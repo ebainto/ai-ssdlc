@@ -1,6 +1,6 @@
 # Agents and Skills Guide — AI-SSDLC Project Template
 
-A complete reference for the five specialist agents and 11 slash commands designed for this template. Covers what each agent does, how they work together in sequence, practical usage examples, and how to maintain and extend the system over time.
+A complete reference for the five specialist agents, 11 slash commands and the `/critique` skill designed for this template. Covers what each agent does, how they work together in sequence, practical usage examples, and how to maintain and extend the system over time.
 
 ---
 
@@ -46,7 +46,7 @@ This project is structured as an agent engineering framework. The table below sc
 | 4 | **Tool Interface** | ✅ Present | `.claude/settings.json` allowlist: read-only shell (`mkdir`, `ls`, `find`, `cat`, `grep`) plus read-only git (`status`, `diff`, `log`, `show`, `branch`); denies `push`, `reset --hard`, `clean`. Build tools are **not** allowed — add `mvn`/`npm`/`docker-compose` yourself if your workflow needs them |
 | 5 | **Execution Environment** | ⚠️ Partial | Referenced in `CLAUDE.md` (docker-compose, `mvn spring-boot:run`, Angular serve) — but `docker-compose.yml` and `Dockerfile` are template scaffolds. Layer `src/` directories are empty placeholders. App code not yet scaffolded for the specific project. |
 | 6 | **Durable State** | ✅ Present | Layer `CLAUDE.md` files (source of truth per layer), `ssdlc/` phase outputs (gates 1–7), `docs/architecture/adr/` (ADRs), `security/pen-test/internal-findings-register.md` (append-only) |
-| 7 | **Orchestration** | ✅ Present | `.claude/commands/` (11 slash commands routing to agents + skills), Dev Lead as the only agent with the Agent tool (correct orchestrator pattern), `CLAUDE.md` routing table |
+| 7 | **Orchestration** | ✅ Present | `.claude/commands/` (11 slash commands) + `.claude/skills/critique/` (routing to agents + skills), Dev Lead as the only agent with the Agent tool (correct orchestrator pattern), `CLAUDE.md` routing table |
 | 8 | **Subagents** | ✅ Present | `.claude/agents/` — 6 specialist agents: dev-lead, code-reviewer, qa-engineer, security-auditor, tech-researcher, infrastructure-agent |
 | 9 | **Skills** | ✅ Present | Implemented inline in the 6 agent bodies. Written specs for all 29 in `docs/agent-skills/` (reference only — not loaded) |
 | 10 | **Verification & Observability** | ⚠️ Partial | Eval suites to be created in `evals/` (project root) via `claude plugin eval` — 5 suites defined (Dev Lead ×2, QA Engineer, Code Reviewer, Security Auditor), not yet recreated in correct location. Security test plan in `ssdlc/` (Phase 6), `/security-audit` command, IA3 monitoring coverage validation. No CI/CD pipeline YAML or runtime monitoring config yet — infrastructure layer scaffolded, awaiting project population. |
@@ -65,6 +65,7 @@ ai-ssdlc/                              ← SSDLC template project
 │   ├── agents/        ← 6 specialist agents
 │   ├── skills/        ← 29 skill playbooks
 │   ├── commands/      ← 11 slash commands
+│   ├── skills/        ← /critique (adversarial review)
 │   └── settings.json  ← shared team permissions
 ├── evals/             ← eval suites (project root — run via claude plugin eval)
 ├── .claudeignore      ← filters noise from Claude's context
@@ -303,7 +304,7 @@ because a worktree is cut from a commit and would hide exactly the
 uncommitted changes under review.
 
 +-------------------------------------------------------------+
-|  The eleven commands that exist                              |
+|  The project surface: 11 commands + /critique                |
 |                                                              |
 |  Pipelines:  /new-feature  /new-api  /new-component          |
 |  Coordinate: /dev-lead                                       |
@@ -311,6 +312,7 @@ uncommitted changes under review.
 |  Direct:     /code-review  /run-tests  /security-audit       |
 |              /infra-check                                    |
 |  Research:   /research  /write-adr                           |
+|  Review:     /critique  (skill, not command)                 |
 +-------------------------------------------------------------+
 
 Everything else is a manual step, not a command: creating the PR
@@ -1517,10 +1519,19 @@ Code Reviewer runs CR1, CR2, CR3 — defined in code-reviewer.md and documented 
 Gate-gated commands read the HITL audit trail first and refuse to run if the
 required gate is not approved.
 
-> **The eleven commands in `.claude/commands/` are the whole surface:**
-> `/dev-lead`, `/gate`, `/new-feature`, `/new-api`, `/new-component`,
-> `/code-review`, `/run-tests`, `/security-audit`, `/infra-check`, `/research`,
-> `/write-adr`.
+> **The surface of this project, in full:**
+>
+> Eleven commands in `.claude/commands/`: `/dev-lead`, `/gate`, `/new-feature`,
+> `/new-api`, `/new-component`, `/code-review`, `/run-tests`, `/security-audit`,
+> `/infra-check`, `/research`, `/write-adr`.
+>
+> One skill in `.claude/skills/`: `/critique` — adversarial review of any
+> artifact in this repository.
+>
+> Five agents in `.claude/agents/`, spawned by the pipelines, never invoked
+> directly by name.
+>
+> Nothing outside this repository is required or invoked.
 >
 > The tables in the rest of this section describe commands that were **designed
 > but never built** — they are a backlog, not a feature list. Every row marked

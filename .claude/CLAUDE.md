@@ -1,15 +1,18 @@
 # AI-SSDLC Project — Claude Code Instructions
 
-**This project's workflow does not use the global MyArchitecture workbench agents.**
+**This project is self-contained.** Its workflow is the seven-gate SSDLC defined
+in the root `CLAUDE.md`, driven by the eleven commands in `.claude/commands/`, the
+`/critique` skill in `.claude/skills/`, and the five agents in `.claude/agents/`.
+That is the whole surface — if a command,
+agent or artifact is not in this repository, it is not part of this workflow.
 
 Note on precedence: Claude Code **concatenates** CLAUDE.md files rather than
-overriding them. If `~/.claude/CLAUDE.md` exists, it is loaded *in addition to*
-this file and the root `CLAUDE.md` — all three are in context at once. This file
-cannot suppress the global one. It states which workflow this project follows;
-it does not and cannot unload anything.
-
-If you need the global workbench agents genuinely out of context, remove or
-relocate `~/.claude/CLAUDE.md` — there is no in-project mechanism for it.
+overriding them, so a personal `~/.claude/CLAUDE.md`, if you have one, is loaded
+alongside this file. No in-project file can unload it. Should that ever conflict
+with the rules here, **this project's files win for work inside this
+repository** — the layer `CLAUDE.md` files, the gate mechanism and the commands
+below are authoritative. Anything a broader instruction set offers that is not
+defined in this repository is out of scope for this project.
 
 ---
 
@@ -70,7 +73,7 @@ None of them exist in the bare template — do not assume their contents.
 - **Save discipline** — Act on save instructions before moving to next task
 - **Security first** — All layer changes must align with `security/CLAUDE.md` policies
 - **Version artifacts** — `[system]_[type]_v[N].[ext]` — never overwrite
-- **No global agents** — This project does not use MyArchitecture agents (Assessment, Greenfield, Brownfield, SSDLC, etc.)
+- **Self-contained surface** — eleven commands in `.claude/commands/`, the `/critique` skill in `.claude/skills/`, and five agents in `.claude/agents/` are the complete set. Do not invoke workflows, agents or artifact conventions from outside this repository.
 
 ---
 
@@ -106,5 +109,5 @@ All phases documented in root `CLAUDE.md`.
 
 ---
 
-**This project defines its own workflow. It does not invoke the MyArchitecture
-workbench agents, but it cannot prevent `~/.claude/CLAUDE.md` from loading.**
+**This project defines its own workflow end to end. Everything it needs is in
+this repository; nothing outside it is required or invoked.**
