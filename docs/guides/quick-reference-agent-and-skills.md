@@ -14,7 +14,7 @@ Training highlights. For full documentation, see [`agents-and-skills-guide.md`](
 | 4 | Tool Interface | ✅ Present | `.claude/settings.json` allowlist (git, mvn, npm, docker-compose) |
 | 5 | Execution Environment | ❌ Absent | No build, test or lint tooling ships with the template — the layer folders are empty by design. You add the toolchain for your stack. |
 | 6 | Durable State | ✅ Present | Layer `CLAUDE.md` files, `ssdlc/` phase outputs, `docs/architecture/adr/`, findings register |
-| 7 | Orchestration | ✅ Present | 9 slash commands, Dev Lead as sole orchestrator with `Agent` tool |
+| 7 | Orchestration | ✅ Present | 11 slash commands, `/dev-lead` as the main-session orchestrator with `Agent` tool |
 | 8 | Subagents | ✅ Present | 6 specialist agents in `.claude/agents/` |
 | 9 | Skills | ✅ Present | Implemented inline in the 6 agent bodies; 29 written specs in `docs/agent-skills/` (reference only — not loaded) |
 | 10 | Verification & Observability | ⚠️ Partial | Jest test suite (9 tests + 17+ reference patterns), test guides, coverage reporting; Prometheus/Grafana/Alertmanager/Loki scaffolded but not configured |
@@ -26,12 +26,12 @@ Training highlights. For full documentation, see [`agents-and-skills-guide.md`](
 | Layer | Status | Why |
 |---|---|---|
 | 1. Instructions | ✅ Present | All three context layers defined: project root + 6 layer-specific + global override. Complete instruction coverage. |
-| 2. Context Delivery | ✅ Present | Knowledge base in `docs/guides/` (5 master guides) + auto-loaded layer CLAUDE.md files. All context delivered to Claude on session start. |
+| 2. Context Delivery | ✅ Present | Knowledge base in `docs/guides/` (5 guides) + auto-loaded layer CLAUDE.md files. All context delivered to Claude on session start. |
 | 3. Context Management | ✅ Present | Mechanisms for controlling context size: `.claudeignore` filters, progressive disclosure in CLAUDE.md, strict layer isolation prevents unnecessary files from loading. |
 | 4. Tool Interface | ✅ Present | `.claude/settings.json` defines exactly which CLI tools are allowed (git, mvn, npm, docker-compose). Permissions explicitly configured and enforced. |
 | 5. Execution Environment | ⚠️ Partial | **Dev execution complete** (npm scripts, Jest, TypeScript build). **Production execution scaffolded** (Docker Compose, Nginx, Vault folders exist but configs not populated). Non-critical gap — app code and container configs are project-specific, not template. |
 | 6. Durable State | ✅ Present | Persistent storage across sessions: layer CLAUDE.md files, `ssdlc/` phase outputs (versioned), `docs/architecture/adr/` (ADRs), `security/pen-test/internal-findings-register.md`. No data loss on session break. |
-| 7. Orchestration | ✅ Present | 9 slash commands (`/new-feature`, `/code-review`, `/run-tests`, etc.) route work to specialist agents. Dev Lead is single orchestrator — no conflicting agent routing. |
+| 7. Orchestration | ✅ Present | 11 slash commands (`/new-feature`, `/code-review`, `/run-tests`, etc.) route work to specialist agents. Dev Lead is single orchestrator — no conflicting agent routing. |
 | 8. Subagents | ✅ Present | 6 specialist agents defined in `.claude/agents/`: Dev Lead (OA), Code Reviewer (CR), QA Engineer (QA), Security Auditor (SA), Tech Researcher (TR), Infrastructure Agent (IA). Each has defined role and tool access. |
 | 9. Skills | ✅ Present | 29 skill specs across 6 agents: OA1–OA7 (orchestration), CR1–CR4 (review), QA1–QA5 (testing), SA1–SA4 (security audit), TR1–TR5 (research), IA1–IA4 (infrastructure). Complete skill inventory with no gaps. |
 | 10. Verification & Observability | ⚠️ Partial | **Verification ✅ Complete:** Jest test suite (9 tests), test guides (4 docs), coverage reporting (`npm test -- --coverage`), GitHub Actions CI/CD. **Observability ❌ Missing:** Prometheus/Grafana/Alertmanager/Loki scaffolded in `infrastructure/monitoring/` but configs not created. |
@@ -57,7 +57,7 @@ ai-ssdlc/
 ├── .claude/
 │   ├── agents/        ← 6 specialist agents
 │   ├── skills/        ← 29 skill playbooks
-│   ├── commands/      ← 9 slash commands
+│   ├── commands/      ← 11 slash commands
 │   └── settings.json  ← shared team permissions
 ├── .claudeignore      ← filters Claude's context
 ├── CLAUDE.md          ← project instructions (auto-loaded)
@@ -305,7 +305,7 @@ Agents refuse to run if their required gate is not approved. The Dev Lead enforc
 [ ] Monitoring and observability designed
 [ ] Compliance requirements identified
 [ ] Architecture principles documented
-[ ] Run /gate-readiness-check 1 to verify
+[ ] Run /gate status 1 to verify
 ```
 
 **Before requesting Gate 2 (Threat model):**
@@ -315,7 +315,7 @@ Agents refuse to run if their required gate is not approved. The Dev Lead enforc
 [ ] No Critical threats with no mitigation (these block approval)
 [ ] Data flow diagram produced showing trust boundaries
 [ ] Affected components named (not generic)
-[ ] Run /gate-readiness-check 2 to verify
+[ ] Run /gate status 2 to verify
 ```
 
 **Before requesting Gate 3 (Requirements):**
@@ -326,7 +326,7 @@ Agents refuse to run if their required gate is not approved. The Dev Lead enforc
 [ ] All acceptance criteria are testable (Given/When/Then)
 [ ] Security ACs present — not just functional ACs
 [ ] Must-priority compliance stories in scope for Sprint 1/2
-[ ] Run /gate-readiness-check 3 to verify
+[ ] Run /gate status 3 to verify
 ```
 
 **Before requesting Gate 4 (Design):**
@@ -337,7 +337,7 @@ Agents refuse to run if their required gate is not approved. The Dev Lead enforc
 [ ] Sequence diagrams produced for top 3 critical flows
 [ ] Security controls specified per component (not just at perimeter)
 [ ] Every user story from Gate 3 has an implementing component
-[ ] Run /gate-readiness-check 4 to verify
+[ ] Run /gate status 4 to verify
 ```
 
 **Before requesting Gate 5 (Dev standards):**
@@ -348,7 +348,7 @@ Agents refuse to run if their required gate is not approved. The Dev Lead enforc
 [ ] CI/CD pipeline stages defined with pass/fail thresholds
 [ ] Definition of Done checklist agreed by the team
 [ ] Security Architecture sections populated in all layer CLAUDE.md files
-[ ] Run /populate-security-arch then /gate-readiness-check 5
+[ ] Run populate the Security Architecture sections by hand, then /gate status 5
 ```
 
 **Before requesting Gate 6 (Test plan):**
@@ -359,7 +359,7 @@ Agents refuse to run if their required gate is not approved. The Dev Lead enforc
 [ ] Pen test scope defined for externally facing components
 [ ] Remediation SLAs agreed: Critical 24h, High 7d, Medium 30d, Low 90d
 [ ] All STRIDE threat categories have at least one test type covering them
-[ ] Run /gate-readiness-check 6 to verify
+[ ] Run /gate status 6 to verify
 ```
 
 **Before requesting Gate 7 (Release / Go-No-Go):**
@@ -375,7 +375,7 @@ Agents refuse to run if their required gate is not approved. The Dev Lead enforc
 [ ] Monitoring and alerting configured and verified (IA3 passing)
 [ ] Rollback plan documented and tested
 [ ] All Gate 1–6 approvals recorded in audit trail
-[ ] Run /gate-readiness-check 7 to verify
+[ ] Run /gate status 7 to verify
 ```
 
 ---
@@ -419,7 +419,7 @@ When you add an @import to a layer CLAUDE.md, every agent that loads that layer 
 | Suite | Agent | Cases | What it protects the team from |
 |---|---|---|---|
 | `dev-lead/triage-routing.yaml` | Dev Lead | 8 | Wrong routing (backend story → wrong layer), gate bypass (spawning Code Reviewer before Gate 5), Dev Lead giving advice instead of routing |
-| `dev-lead/pipeline-coordination.yaml` | Dev Lead | 8 | Developer implementing before QA writes tests, Security Auditor not triggered on auth/PII changes, pipeline not closing with `/create-pr` |
+| `dev-lead/pipeline-coordination.yaml` | Dev Lead | 8 | Developer implementing before QA writes tests, Security Auditor not triggered on auth/PII changes, pipeline not closing with `gh pr create` |
 | `qa-engineer/tdd-gate.yaml` | QA Engineer | 9 | Tests written after implementation (defeats TDD), database mocked in unit tests (masks real bugs), QA writing implementation code instead of tests |
 | `code-reviewer/layer-review.yaml` | Code Reviewer | 9 | Hardcoded secrets passing review, missing `@PreAuthorize` on endpoints, PII logged, layer boundary violations, reviewer modifying source files |
 | `security-auditor/confidentiality.yaml` | Security Auditor | 10 | Finding details in conversation or PR descriptions, register overwritten, wrong SLA assigned to severity, exploit steps produced in chat |
@@ -535,7 +535,7 @@ Dev Lead spawns Code Reviewer → CR1 + CR2 + CR3 → CR4 report
   If APPROVED:
     Dev Lead spawns Security Auditor (if triggered) → SA1 → "N findings recorded"
       ↓
-    "Run /create-pr"
+    "Run gh pr create"
   If CHANGES REQUIRED:
     Relay findings → developer fixes → Code Reviewer spawned again
 ```
@@ -568,13 +568,16 @@ Read in this order. Each step takes less than 30 minutes.
 | All 6 layer CLAUDE.md files (populated) | ✅ Complete |
 | All 6 layers have @imported design documents | ✅ Complete |
 | 6 specialist agents + 29 skill specs | ✅ Complete |
-| 9 slash commands | ✅ Complete |
+| 11 slash commands | ✅ Complete |
 | Security policy files (5) | ✅ Complete |
 | SSDLC 7-gate structure enforced | ✅ Complete |
 | `evals/` — 5 suites defined, to be created via `claude plugin eval` | ⚠️ Pending — recreate in `evals/` at project root |
-| App code (`src/`) + Jenkinsfile | ⚠️ Template scaffolds — project-specific |
+| App code (`src/`) + CI pipeline definition | ⚠️ Not shipped — project-specific |
 
-**RDE score: 8 of 10.** Evals moved to `evals/` (project root) — recreate all five suites via `claude plugin eval`. App code and Jenkinsfile being empty is expected — project-specific. See `agents-and-skills-guide.md` Section 12 for the full assessment.
+**Eval coverage: none yet.** No `evals/` folder ships with this template. To add
+one, write cases as `evals/<case>/prompt.md` plus `graders/*.md` and run
+`claude plugin eval evals/`. Application code and a CI pipeline definition are
+deliberately absent — both are project-specific.
 
 ---
 

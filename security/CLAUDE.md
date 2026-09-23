@@ -45,7 +45,7 @@ This file is automatically loaded by Claude Code whenever you work on any file i
 | Data encryption at rest | Database + Infrastructure | Both CLAUDE.md Security Architecture sections |
 | Secrets management | Infrastructure | `infrastructure/CLAUDE.md` → Security Architecture |
 | Webhook signature validation | Integration | `integration/CLAUDE.md` → Security Architecture |
-| SAST / SCA pipeline gates | All layers | `security/sast/` config + Jenkins pipeline |
+| SAST / SCA pipeline gates | All layers | `security/sast/` config + your CI pipeline |
 | Pen test scope and findings | Cross-cutting | `security/pen-test/` |
 | Threat model (operational) | Cross-cutting | `security/threat-model/` |
 
@@ -117,8 +117,8 @@ This file is automatically loaded by Claude Code whenever you work on any file i
 | Audit logging | Backend (Spring Boot) | ISO A.8.15 | Spring AOP `@AuditLog` aspect logs all state-changing operations: `userId`, `action`, `entityId`, `correlationId`, `timestamp` |
 | Data classification | Database (SQL Server) | GDPR Art 32 / ISO A.8.2 | PII columns encrypted via SQL Server Always Encrypted; classification table maintained in `database/CLAUDE.md` |
 | Static analysis (SAST) | Backend (Java), Frontend (TypeScript) | OWASP ASVS V14 | Backend: SpotBugs + find-sec-bugs plugin (Maven verify phase). Frontend: ESLint with `@angular-eslint/security` rules. Both block PR merge on Critical/High |
-| Dependency scanning (SCA) | Backend (Maven), Frontend (npm) | OWASP ASVS V14 | OWASP Dependency-Check (Maven plugin) + `npm audit` in Jenkins pipeline. Critical CVEs block deployment |
-| Container scanning | Infrastructure (Docker) | OWASP ASVS V14 | Trivy scans all Docker images in Jenkins pipeline; Critical CVEs block deployment |
+| Dependency scanning (SCA) | Backend (Maven), Frontend (npm) | OWASP ASVS V14 | OWASP Dependency-Check (Maven plugin) + `npm audit` in the CI pipeline. Critical CVEs block deployment |
+| Container scanning | Infrastructure (Docker) | OWASP ASVS V14 | Trivy scans all Docker images in the CI pipeline; Critical CVEs block deployment |
 | Penetration test | Full application | OWASP ASVS V14.3 | Annual external pen test + after every major release; scope in `security/pen-test/scope.md` |
 
 ---

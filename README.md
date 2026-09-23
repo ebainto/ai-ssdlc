@@ -201,7 +201,7 @@ Artifact naming convention: `[system-name]_[artifact-type]_v[N].md` — versions
 |---|---|---|
 | Quick reference | `docs/guides/quick-reference.md` | Short visual training guide — start here |
 | Full template guide | `docs/guides/template-guide.md` | Every file, every decision, common mistakes |
-| Agents and skills guide | `docs/guides/agents-and-skills-guide.md` | Five development agents and 18 slash commands — design, decision rationale, and implementation priority |
+| Agents and skills guide | `docs/guides/agents-and-skills-guide.md` | Five specialist agents and 18 slash commands — design, decision rationale, and implementation priority |
 | Security layer overview | `security/README.md` | What the security layer is and how it relates to the other security locations |
 | Secure coding standard | `security/policies/secure-coding-standard.md` | Coding rules with compliance control references |
 | Encryption policy | `security/policies/encryption-policy.md` | Approved algorithms and key management requirements |

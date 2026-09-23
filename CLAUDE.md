@@ -8,7 +8,10 @@ This is a reusable SSDLC project template for building secure applications. It p
 
 Development progresses from an approved target architecture through seven gated phases to a production-ready release, with mandatory human approval (HITL gates 1–7) at each phase boundary.
 
-**New to this template?** Read `docs/guides/template-guide.md` first — it explains every file, who updates what, and the five-step update sequence for a new project.
+**New to this template?** Same entry point as the README: start with
+`docs/guides/quick-reference.md` for a short visual overview, then
+`docs/guides/template-guide.md` for full detail — it explains every file, who
+updates what, and the five-step update sequence for a new project.
 
 ## Template Tech Stack (example — replace per project)
 
@@ -115,15 +118,26 @@ Each gate requires an explicit `approve`, `reject`, or `approve with conditions:
 
 ## Key Artifacts
 
-| Artifact | Folder | Skill |
-|---|---|---|
-| HITL audit trail | `./ssdlc/` | S9 — auto-updated after every gate |
-| Threat model | `./ssdlc/` | S3 |
-| User stories | `./ssdlc/` | S4 |
-| Component design specs | `./ssdlc/` | S5 |
-| Dev standards | `./ssdlc/` | S6 |
-| Security test plan | `./ssdlc/` | S7 |
-| Release checklist | `./ssdlc/` | S8 |
+These are the phase outputs the gated commands read. **You produce them** — no
+command in this project generates them, and none ship with the template.
+
+| Artifact | Folder | Produced by | Read by |
+|---|---|---|---|
+| HITL audit trail | `./ssdlc/` | `/gate` — the only writer of gate decisions | every gated command |
+| Threat model | `./ssdlc/` | you, at Phase 2 (operational copy: `security/threat-model/stride-model.md`) | `/security-audit` (SA1) |
+| User stories | `./ssdlc/` | you, at Phase 3 | `/run-tests`, `/new-feature` |
+| Component design specs | `./ssdlc/` | you, at Phase 4 | `/new-component`, `/code-review` |
+| Dev standards | `./ssdlc/` | you, at Phase 5 (layer rules live in each layer's `CLAUDE.md`) | `/code-review` |
+| Security test plan | `./ssdlc/` | you, at Phase 6 | `/run-tests` |
+| Release checklist | `./ssdlc/` | you, at Phase 7 | Gate 7 review |
+
+Audit trail format contract: `ssdlc/GATE-FORMAT.md`. Template to copy:
+`ssdlc/_TEMPLATE_hitl-audit-trail_v1.md`.
+
+Earlier versions of this table credited skills `S3`–`S9` of an "SSDLC Agent".
+That agent belongs to a separate global workbench and is **not** part of this
+project — there is no `S`-prefixed skill here. The commands in
+`.claude/commands/` are the whole surface.
 
 ## Security context — how it reaches every layer
 

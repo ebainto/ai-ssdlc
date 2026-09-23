@@ -1,6 +1,6 @@
 # Agents and Skills Guide — AI-SSDLC Project Template
 
-A complete reference for the six development agents and 9 slash commands designed for this template. Covers what each agent does, how they work together in sequence, practical usage examples, and how to maintain and extend the system over time.
+A complete reference for the five specialist agents and 11 slash commands designed for this template. Covers what each agent does, how they work together in sequence, practical usage examples, and how to maintain and extend the system over time.
 
 ---
 
@@ -46,7 +46,7 @@ This project is structured as an agent engineering framework. The table below sc
 | 4 | **Tool Interface** | ✅ Present | `.claude/settings.json` permissions allowlist (git, mvn, npm, docker-compose — explicit allow/deny per command) |
 | 5 | **Execution Environment** | ⚠️ Partial | Referenced in `CLAUDE.md` (docker-compose, `mvn spring-boot:run`, Angular serve) — but `docker-compose.yml` and `Dockerfile` are template scaffolds. Layer `src/` directories are empty placeholders. App code not yet scaffolded for the specific project. |
 | 6 | **Durable State** | ✅ Present | Layer `CLAUDE.md` files (source of truth per layer), `ssdlc/` phase outputs (gates 1–7), `docs/architecture/adr/` (ADRs), `security/pen-test/internal-findings-register.md` (append-only) |
-| 7 | **Orchestration** | ✅ Present | `.claude/commands/` (9 slash commands routing to agents + skills), Dev Lead as the only agent with the Agent tool (correct orchestrator pattern), `CLAUDE.md` routing table |
+| 7 | **Orchestration** | ✅ Present | `.claude/commands/` (11 slash commands routing to agents + skills), Dev Lead as the only agent with the Agent tool (correct orchestrator pattern), `CLAUDE.md` routing table |
 | 8 | **Subagents** | ✅ Present | `.claude/agents/` — 6 specialist agents: dev-lead, code-reviewer, qa-engineer, security-auditor, tech-researcher, infrastructure-agent |
 | 9 | **Skills** | ✅ Present | Implemented inline in the 6 agent bodies. Written specs for all 29 in `docs/agent-skills/` (reference only — not loaded) |
 | 10 | **Verification & Observability** | ⚠️ Partial | Eval suites to be created in `evals/` (project root) via `claude plugin eval` — 5 suites defined (Dev Lead ×2, QA Engineer, Code Reviewer, Security Auditor), not yet recreated in correct location. Security test plan in `ssdlc/` (Phase 6), `/security-audit` command, IA3 monitoring coverage validation. No CI/CD pipeline YAML or runtime monitoring config yet — infrastructure layer scaffolded, awaiting project population. |
@@ -64,7 +64,7 @@ ai-ssdlc/                              ← SSDLC template project
 ├── .claude/
 │   ├── agents/        ← 6 specialist agents
 │   ├── skills/        ← 29 skill playbooks
-│   ├── commands/      ← 9 slash commands
+│   ├── commands/      ← 11 slash commands
 │   └── settings.json  ← shared team permissions
 ├── evals/             ← eval suites (project root — run via claude plugin eval)
 ├── .claudeignore      ← filters noise from Claude's context
@@ -186,14 +186,17 @@ DEVELOPER TYPES                    WHAT HAPPENS INTERNALLY
 /research [topic]             -->  Tech Researcher Agent activates    +-- spawns --> Code Reviewer Agent
 /security-audit               -->  Security Auditor Agent activates   |
 /code-review                  -->  Code Reviewer Agent activates      +-- spawns --> Security Auditor Agent
-/infra-mode                   -->  Infrastructure Agent activates     |
+/infra-check                   -->  Infrastructure Agent activates     |
                                                                       +-- spawns --> Infrastructure Agent
 
-/create-pr                    -->  Procedural script — no agent
-/template-health-check        -->  Procedural script — no agent
-/gate-readiness-check [N]     -->  Procedural script — no agent
-/populate-security-arch       -->  Procedural script — no agent
-... (all other /commands)     -->  Procedural script — no agent
+/gate status [N]              -->  Reads the HITL audit trail — no agent
+/gate [N] approve             -->  Writes a gate decision — no agent
+/write-adr [topic]            -->  Tech Researcher Agent activates
+/run-tests [scope]            -->  QA Engineer Agent activates
+
+These eleven are the complete command surface. Anything else — creating the PR,
+populating layer sections, intaking a pen test report, connecting a document —
+is a manual step, not a command.
 ```
 
 **Rule:** if you want to call a sub-agent directly (skip orchestration), you can — use its direct slash command. But bypassing the Dev Lead coordinator means you bypass the gate checks and TDD sequence enforcement. Only do this when you know exactly what you need.
@@ -202,32 +205,32 @@ DEVELOPER TYPES                    WHAT HAPPENS INTERNALLY
 
 | What you want to do | Type what | Notes |
 |---|---|---|
-| Start a development session and don't know what's next | `/orchestrate` | OA asks one question and routes you |
+| Start a development session and don't know what's next | `/dev-lead` | OA asks one question and routes you |
 | Build a new user story end-to-end | `/new-feature [story ID]` | Full multi-agent pipeline: QA → dev → review → audit → PR |
 | Add a specific REST API endpoint | `/new-api POST /api/v1/loans/apply` | Enforces OpenAPI spec update + contract test |
 | Build a specific frontend or backend component | `/new-component LoanStatusCard frontend` | Layer-aware pipeline |
 | Research a library version or upgrade | `/research spring-boot upgrade` | Tech Researcher activates; writes ADR if needed |
 | Get a code review without the full pipeline | `/code-review` | Code Reviewer activates directly — skips OA |
 | Run a security audit on a specific change | `/security-audit` | Security Auditor activates directly |
-| Plan what infrastructure a feature needs | `/infra-mode` | Infrastructure Agent activates directly |
-| Check if gate N is ready to approve | `/gate-readiness-check 5` | Procedural — reads HITL audit trail |
-| Create a PR after all reviews are done | `/create-pr` | Procedural — git workflow |
-| Check for template health issues | `/template-health-check` | Procedural — scans all CLAUDE.md files |
-| Intake a pen test report | `/pentest-intake` | Procedural — parses report, populates findings register |
-| Check if a change needs a threat model re-run | `/threat-model-trigger-check` | Procedural — reads trigger list from stride-model.md |
-| Connect a new team document to Claude | `/doc-intake` | Procedural — outputs the @import line and folder |
+| Plan what infrastructure a feature needs | `/infra-check` | Infrastructure Agent activates directly |
+| Check if gate N is ready to approve | `/gate status 5` | Procedural — reads HITL audit trail |
+| Create a PR after all reviews are done | `gh pr create` | Plain git/gh — not a project command |
+| Check for template health issues | *(manual)* | No command ships for this — read the layer `CLAUDE.md` files |
+| Intake a pen test report | *(manual)* | Fill `security/pen-test/findings-register.md` by hand |
+| Check if a change needs a threat model re-run | *(manual)* | Compare the change against the trigger list in `security/threat-model/stride-model.md` |
+| Connect a new team document to Claude | *(manual)* | Convert to `.md` under `docs/<layer>/`, then add `@../docs/...` to that layer's `CLAUDE.md` |
 
 ### Calling sequence for the most common scenarios
 
 **Scenario 1 — Normal sprint: new user story**
 ```
-1.  /orchestrate          or /new-feature [story ID]
+1.  /dev-lead          or /new-feature [story ID]
 2.  [QA Engineer spawned automatically — writes tests]
 3.  [Developer codes in the affected layer — CLAUDE.md guides]
 4.  [Infrastructure Agent spawned if infra changes detected]
 5.  [Code Reviewer spawned automatically — reviews diff]
 6.  [Security Auditor spawned if story touches security controls]
-7.  /create-pr
+7.  gh pr create
 ```
 
 **Scenario 2 — Dependency upgrade**
@@ -236,35 +239,38 @@ DEVELOPER TYPES                    WHAT HAPPENS INTERNALLY
 2.  [Tech Researcher checks versions, researches upgrade path, writes ADR]
 3.  [Developer implements upgrade]
 4.  /code-review           (direct — no full orchestration needed)
-5.  /create-pr
+5.  gh pr create
 ```
 
 **Scenario 3 — Pen test report arrives**
 ```
-1.  /pentest-intake        (procedural — parses report)
-2.  /threat-model-trigger-check  (procedural — do any findings need Phase 2 re-run?)
-3.  /orchestrate           for each Critical or High finding (routes to fix pipeline)
-4.  /security-audit        after fix is implemented (verifies finding is resolved)
-5.  /create-pr
+1.  [Manual] Transcribe the report into security/pen-test/findings-register.md
+2.  [Manual] Check each finding against the trigger list in
+             security/threat-model/stride-model.md — does Phase 2 need a re-run?
+3.  /dev-lead           for each Critical or High finding (routes to fix pipeline)
+4.  /security-audit     after the fix is implemented (verifies finding is resolved)
+5.  gh pr create
 ```
 
 **Scenario 4 — Before a SSDLC gate approval**
 ```
-1.  /gate-readiness-check [N]    (procedural — lists what is and is not ready)
-2.  Fix any blockers listed
-3.  /template-health-check       (sanity check — no placeholder content)
-4.  /security-propagation-check  (Gate 5 and above — threat model vs layer CLAUDE.md)
-5.  Switch to SSDLC Agent to request gate approval
+1.  /gate status [N]    (shows the current decision for that gate)
+2.  Fix any blockers
+3.  [Manual] Sanity check the active layer CLAUDE.md files for leftover
+             placeholder content
+4.  [Manual] Gate 5 and above — check every Mitigated STRIDE threat has a
+             matching layer Security Architecture entry
+5.  /gate [N] approve   (once the human has signed off)
 ```
 
 **Scenario 5 — Infrastructure-only change (Vault policy, Nginx, monitoring)**
 ```
-1.  /infra-mode            (Infrastructure Agent activates directly)
+1.  /infra-check            (Infrastructure Agent activates directly)
 2.  [IA1 — plan the infra change]
 3.  [IA2 — review the config diff]
-4.  /validate-infra        (procedural — syntax check)
+4.  /infra-check review        (procedural — syntax check)
 5.  /code-review           (Code Reviewer reviews the config files)
-6.  /create-pr
+6.  gh pr create
 ```
 
 ---
@@ -273,11 +279,11 @@ DEVELOPER TYPES                    WHAT HAPPENS INTERNALLY
 
 ```
 +-------------------------------------------------------------+
-|  Dev Lead coordinator                                        |
-|  Entry point — plans work, checks gate status, routes       |
-|                                                             |
-|  /new-feature   /new-api   /new-component                   |
-|  Multi-agent coordination for full development pipeline     |
+|  /dev-lead  -- coordinator, runs in the MAIN session         |
+|  Plans work, checks gate status, routes, spawns specialists  |
+|                                                              |
+|  /new-feature   /new-api   /new-component                    |
+|  Full development pipeline, one gate-checked step at a time  |
 +-------------------------------------------------------------+
      |          |           |           |           |
      v          v           v           v           v
@@ -287,29 +293,30 @@ DEVELOPER TYPES                    WHAT HAPPENS INTERNALLY
 | Agent  | | Agent  | | Agent  | | Agent  | |        |
 |        | |        | |        | |        | |        |
 | Fresh  | | Fresh  | | Fresh  | | Fresh  | | Fresh  |
-| +      | | +      | |        | | + web  | | +      |
-| wktree | | wktree | |        | | search | | wktree |
+| agent  | | agent  | | agent  | | agent  | | agent  |
+|        | |        | |        | | + web  | |        |
 +--------+ +--------+ +--------+ +--------+ +--------+
 
+Each specialist is a subagent with no prior implementation context.
+That independence is the point -- none of them uses worktree isolation,
+because a worktree is cut from a commit and would hide exactly the
+uncommitted changes under review.
+
 +-------------------------------------------------------------+
-|  Slash Commands  (procedural — no agent persona)            |
-|                                                             |
-|  Template setup:  /layer-setup  /boundary-check             |
-|                   /template-health-check                    |
-|                   /gate-readiness-check [N]                 |
-|                                                             |
-|  CLAUDE.md:       /populate-spec  /populate-tech-stack      |
-|                   /populate-security-arch                   |
-|                                                             |
-|  Security:        /threat-model-trigger-check               |
-|                   /security-propagation-check               |
-|                   /policy-propagation                       |
-|                   /suppression-audit  /pentest-intake        |
-|                                                             |
-|  Documents:       /doc-intake  /doc-version-update          |
-|  Compliance:      /compliance-traceability-check            |
-|  Delivery:        /create-pr  /validate-infra               |
+|  The eleven commands that exist                              |
+|                                                              |
+|  Pipelines:  /new-feature  /new-api  /new-component          |
+|  Coordinate: /dev-lead                                       |
+|  Gates:      /gate status [N]   /gate [N] approve            |
+|  Direct:     /code-review  /run-tests  /security-audit       |
+|              /infra-check                                    |
+|  Research:   /research  /write-adr                           |
 +-------------------------------------------------------------+
+
+Everything else is a manual step, not a command: creating the PR
+(`gh pr create`), populating layer CLAUDE.md sections, intaking a pen
+test report, and connecting a new document via an @import line. See
+section 7 for the designed-but-unbuilt command backlog.
 
 NOTE: Layer CLAUDE.md files (auto-loaded by Claude Code) serve
 as the development agent. No separate Dev Agent is needed.
@@ -411,7 +418,7 @@ Developer → Dev Lead coordinator (SKILL OA6 — /new-api)
     |       Security Auditor: checks STRIDE threats for this endpoint
     |       Produces: audit report or finding card (confidential)
     |
-    +-- 6. /create-pr (slash command)
+    +-- 6. gh pr create (slash command)
             All agents report clean → PR created with standard template
 ```
 
@@ -461,7 +468,7 @@ Developer → Dev Lead coordinator (SKILL OA1 — triage and route)
     +-- 7. Code Reviewer (SKILL CR1)
     |       Reviews pom.xml changes + any Spring Security config changes
     |
-    +-- 8. /create-pr
+    +-- 8. gh pr create
 ```
 
 ---
@@ -471,14 +478,15 @@ Developer → Dev Lead coordinator (SKILL OA1 — triage and route)
 **Trigger:** Developer says `"The external pen test report is ready — intake it"`
 
 ```
-Developer → /pentest-intake (slash command)
+Developer → [Manual intake — no command ships for this]
     |
-    | Developer: @security/pen-test/pentest-report-2026-09.pdf
-    | Command parses: 3 High findings, 1 Critical finding
+    | Developer reads the report: @security/pen-test/pentest-report-2026-09.pdf
+    | and transcribes it into findings-register.md
+    | Example: 3 High findings, 1 Critical finding
     | Command populates: security/pen-test/internal-findings-register.md
     | Command flags: "Finding SF-001 (Critical) — 24-hour SLA applies"
     |
-    +-- /threat-model-trigger-check (slash command)
+    +-- a threat-model update request (slash command)
     |       "Do any findings reveal an unmodelled STRIDE threat?"
     |       Result: SF-003 reveals unmodelled E (Elevation) threat on admin endpoint
     |       Output: PHASE 2 RE-RUN REQUIRED for admin endpoint scope
@@ -489,12 +497,14 @@ Developer → /pentest-intake (slash command)
     |       Security Auditor confirms finding, produces structured finding card
     |       Developer implements fix
     |       Code Reviewer reviews fix
-    |       /create-pr → merge → Security Auditor verifies via SKILL SA3
+    |       commit → push → gh pr create → merge
+    |       Security Auditor verifies via SKILL SA3
     |
-    +-- For Phase 2 re-run (SF-003):
-            Developer switches to SSDLC Agent (ssdlc mode)
-            Runs SKILL S3 for admin endpoint scope
-            New Gate 2 approval required
+    +-- For a Phase 2 re-run (SF-003):
+            Owner re-runs threat modelling for the admin endpoint scope
+            (manual — this project ships no threat-model generator)
+            Updates security/threat-model/stride-model.md
+            New Gate 2 decision recorded via /gate 2 approve
             New ssdlc/[system]_threat-model_vN.md snapshot saved
 ```
 
@@ -538,7 +548,7 @@ Developer → Dev Lead coordinator (SKILL OA7 — /new-component)
     |       Only if component handles PII display or auth state
     |       Otherwise skipped — Code Reviewer CR2 covers Security Architecture check
     |
-    +-- 5. /create-pr
+    +-- 5. gh pr create
 ```
 
 ---
@@ -565,17 +575,17 @@ Developer → Infrastructure Agent (SKILL IA1)
     |
     +-- Security Auditor (SKILL SA1)
     |       Checks: is "secrets management for external payment API" in threat model?
-    |       If not: flags for /threat-model-trigger-check
+    |       If not: flags for a threat-model update request
     |
     +-- Code Reviewer (SKILL CR1)
     |       Reviews: vault/policies/backend.hcl change
     |                docker/docker-compose.yml env var addition
     |                monitoring/grafana/payments-dashboard.json
     |
-    +-- /validate-infra (slash command)
+    +-- /infra-check review (slash command)
     |       Runs automated syntax check on Vault policy and Nginx config
     |
-    +-- /create-pr
+    +-- gh pr create
 ```
 
 ---
@@ -722,7 +732,7 @@ Step 5  Security Auditor Agent (SKILL SA1)
         Only if the story touches a Security Architecture control
         or adds a new trust boundary.
 
-Step 6  /create-pr
+Step 6  gh pr create
         All agents clean — PR created with standard template.
 ```
 
@@ -770,7 +780,7 @@ Step 5  Security Auditor Agent (SKILL SA1)
         Specifically: Spoofing (auth), Tampering (input validation),
         Information Disclosure (response filtering), Elevation (RBAC).
 
-Step 6  /create-pr
+Step 6  gh pr create
 ```
 
 ---
@@ -799,7 +809,7 @@ Step 3  Developer implements the component.
 
 Step 4  Code Reviewer Agent (SKILL CR1 + CR3)
 
-Step 5  /create-pr
+Step 5  gh pr create
 ```
 
 **Backend service pipeline:**
@@ -816,7 +826,7 @@ Step 3  Code Reviewer Agent (SKILL CR1 + CR2)
 Step 4  Security Auditor Agent (SKILL SA1)
         Only if service handles PII, financial data, or auth decisions.
 
-Step 5  /create-pr
+Step 5  gh pr create
 ```
 
 ---
@@ -927,7 +937,7 @@ Always spawned as a **fresh agent in a worktree**.
 - Never rate a compliance gap below Must priority.
 - Never approve a code path where a STRIDE threat is "Mitigated" in the threat model but the mitigation control is absent from the code.
 - Never add a SAST suppression without the full justification block (rule, justification, approver, review date).
-- If a finding reveals an unmodelled STRIDE threat, flag it for `/threat-model-trigger-check` — do not update the threat model yourself.
+- If a finding reveals an unmodelled STRIDE threat, flag it for `a threat-model update request` — do not update the threat model yourself.
 
 **Skills**
 
@@ -936,7 +946,7 @@ Always spawned as a **fresh agent in a worktree**.
 #### SKILL SA1 — Audit against threat model
 **Trigger:** `"audit against threat model"`, `"check threat coverage"`.
 
-Reads `security/threat-model/stride-model.md`. For each "Mitigated" threat, verifies the control exists in the diff. Flags unmodelled code paths for `/threat-model-trigger-check`.
+Reads `security/threat-model/stride-model.md`. For each "Mitigated" threat, verifies the control exists in the diff. Flags unmodelled code paths for `a threat-model update request`.
 
 | STRIDE Threat | Component | Mitigation control | In diff? | Status |
 |---|---|---|---|---|
@@ -1167,7 +1177,7 @@ You are always spawned as a **fresh agent in a worktree**.
 - Never approve an Nginx configuration that disables TLS or downgrades below TLS 1.2.
 - Never approve a Docker image running as root unless there is a documented, justified exception in `infrastructure/CLAUDE.md`.
 - Never approve a new environment variable that holds a secret value directly — all secrets must come from Vault via the sidecar.
-- If an infrastructure change introduces a new trust boundary or network path, flag it for `/threat-model-trigger-check`.
+- If an infrastructure change introduces a new trust boundary or network path, flag it for `a threat-model update request`.
 - Monitoring coverage is a hard requirement — a new service with no health check or metric is always flagged.
 
 **Skills**
@@ -1190,7 +1200,7 @@ You are always spawned as a **fresh agent in a worktree**.
 | New metric / endpoint | New Prometheus scrape config + Grafana panel | `monitoring/prometheus.yml`, `monitoring/grafana/` |
 
 3. Output an infrastructure change checklist — one line per change with the config file to update.
-4. Flag any change that introduces a new trust boundary for `/threat-model-trigger-check`.
+4. Flag any change that introduces a new trust boundary for `a threat-model update request`.
 
 ---
 
@@ -1239,7 +1249,7 @@ Monitoring:      APPROVED / CHANGES REQUIRED ([specific issue])
 Blockers:
   - [issue] — [config file : line]
 
-Trust boundary flag: YES — run /threat-model-trigger-check / NO
+Trust boundary flag: YES — run a threat-model update request / NO
 ```
 
 ---
@@ -1348,7 +1358,7 @@ Dev Lead runs OA3 — reads `ssdlc/[system]_hitl-audit-trail_vN.md` and reports 
 
 ### Gate procedure — checklist per phase
 
-Use `/gate-readiness-check [N]` to run the automated pre-conditions check before requesting approval for gate N.
+Use `/gate status [N]` to run the automated pre-conditions check before requesting approval for gate N.
 
 **Gate 1 — Architecture:**
 ```
@@ -1359,7 +1369,7 @@ Use `/gate-readiness-check [N]` to run the automated pre-conditions check before
 [ ] Monitoring and observability designed
 [ ] Compliance requirements identified
 [ ] Architecture principles documented
-[ ] Run: /gate-readiness-check 1
+[ ] Run: /gate status 1
 ```
 
 **Gate 2 — Threat model:**
@@ -1369,7 +1379,7 @@ Use `/gate-readiness-check [N]` to run the automated pre-conditions check before
 [ ] No Critical threats without mitigation (these block approval)
 [ ] Data flow diagram showing trust boundaries produced
 [ ] Affected components named (not generic)
-[ ] Run: /gate-readiness-check 2
+[ ] Run: /gate status 2
 ```
 
 **Gate 3 — Requirements:**
@@ -1380,7 +1390,7 @@ Use `/gate-readiness-check [N]` to run the automated pre-conditions check before
 [ ] All acceptance criteria are testable (Given/When/Then)
 [ ] Security ACs present — not just functional ACs
 [ ] Must-priority compliance stories in scope for Sprint 1/2
-[ ] Run: /gate-readiness-check 3
+[ ] Run: /gate status 3
 ```
 
 **Gate 4 — Design:**
@@ -1391,7 +1401,7 @@ Use `/gate-readiness-check [N]` to run the automated pre-conditions check before
 [ ] Sequence diagrams produced for top 3 critical flows
 [ ] Security controls specified per component (not just at perimeter)
 [ ] Every user story from Gate 3 has an implementing component
-[ ] Run: /gate-readiness-check 4
+[ ] Run: /gate status 4
 ```
 
 **Gate 5 — Dev standards:**
@@ -1402,7 +1412,7 @@ Use `/gate-readiness-check [N]` to run the automated pre-conditions check before
 [ ] CI/CD pipeline stages defined with pass/fail thresholds
 [ ] Definition of Done checklist agreed by the team
 [ ] Security Architecture sections populated in all layer CLAUDE.md files
-[ ] Run: /populate-security-arch  then  /gate-readiness-check 5
+[ ] Run: populate Security Architecture by hand, then /gate status 5
 ```
 
 **Gate 6 — Test plan:**
@@ -1413,7 +1423,7 @@ Use `/gate-readiness-check [N]` to run the automated pre-conditions check before
 [ ] Pen test scope defined for externally facing components
 [ ] Remediation SLAs agreed: Critical 24h / High 7d / Medium 30d / Low 90d
 [ ] All STRIDE threat categories have at least one test type covering them
-[ ] Run: /gate-readiness-check 6
+[ ] Run: /gate status 6
 ```
 
 **Gate 7 — Release / Go-No-Go:**
@@ -1429,7 +1439,7 @@ Use `/gate-readiness-check [N]` to run the automated pre-conditions check before
 [ ] Monitoring and alerting configured and verified (/infra-check monitoring passing)
 [ ] Rollback plan documented and tested
 [ ] All Gate 1–6 approvals recorded in audit trail
-[ ] Run: /gate-readiness-check 7
+[ ] Run: /gate status 7
 ```
 
 ---
@@ -1489,54 +1499,65 @@ Code Reviewer runs CR1, CR2, CR3 — defined in code-reviewer.md and documented 
 - `docs/agent-skills/` is **documentation** — never loaded by Claude Code. Claude Code loads a skill only from `.claude/skills/<name>/SKILL.md`; these files match no loader. Reference them explicitly in a prompt or via `@` import when you need the detail.
 - Skills within an agent (CR1, OA5, etc.) are implemented inside the agent's `.claude/agents/` file — that implementation is authoritative because it is the one that executes. The `docs/agent-skills/` file documents the same skill at the level of detail a human needs when changing it.
 
-Implemented in `.claude/commands/`. Procedural, no dialogue, no persona. Gate-gated commands read the HITL audit trail first and refuse to run if the required gate is not approved.
+Gate-gated commands read the HITL audit trail first and refuse to run if the
+required gate is not approved.
+
+> **The eleven commands in `.claude/commands/` are the whole surface:**
+> `/dev-lead`, `/gate`, `/new-feature`, `/new-api`, `/new-component`,
+> `/code-review`, `/run-tests`, `/security-audit`, `/infra-check`, `/research`,
+> `/write-adr`.
+>
+> The tables in the rest of this section describe commands that were **designed
+> but never built** — they are a backlog, not a feature list. Every row marked
+> *not shipped* has no file in `.claude/commands/` and will not autocomplete.
+> Only `/gate status` among the procedural ideas below actually exists.
 
 ### Template setup and validation
 
 | Command | Purpose | Gate dependency |
 |---|---|---|
-| `/layer-setup` | Guide new project setup — which layers to keep, which to delete, what adjacent CLAUDE.md files to update | None |
-| `/boundary-check` | Verify Layer Boundaries sections across active CLAUDE.md files — flag stale and missing references | None |
-| `/template-health-check` | Scan all active CLAUDE.md files for placeholder content, empty sections, broken @import paths | None |
-| `/gate-readiness-check [N]` | Verify pre-conditions for gate N (1–7) before requesting approval | None |
+| `/layer-setup` *(not shipped)* | Guide new project setup — which layers to keep, which to delete, what adjacent CLAUDE.md files to update | None |
+| `/boundary-check` *(not shipped)* | Verify Layer Boundaries sections across active CLAUDE.md files — flag stale and missing references | None |
+| `/template-health-check` *(not shipped)* | Scan all active CLAUDE.md files for placeholder content, empty sections, broken @import paths | None |
+| `/gate status [N]` | Verify pre-conditions for gate N (1–7) before requesting approval | None |
 
 ### CLAUDE.md population
 
 | Command | Purpose | Gate dependency |
 |---|---|---|
-| `/populate-spec` | Populate Application Specification sections in active layers | Gate 3 approved |
-| `/populate-tech-stack` | Populate Tech Stack and Entry Points sections | Gate 4 approved |
-| `/populate-security-arch` | Translate Phase 2 STRIDE threats + Phase 4 stack into Security Architecture entries per layer | Gate 5 approved |
+| *(no command)* | Application Specification sections are populated by hand at Gate 3 | Gate 3 approved |
+| *(no command)* | Tech Stack and Entry Points sections are populated by hand at Gate 4 | Gate 4 approved |
+| *(no command)* | Security Architecture entries are written by hand per layer, translating Phase 2 STRIDE threats + the Phase 4 stack | Gate 5 approved |
 
 ### Security maintenance
 
 | Command | Purpose | Gate dependency |
 |---|---|---|
-| `/threat-model-trigger-check` | Check whether a proposed change requires a Phase 2 re-run | Gate 2 approved |
-| `/security-propagation-check` | Verify every mitigated STRIDE threat has a corresponding layer Security Architecture entry | Gate 5 approved |
-| `/policy-propagation` | Identify which layer Security Architecture sections need updating when a policy changes | Gate 5 approved |
-| `/suppression-audit` | Audit the SAST suppression register for entries past their 90-day review date | None |
-| `/pentest-intake` | Parse a pen test report and populate `security/pen-test/internal-findings-register.md` | None |
+| *(no command)* | Compare the change against the trigger list in `security/threat-model/stride-model.md` to decide if Phase 2 must re-run | Gate 2 approved |
+| `/security-propagation-check` *(not shipped)* | Verify every mitigated STRIDE threat has a corresponding layer Security Architecture entry | Gate 5 approved |
+| `/policy-propagation` *(not shipped)* | Identify which layer Security Architecture sections need updating when a policy changes | Gate 5 approved |
+| `/suppression-audit` *(not shipped)* | Audit the SAST suppression register for entries past their 90-day review date | None |
+| `/pentest-intake` *(not shipped)* | Parse a pen test report and populate `security/pen-test/internal-findings-register.md` | None |
 
 ### Document management
 
 | Command | Purpose | Gate dependency |
 |---|---|---|
-| `/doc-intake` | Guide connecting a new team document to Claude — right folder, format, @import statement | None |
-| `/doc-version-update [old] [new] [layer]` | Update the @import reference when a new document version arrives | None |
+| `/doc-intake` *(not shipped)* | Guide connecting a new team document to Claude — right folder, format, @import statement | None |
+| `/doc-version-update [old] [new] [layer]` *(not shipped)* | Update the @import reference when a new document version arrives | None |
 
 ### Compliance
 
 | Command | Purpose | Gate dependency |
 |---|---|---|
-| `/compliance-traceability-check` | Verify every compliance obligation in `security/CLAUDE.md` traces to a layer Security Architecture entry | Gate 5 approved |
+| `/compliance-traceability-check` *(not shipped)* | Verify every compliance obligation in `security/CLAUDE.md` traces to a layer Security Architecture entry | Gate 5 approved |
 
 ### Delivery
 
 | Command | Purpose | Gate dependency |
 |---|---|---|
-| `/create-pr` | Run git workflow: check status, stage, commit, create PR with project template | Gate 5 approved |
-| `/validate-infra` | Check Docker, Nginx, and Vault configuration syntax against infrastructure CLAUDE.md standards | None |
+| `gh pr create` | Run git workflow: check status, stage, commit, create PR with project template | Gate 5 approved |
+| `/infra-check review` | Check Docker, Nginx, and Vault configuration syntax against infrastructure CLAUDE.md standards | None |
 
 ### Working with Commands
 
@@ -1559,7 +1580,7 @@ Implemented in `.claude/commands/`. Procedural, no dialogue, no persona. Gate-ga
 /new-feature — add loan status tracking to the payment dashboard
 /new-api GET /api/v1/invoices/{invoiceNr} — retrieve a single invoice by composite key
 /run-tests InvoiceImportService — focus on duplicate detection and chunk boundary
-/security-audit — full project scan including Cognito auth config
+/security-audit — full project scan including Auth0 auth config
 /code-review — review my current changes and prepare a PR
 /research spring-boot upgrade — check for CVEs and latest stable version
 /write-adr — JWT vs session cookies for the auth approach
@@ -1652,7 +1673,7 @@ claude plugin eval evals/dev-lead/triage-routing.yaml
 
 **2. Dev Lead — pipeline-coordination.yaml** (`OA5/OA6/OA7` | 8 cases)
 
-*What it tests:* The Dev Lead's pipeline sequencing — does QA Engineer run before implementation? Does the Security Auditor trigger only when required? Does the pipeline end with `/create-pr`?
+*What it tests:* The Dev Lead's pipeline sequencing — does QA Engineer run before implementation? Does the Security Auditor trigger only when required? Does the pipeline end with `gh pr create`?
 
 | Case | Scenario tested | What would go wrong without it |
 |---|---|---|
@@ -1663,7 +1684,7 @@ claude plugin eval evals/dev-lead/triage-routing.yaml
 | `security-auditor-not-triggered-for-ui-label` | UI label change → Security Auditor not spawned | Unnecessary audit adds time to every small UI change |
 | `infra-agent-triggered-for-new-secret` | New external API with API key → Infrastructure Agent spawned | Secret stored in code or `.env` instead of Vault |
 | `infra-agent-not-triggered-for-pure-logic` | Business logic change → Infrastructure Agent not spawned | Unnecessary infra review adds time to every logic change |
-| `pipeline-ends-with-create-pr` | All steps done → Dev Lead says `/create-pr` | Developer doesn't know the pipeline is complete and waits for the next instruction |
+| `pipeline-ends-with-create-pr` | All steps done → Dev Lead says `gh pr create` | Developer doesn't know the pipeline is complete and waits for the next instruction |
 
 *Run when:* `OA5-new-feature-pipeline.md`, `OA6-new-api-pipeline.md`, or `OA7-new-component-pipeline.md` is edited.
 
@@ -1847,9 +1868,9 @@ Eval suite YAML files live in `evals/` at the project root (not inside `.claude/
 |---|---|---|
 | Agent prefix | Two-letter code: OA, CR, SA, QA, TR, IA | OA = Dev Lead, CR = Code Reviewer |
 | Skill ID | Agent prefix + sequential number | OA1, CR1, SA1 |
-| Slash command | Lowercase kebab-case with `/` prefix | `/gate-readiness-check` |
+| Slash command | Lowercase kebab-case with `/` prefix | `/gate status` |
 | Agent file | `.claude/agents/[agent-name].md` | `.claude/agents/dev-lead.md`, `.claude/agents/cr-agent.md` |
-| Command file | `.claude/commands/[command-name].md` | `.claude/commands/gate-readiness-check.md` |
+| Command file | `.claude/commands/[command-name].md` | `.claude/commands/gate.md` |
 
 ---
 
@@ -1860,7 +1881,7 @@ Follow these steps in order. Do not skip steps.
 **Step 1 — Justify the new agent**
 
 Answer these questions before writing anything:
-- What does this agent do that none of the existing six agents do?
+- What does this agent do that none of the existing five agents do?
 - Is this a specialist role that benefits from a distinct persona and guardrails, or is it a procedural task that should be a slash command instead?
 - What gate pre-conditions should the Dev Lead coordinator enforce before routing to this agent?
 - Does this agent need web search? Worktree isolation? Fresh start (no fork)?
@@ -2014,7 +2035,7 @@ At the bottom of this guide, add a changelog entry:
 | New tech stack element added (new language, framework, tool) | Review all skills for any tech-specific references that need updating |
 | Security incident or pen test finding reveals a gap | Review Security Auditor and Code Reviewer skills — add coverage |
 | A SSDLC phase is approved with conditions | Check if any skills need updating to address the conditions |
-| A new compliance obligation is added | Review Security Auditor guardrails and `/compliance-traceability-check` |
+| A new compliance obligation is added | Review Security Auditor guardrails and the compliance obligations table in `security/CLAUDE.md` |
 | Quarterly — no trigger needed | Full review of implementation priority; retire any skill no longer needed |
 
 ---
@@ -2051,39 +2072,42 @@ At the bottom of this guide, add a changelog entry:
 
 The Dev Lead coordinator is the only agent with the `Agent` tool. It spawns all sub-agents (QA Engineer, Code Reviewer, Security Auditor, Infrastructure, Tech Researcher) inline via the Agent tool using the prompt definitions in its skills. Sub-agents do not need separate `.claude/agents/` files to work — they are spawned with scoped prompts. Create individual agent files only when a sub-agent needs to be called directly (bypassing the Dev Lead).
 
-The Code Reviewer Agent (`code-reviewer.md`) has `Read` only tools — it cannot modify any file. When spawned by the Dev Lead, it runs in a worktree (isolated read-only copy). When invoked directly via `/code-review`, it reads the current working tree without isolation. Both paths produce the same structured CR4 review report.
+The Code Reviewer Agent (`code-reviewer.md`) has `Read` only tools — it cannot modify any file. It reads the current working tree — including uncommitted changes, which are usually what needs reviewing. Its independence comes from being a fresh agent with no memory of the implementation session, not from filesystem isolation. Both invocation paths produce the same structured CR4 review report.
 
-The QA Engineer Agent (`qa-engineer.md`) has `Read` and `Write` tools — it reads layer CLAUDE.md files and writes test files. It is always invoked before implementation (TDD). Skill files in `docs/agent-skills/qa-engineer/` are the canonical per-skill definitions; the agent file references them.
+The QA Engineer Agent (`qa-engineer.md`) has `Read` and `Write` tools — it reads layer CLAUDE.md files and writes test files. It is always invoked before implementation (TDD). The `### SKILL QA<N>` sections inside the agent file are what run; `docs/agent-skills/qa-engineer/` holds the fuller written specs, which are documentation only.
 
-**`docs/agent-skills/` folder:** This project-level skills folder holds standalone skill definition files, one per skill per agent. Subfolders match agent names. Skill files are the authoritative documentation for each numbered skill (QA1, CR1, OA5, etc.). Agent files contain the identity, guardrails, and skill references; skill files contain the full procedure. As each agent is implemented, its skill files are created in the corresponding subfolder.
+**`docs/agent-skills/` folder:** written specs, one per skill per agent, with subfolders matching agent names. Nothing here is loaded by Claude Code — it documents each numbered skill at the level of detail a human needs when changing one. The copy that executes is the `### SKILL <ID>` section in the agent file, so that copy is authoritative on any conflict.
 
-### Priority table
+### Priority table — backlog, not shipped
+
+None of the slash commands below exist yet. This is the order they were judged
+worth building in, kept as a backlog.
 
 | Priority | Item | Type | Reason |
 |---|---|---|---|
 | 1 | `/template-health-check` | Slash command | Immediately useful; no dependencies; catches most common template mistakes |
 | 2 | `/layer-setup` | Slash command | Used at every new project kickoff — high frequency |
 | 3 | Dev Lead coordinator (OA1, OA3) | Command | Entry point; gate-status check needed before anything else |
-| 4 | `/gate-readiness-check` | Slash command | Pre-gate ritual; builds on health-check |
-| 5 | `/populate-security-arch` | Slash command | Highest impact on Claude output quality |
+| 4 | `/gate status` | Slash command | Pre-gate ritual; builds on health-check |
+| 5 | `populate the Security Architecture sections by hand` | Slash command | Highest impact on Claude output quality |
 | 6 | QA Engineer Agent (QA1, QA4) | Agent | TDD — tests before implementation; QA4 surfaces coverage gaps fast |
 | 7 | Code Reviewer Agent (CR1, CR4) | Agent | Core development workflow; blocks PR creation |
 | 8 | Dev Lead coordinator (OA5, OA6, OA7) | Agent skills | Multi-agent pipelines; depends on CR and QA being ready |
-| 9 | `/threat-model-trigger-check` | Slash command | Prevents the most dangerous error — missing a Phase 2 re-run |
-| 10 | `/security-propagation-check` | Slash command | Detects drift between threat model and layer CLAUDE.md |
+| 9 | `a threat-model update request` | Slash command | Prevents the most dangerous error — missing a Phase 2 re-run |
+| 10 | `/security-propagation-check` *(not shipped)* | Slash command | Detects drift between threat model and layer CLAUDE.md |
 | 11 | Infrastructure Agent (IA1, IA2) | Agent | High value for infra-heavy changes; requires CLAUDE.md to be populated |
 | 12 | Security Auditor Agent (SA1, SA4) | Agent | Depends on threat model; high value once populated |
 | 13 | Tech Researcher Agent (TR1, TR3, TR4) | Agent | High value for long-running projects; lower urgency at start |
-| 14 | `/create-pr` | Slash command | Enforces PR template; useful once development is flowing |
+| 14 | `gh pr create` | Slash command | Enforces PR template; useful once development is flowing |
 | 15 | Infrastructure Agent (IA3, IA4) | Agent skills | Build after IA1 and IA2 are working |
-| 16 | `/pentest-intake` | Slash command | High value but lower frequency |
-| 17 | `/suppression-audit` | Slash command | Maintenance; lower urgency |
+| 16 | `/pentest-intake` *(not shipped)* | Slash command | High value but lower frequency |
+| 17 | `/suppression-audit` *(not shipped)* | Slash command | Maintenance; lower urgency |
 | 18 | `/doc-intake`, `/doc-version-update` | Slash commands | Useful; lower urgency |
-| 19 | `/populate-spec`, `/populate-tech-stack` | Slash commands | Useful at gates 3 and 4 |
+| 19 | Layer-section population | Manual | Useful at gates 3 and 4; no command ships for this |
 | 20 | Tech Researcher Agent (TR2, TR5) | Agent skills | Build after TR1, TR3, TR4 are working |
 | 21 | QA Engineer Agent (QA2, QA3, QA5) | Agent skills | Build after QA1 and QA4 are working |
 | 22 | `/policy-propagation`, `/compliance-traceability-check` | Slash commands | Advanced; requires policies and Security Architecture to be populated first |
-| 23 | `/boundary-check`, `/validate-infra` | Slash commands | Maintenance; lowest urgency |
+| 23 | `/boundary-check` | Slash command | Maintenance; lowest urgency |
 
 ---
 
@@ -2122,10 +2146,10 @@ This template is **production grade as an agent engineering framework**. The tab
 | All 6 layers have @imported design documents | `openapi-spec_v1.yaml` (backend+frontend), `data-dictionary_v1.md` (database), `infrastructure-design_v1.md` (infrastructure), `external-services-summary_v1.md` (integration), `asvs-mapping_v1.md` (security) |
 | 6 specialist agents | `.claude/agents/` — dev-lead, code-reviewer, qa-engineer, security-auditor, tech-researcher, infrastructure-agent |
 | 29 skill specs | `docs/agent-skills/` — OA1–OA7, CR1–CR4, QA1–QA5, SA1–SA4, TR1–TR5, IA1–IA4 |
-| 9 slash commands | `.claude/commands/` — `/new-feature`, `/new-api`, `/new-component`, `/code-review`, `/run-tests`, `/security-audit`, `/research`, `/write-adr`, `/infra-check` |
+| 11 slash commands | `.claude/commands/` — `/new-feature`, `/new-api`, `/new-component`, `/code-review`, `/run-tests`, `/security-audit`, `/research`, `/write-adr`, `/infra-check` |
 | SSDLC 7-gate structure | Enforced by gate-gated commands reading `ssdlc/[system]_hitl-audit-trail_vN.md` before allowing execution |
 | Security layer policy files | `secure-coding-standard.md`, `encryption-policy.md`, `suppression-rules.md`, `findings-register.md`, `stride-model.md` — all present |
-| Guide ecosystem | 4 guide files: `template-guide.md`, `quick-reference.md`, `agents-and-skills-guide.md`, `quick-reference-agent-and-skills.md` |
+| Guide ecosystem | 5 guide files: `template-guide.md`, `quick-reference.md`, `agents-and-skills-guide.md`, `quick-reference-agent-and-skills.md`, `development-workflow.md` |
 | RDE score | 8 of 10 — Layers 1–4, 6–9 fully present |
 
 ### What is complete — updated
@@ -2144,9 +2168,9 @@ This template is **production grade as an agent engineering framework**. The tab
 | Item | Why it is empty | What fills it |
 |---|---|---|
 | `frontend/src/`, `backend/src/`, etc. | Template scaffold — app code is project-specific | Filled during SSDLC Phases 3–7 for each project |
-| `Jenkinsfile` | Project-specific pipeline | Written at Gate 5 (Dev Standards) per project |
+| CI pipeline definition | Project-specific | Written at Gate 5 (Dev Standards) per project |
 | `ssdlc/*.md` | Phase outputs | Generated during SSDLC sessions for each project |
-| `docs/architecture/adr/` | ADRs written when real decisions are made | Created during greenfield/brownfield architecture sessions |
+| `docs/architecture/adr/` | ADRs written when real decisions are made | Created by `/write-adr` when a decision is taken |
 
 ### Production grade verdict
 
@@ -2191,4 +2215,4 @@ For someone new to this project or this template, read in this order:
 | 2026-09-20 | Added Section 12 (Production Readiness Assessment — complete vs gap vs expected-empty table, verdict). Added Section 13 (New team member — where to start — 5-step onboarding, security-first checklist). Added agent guides to `template-guide.md` Further Reading → Start here table. Added Agent and skills system section to `quick-reference.md`. Added New team member and production readiness sections to `quick-reference-agent-and-skills.md`. All 6 layers now have @imported design documents — template is production grade as an agent engineering framework. |
 | 2026-09-21 | Removed `.claude/evals/` folder — evals must live in `evals/` at project root and be run via `claude plugin eval`. Updated all path references in Section 8, project setup tree, RDE score (8/10), and Section 12. |
 | 2026-09-21 | Expanded Section 8 evals documentation into full team reference: plain-English definition ("what is an eval"), per-suite breakdown (5 suites × per-case table showing what each case tests and what goes wrong without it), team responsibility table (Tech Lead, Security Lead, all team members), step-by-step "how to fix a failing eval", regression eval pattern with example, updated current eval suites table. Replaced compact evals section in `quick-reference-agent-and-skills.md` with full team reference: "at a glance" suite table, run commands, output reading guide, fix rule, regression pattern, who does what. |
-| 2026-09-20 | Built all four priority eval suites (44 cases total): `dev-lead/triage-routing.yaml` (8 cases — OA1 routing, gate enforcement, output format), `dev-lead/pipeline-coordination.yaml` (8 cases — TDD sequence, Security Auditor conditional trigger, /create-pr completion), `qa-engineer/tdd-gate.yaml` (9 cases — CLAUDE.md read-first, coverage map, mocking rules, no implementation), `code-reviewer/layer-review.yaml` (9 cases — hardcoded secrets, security controls, layer boundaries, read-only), `security-auditor/confidentiality.yaml` (10 cases — no detail in chat, register append, sequential IDs, no exploit steps). Added "Reading and acting on eval results" subsection to Section 8 — output format, how to fix failures, regression eval pattern, current eval suite table. Updated RDE score from 8/10 to 9/10. Updated production readiness section. |
+| 2026-09-20 | Built all four priority eval suites (44 cases total): `dev-lead/triage-routing.yaml` (8 cases — OA1 routing, gate enforcement, output format), `dev-lead/pipeline-coordination.yaml` (8 cases — TDD sequence, Security Auditor conditional trigger, gh pr create completion), `qa-engineer/tdd-gate.yaml` (9 cases — CLAUDE.md read-first, coverage map, mocking rules, no implementation), `code-reviewer/layer-review.yaml` (9 cases — hardcoded secrets, security controls, layer boundaries, read-only), `security-auditor/confidentiality.yaml` (10 cases — no detail in chat, register append, sequential IDs, no exploit steps). Added "Reading and acting on eval results" subsection to Section 8 — output format, how to fix failures, regression eval pattern, current eval suite table. Updated RDE score from 8/10 to 9/10. Updated production readiness section. |

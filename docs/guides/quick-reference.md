@@ -239,7 +239,7 @@ Trigger a new Phase 2 snapshot when: new external integration, auth model change
 ## The SSDLC phase sequence
 
 ```
-  Architecture document (from Greenfield / Brownfield agent)
+  Architecture document (your approved target architecture)
          |
          v
 +-------------------+

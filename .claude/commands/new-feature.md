@@ -20,6 +20,9 @@ Steps to follow:
      "<name the gates that are missing or rejected> not approved. Run `/gate status`
      to see current gate state, then `/gate 3 approve` and `/gate 5 approve` once
      the human has signed off on each."
+   - This pipeline always spawns QA Engineer (Gate 3) and Code Reviewer (Gate 5).
+     Security Auditor (Gate 2) and Infrastructure (Gate 1) are conditional and are
+     gate-checked at spawn time — see the Gate pre-conditions table in `/dev-lead`.
    - Row says `rejected` → stop, and quote the reason from the row.
    - Row says `approved-with-conditions` → proceed, but echo the conditions to
      the developer first.

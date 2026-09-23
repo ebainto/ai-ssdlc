@@ -191,7 +191,7 @@ Developer: Implement user story for invoice import with duplicate detection
                         ↓
          Dev Lead: "Ready to create PR"
                         ↓
-         You: /create-pr
+         You: gh pr create
                         ↓
     PR merged, feature deployed to staging
 ```
@@ -339,7 +339,7 @@ Code review requires:
 Current status: Gate 5 PENDING
 
 Cannot spawn Code Reviewer until Gate 5 is approved.
-Request: Run '/gate-readiness-check 5' to see what's missing."
+Request: Run '/gate status 5' to see what's missing."
 ```
 
 ### Scenario 2: Test Skipped (TDD Violation)
@@ -357,7 +357,7 @@ Correct sequence:
   2. Developer implements code
   3. /code-review → Code Reviewer reviews
   4. /security-audit → Security Auditor audits
-  5. /create-pr → Create PR
+  5. gh pr create → Create PR
 
 I cannot spawn implementation before tests."
 ```
@@ -401,7 +401,7 @@ Recommendation: Continue implementation, then /code-review"
 | `/write-adr JWT vs session` | Document decision | Tech Researcher checks existing ADRs, writes new |
 | `/infra-check plan BE-042` | Infrastructure needed | Infrastructure Agent maps config changes |
 | `/infra-check monitoring` | Check observability | IA3 validates all services are monitored |
-| `/gate-readiness-check 1` | Pre-gate validation | Checklist of what's needed for Gate 1 |
+| `/gate status 1` | Pre-gate validation | Checklist of what's needed for Gate 1 |
 | `check gate status` | Where are we? | Read audit trail, show current gate |
 | `dev mode` | Resume session | Dev Lead restarts orchestration |
 
@@ -413,7 +413,7 @@ Recommendation: Continue implementation, then /code-review"
 
 - ✅ **Start every session** with `/new-feature`, `/new-api`, or `dev mode`
 - ✅ **Wait for tests first** — QA writes before you implement
-- ✅ **Read gate checklists** — `/gate-readiness-check N` before requesting approval
+- ✅ **Read gate checklists** — `/gate status N` before requesting approval
 - ✅ **Save immediately** after phase outputs — don't proceed without saving
 - ✅ **Use fresh reviews** — Code Reviewer and Security Auditor are intentionally fresh agents
 - ✅ **Log gate decisions** — Always approve/reject/conditional, never "OK" or "continue"
@@ -455,7 +455,7 @@ Recommendation: Continue implementation, then /code-review"
         Security Auditor: "1 finding recorded. No blockers. Ready for PR."
 
 14:52 — Create PR
-        "/create-pr"
+        "gh pr create"
         PR created and linked
 
 15:00 — Session end
@@ -469,8 +469,8 @@ Recommendation: Continue implementation, then /code-review"
 
 | Problem | Solution |
 |---------|----------|
-| "Which command should I use?" | `/help` or "I'm not sure, help me" → WTF Agent |
-| "What's required for this gate?" | `/gate-readiness-check N` → Full checklist |
+| "Which command should I use?" | `/dev-lead` with a plain description — it triages and routes (SKILL OA1) |
+| "What's required for this gate?" | `/gate status N` → current decision for that gate |
 | "Did I follow TDD?" | `/run-tests` always before code. If skipped, start over. |
 | "Where's my work?" | `git log` shows all commits + versions in `ssdlc/` folder |
 | "Can I bypass Gate 3?" | No. All gates mandatory. Read gate checklist first. |
