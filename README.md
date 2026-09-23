@@ -31,9 +31,12 @@ project-root/
 ├── .gitignore
 ├── .claudeignore
 │
-├── .claude/                         ← Claude Code configuration
-│   ├── settings.json                ← Permissions and allowed commands
-│   └── commands/                    ← Custom slash commands
+├── .claude/                         ← Claude Code configuration — the whole surface
+│   ├── CLAUDE.md                    ← Project-level rules, loaded everywhere
+│   ├── settings.json                ← Permission allow/deny list
+│   ├── commands/                    ← 11 slash commands (see the command table below)
+│   ├── skills/critique/             ← /critique — adversarial review of any artifact here
+│   └── agents/                      ← 5 specialist agents, spawned by the pipelines
 │
 ├── frontend/                        ← Layer 1: UI — Angular (browser/mobile client)
 │   ├── CLAUDE.md                    ← Layer guide — auto-loaded by Claude when working here

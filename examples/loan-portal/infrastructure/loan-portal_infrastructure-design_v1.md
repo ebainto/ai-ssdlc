@@ -41,8 +41,9 @@ Internet
 [db-prod-01 — SQL Server 2022]
 
 [vault-prod-01]      ← :8200 (VLAN 10.0.1.0/24 only)
-  Vault Agent sidecar co-deployed on each app server
-  Injects secrets at container startup
+  Vault Agent co-deployed on each app server
+  Renders secrets to a tmpfs volume the app container reads at startup
+  (a sidecar cannot set a sibling container's environment)
 
 [monitor-prod-01]    ← Prometheus scrapes :8080/actuator/prometheus
   ← Loki receives logs from Loki Docker driver on all app servers

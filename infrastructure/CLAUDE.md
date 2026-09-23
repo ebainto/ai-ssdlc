@@ -29,7 +29,8 @@ This file is automatically loaded by Claude Code whenever you work on any file i
 Hosting:          On-premises physical servers (Linux — Ubuntu 22.04 LTS)
 Containerisation: Docker 25 + Docker Compose v2
 Reverse proxy:    Nginx 1.24 (TLS termination, load balancing, static asset serving)
-Secrets:          HashiCorp Vault 1.15 (AppRole auth; secrets injected into containers at startup)
+Secrets:          HashiCorp Vault 1.15 (AppRole auth; Vault Agent renders secrets
+                  to a tmpfs volume the app reads — never into env vars)
 Monitoring:       Prometheus 2.49 + Grafana 10 (metrics); Loki (logs); Alertmanager (alerts)
 CI/CD:            Jenkins 2.440 (pipelines defined in Jenkinsfile at project root)
 TLS certificates: Internal CA (on-prem) — certificates issued and renewed via cert-manager scripts
@@ -175,7 +176,7 @@ Internet
 |---|---|---|
 | Man-in-the-middle — external (STRIDE-I) | TLS 1.2+ enforced on all external connections | Nginx: `ssl_protocols TLSv1.2 TLSv1.3;` + `ssl_prefer_server_ciphers on;`. HTTP → HTTPS redirect for all requests |
 | Man-in-the-middle — internal (STRIDE-I) | Internal service traffic on isolated VLAN | Backend → SQL Server traffic on dedicated VLAN (`10.0.2.0/24`); no cross-VLAN access without firewall rule |
-| Secrets in config files (STRIDE-I) | HashiCorp Vault — no secrets in Docker Compose or env files | Vault Agent sidecar runs alongside each container; injects secrets as environment variables at startup. `.env` files contain only Vault address and AppRole credentials |
+| Secrets in config files (STRIDE-I) | HashiCorp Vault — no secrets in Docker Compose, `.env` or environment variables | Vault Agent renders secrets from a template to a `tmpfs` volume mounted into the app container (`0400`, owned by the app UID); the app reads the file at startup. A sidecar **cannot** set a sibling container's environment — env is fixed at creation — so env injection is not an option. `.env` holds only the Vault address and AppRole role/secret id |
 | Unauthorised container access (STRIDE-E) | Docker socket never mounted into a container; non-root containers | **Socket access is root-equivalent on the host** — anyone who can reach `/var/run/docker.sock` can start a privileged container and mount the host filesystem, so "restricted to the `jenkins` user" means the CI user is effectively root there. Never bind-mount the socket into an application container, and keep the CI runner off production app hosts. All containers run non-root (UID 1000) with `--no-new-privileges` |
 | Unpatched base images (STRIDE-T) | Pinned digest images + weekly Trivy scan | All Dockerfiles use `FROM image@sha256:...` (never `latest`). Jenkins pipeline runs `trivy image` scan; critical CVEs block deployment |
 | Unrestricted network access (STRIDE-I) | `ufw` firewall on all servers | Default deny-all inbound. Only open: `:443` (Nginx, internet-facing), `:1433` (SQL Server, VLAN only), `:8200` (Vault, internal only), `:9090` (Prometheus, monitor VLAN only) |

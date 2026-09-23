@@ -160,10 +160,10 @@ command in this project generates them, and none ship with the template.
 Audit trail format contract: `ssdlc/GATE-FORMAT.md`. Template to copy:
 `ssdlc/_TEMPLATE_hitl-audit-trail_v1.md`.
 
-Earlier versions of this table credited skills `S3`–`S9` of an "SSDLC Agent".
-That agent belongs to a separate global workbench and is **not** part of this
-project — there is no `S`-prefixed skill here. The commands in
-`.claude/commands/` are the whole surface.
+There is no `S`-prefixed skill in this project, and no agent that generates
+these artifacts for you — earlier versions of this table implied otherwise. The
+surface is exactly: the eleven commands in `.claude/commands/`, the `/critique`
+skill in `.claude/skills/`, and the five agents in `.claude/agents/`.
 
 ## Security context — how it reaches every layer
 

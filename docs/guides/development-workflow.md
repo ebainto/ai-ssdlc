@@ -401,7 +401,11 @@ Recommendation: Continue implementation, then /code-review"
 | `/write-adr JWT vs session` | Document decision | Tech Researcher checks existing ADRs, writes new |
 | `/infra-check plan BE-042` | Infrastructure needed | Infrastructure Agent maps config changes |
 | `/infra-check monitoring` | Check observability | IA3 validates all services are monitored |
-| `/gate status 1` | Pre-gate validation | Checklist of what's needed for Gate 1 |
+| `/gate status 1` | Pre-gate validation | Current decision for Gate 1 |
+| `/gate 1 approve` | Record a gate decision | Appends to the HITL audit trail — the only writer |
+| `/critique layer backend` | Adversarial review | Named perspectives raise severity-rated findings |
+| `/critique changes` | Review uncommitted work | Independent reviewer, security analyst, regression hunter |
+| `/dev-lead BE-042` | Plan and coordinate | Checks gates, enforces TDD order, spawns specialists |
 | `check gate status` | Where are we? | Read audit trail, show current gate |
 | `dev mode` | Resume session | Dev Lead restarts orchestration |
 

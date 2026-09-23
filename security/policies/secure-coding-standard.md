@@ -57,7 +57,20 @@ These rules derive from:
 | Rule | Applies to | Control ref | Enforcement |
 |---|---|---|---|
 | Never hardcode credentials, API keys, or tokens in source code or config files | All layers | ASVS V2.10.1 / ISO A.9.4 | SAST (secrets scan, pre-commit hook) |
-| All secrets are retrieved from HashiCorp Vault — environment variables are not used for secrets in production | All layers | ASVS V2.10.4 | Code review |
+| All secrets are retrieved from HashiCorp Vault. Vault Agent renders them to a file on a `tmpfs` volume the application reads at startup — **not** into environment variables | All layers | ASVS V2.10.4 | Code review |
+
+> **Why not environment variables.** An environment variable is readable via
+> `/proc/<pid>/environ`, appears in `docker inspect`, is inherited by every child
+> process, and is commonly captured in crash dumps and error telemetry. A file on
+> a `tmpfs` volume with `0400` ownership is readable only by the process that
+> needs it and never touches disk.
+>
+> **A sidecar cannot set a sibling container's environment.** Environment is
+> fixed at container creation, so "Vault Agent injects secrets as env vars into
+> the app container" is not implementable. The two mechanisms that do work are:
+> Vault Agent templates the secret to a shared volume and the app reads the file,
+> or Vault Agent runs in the same container as an exec wrapper. If your design
+> claims env injection from a sidecar, it has not been built yet.
 | Rotate secrets immediately if accidentally committed — do not just delete the commit | All layers | ISO A.9.4 | Incident process |
 
 ---
