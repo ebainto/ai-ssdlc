@@ -11,7 +11,7 @@ Scope: $ARGUMENTS
 
 Steps to follow:
 1. Confirm Gate 5 is approved before doing anything else.
-   Run: `grep -hE "^Gate 5:" ssdlc/*_hitl-audit-trail_v1.md 2>/dev/null | tail -5`
+   Run: `grep -hE "^Gate 5:" ssdlc/*_hitl-audit-trail_v*.md 2>/dev/null | tail -5`
    The **last** matching row wins. Format contract:
    `ssdlc/GATE-FORMAT.md` (Gate 5 = dev standards sign-off).
    - No trail file, or no row for this gate → stop:

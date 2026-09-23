@@ -7,12 +7,12 @@ without updating `.claude/commands/gate.md` and the seven gated commands.
 ## File location and naming
 
 ```
-ssdlc/[system-name]_hitl-audit-trail_v1.md
+ssdlc/[system-name]_hitl-audit-trail_v[N].md
 ```
 
-One file per system. It is **append-only**: a new decision is a new row, never
-an edit to an existing one. Superseding an earlier decision means appending a
-later row for the same gate — the latest row for a gate wins.
+One file per system. Versions increment (`v1`, `v2`, etc.) when the trail needs to be archived; never overwrite.
+It is **append-only**: a new decision is a new row, never an edit to an existing one. Superseding an earlier 
+decision means appending a later row for the same gate — the latest row for a gate wins.
 
 ## The parsable line
 

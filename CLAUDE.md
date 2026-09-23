@@ -140,7 +140,7 @@ Phase 6: Security Testing Plan               → Gate 6
 Phase 7: Release Readiness Review            → Gate 7
 ```
 
-Each gate requires an explicit `approve`, `reject`, or `approve with conditions: [notes]` response before the next phase begins. "OK" or "continue" are not valid gate responses.
+Each gate requires an explicit `approve`, `reject`, or `conditions [notes]` response (via `/gate N <response>`) before the next phase begins. "OK" or "continue" are not valid gate responses.
 
 ## Key Artifacts
 

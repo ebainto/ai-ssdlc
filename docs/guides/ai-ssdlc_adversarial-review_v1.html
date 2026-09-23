@@ -1,0 +1,1541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Adversarial Review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EEF0EC; --sheet:#F8F9F6; --ink:#17212B; --muted:#5E6873; --rule:#CDD2CC;
+  --red:#B8321F; --red-soft:#F3DCD6; --amber:#9A6412; --amber-soft:#F2E6CF;
+  --green:#2C6A4C; --green-soft:#D9E9DF; --blue:#2B4E73; --blue-soft:#DCE5EE;
+  --grey-soft:#E2E5E0;
+  --sans:"Schibsted Grotesk","Helvetica Neue",Arial,system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  box-sizing:border-box;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#141A20; --sheet:#1B232B; --ink:#E6EAE4; --muted:#9AA4AD; --rule:#2F3A44;
+    --red:#EE7A63; --red-soft:#3A221E; --amber:#E0AE5C; --amber-soft:#342A18;
+    --green:#7CC3A0; --green-soft:#1D3229; --blue:#8FB4DA; --blue-soft:#1E2B3A; --grey-soft:#242D35;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#141A20; --sheet:#1B232B; --ink:#E6EAE4; --muted:#9AA4AD; --rule:#2F3A44;
+  --red:#EE7A63; --red-soft:#3A221E; --amber:#E0AE5C; --amber-soft:#342A18;
+  --green:#7CC3A0; --green-soft:#1D3229; --blue:#8FB4DA; --blue-soft:#1E2B3A; --grey-soft:#242D35;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:16px;scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+code,.mono{font-family:var(--mono);font-size:.82em}
+code{background:var(--grey-soft);padding:.08em .35em;border-radius:3px;word-break:break-word}
+a{color:inherit}
+button,select,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+@media (min-width:700px){.wrap{padding:0 24px}}
+.layout{display:grid;grid-template-columns:230px minmax(0,1fr);gap:48px;align-items:start}
+@media (max-width:900px){.layout{grid-template-columns:1fr;gap:0}.side{display:none}}
+.top{display:flex;justify-content:space-between;align-items:center;padding:20px 0;border-bottom:1px solid var(--rule);gap:12px;flex-wrap:wrap}
+.top .repo{font-family:var(--mono);font-size:13px;color:var(--muted)}
+.theme-btn{background:none;border:1px solid var(--rule);border-radius:6px;padding:5px 10px;cursor:pointer;font-size:13px;color:var(--muted)}
+.hero{padding:48px 0 36px}
+.hero h1{font-size:clamp(30px,5vw,56px);line-height:1.04;letter-spacing:-.025em;font-weight:800;margin:0 0 20px;max-width:20ch}
+.hero p.lede{font-size:19px;color:var(--muted);max-width:64ch;margin:0 0 28px}
+.tally{display:flex;flex-wrap:wrap;gap:10px}
+.pill{border-radius:999px;padding:6px 14px;font-size:14px;font-weight:600}
+.pill.high{background:var(--red-soft);color:var(--red)}
+.pill.medium{background:var(--amber-soft);color:var(--amber)}
+.pill.low{background:var(--grey-soft);color:var(--muted)}
+.pill.tot{background:var(--ink);color:var(--paper)}
+.side{position:sticky;top:24px;padding-top:28px;font-size:14px}
+.side h4{font-size:13px;color:var(--muted);font-weight:500;margin:0 0 8px}
+.side nav a{display:flex;justify-content:space-between;text-decoration:none;padding:5px 0;border-bottom:1px solid var(--rule);color:var(--ink)}
+.side nav a span{color:var(--muted);font-variant-numeric:tabular-nums}
+.side nav a:hover{color:var(--blue)}
+.progress{margin-top:28px}
+.progress .track{height:6px;background:var(--grey-soft);border-radius:3px;overflow:hidden;margin:6px 0}
+.progress .track div{height:100%;background:var(--green);width:0;transition:width .3s}
+.progress small{color:var(--muted)}
+section.block{padding:40px 0;border-top:1px solid var(--rule)}
+section.block:first-of-type{border-top:0}
+.block h2{font-size:26px;letter-spacing:-.015em;margin:0 0 6px;line-height:1.18}
+.block .sub{color:var(--muted);margin:0 0 22px;max-width:70ch}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--rule);border-radius:6px;background:var(--sheet)}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:15px}
+th,td{text-align:left;padding:11px 16px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-size:13px;font-weight:600;color:var(--muted);background:var(--paper)}
+tr:last-child td{border-bottom:0}
+td.claim{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--red);text-decoration-thickness:1.5px}
+td.actual{font-weight:500}
+td.actual strong{color:var(--red)}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:18px;position:sticky;top:0;background:var(--paper);padding:12px 0;z-index:5;border-bottom:1px solid var(--rule)}
+.search{flex:1 1 200px;min-width:160px;padding:9px 12px;border:1px solid var(--rule);border-radius:6px;background:var(--sheet)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--rule);background:var(--sheet);border-radius:999px;padding:5px 12px;font-size:13px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.ctrl-select{padding:7px 10px;border:1px solid var(--rule);border-radius:6px;background:var(--sheet);font-size:14px}
+.count{font-size:13px;color:var(--muted);margin-left:auto}
+.linkbtn{background:none;border:0;padding:0;color:var(--blue);cursor:pointer;font-size:13px;text-decoration:underline}
+.group{margin-bottom:32px}
+.group-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.group-head h3{font-size:20px;margin:0;letter-spacing:-.01em}
+.group-head .gmeta{font-size:13px;color:var(--muted)}
+.group-note{font-size:15px;color:var(--muted);margin:-2px 0 12px;max-width:72ch}
+.finding{background:var(--sheet);border:1px solid var(--rule);border-left:3px solid var(--rule);border-radius:4px;margin-bottom:8px}
+.finding.st-accepted{border-left-color:var(--amber)}
+.finding.st-fixed{border-left-color:var(--green)}
+.finding.st-disputed{border-left-color:var(--blue)}
+.f-head{display:grid;grid-template-columns:52px 1fr auto;gap:12px;align-items:center;padding:12px 14px;cursor:pointer;width:100%;text-align:left;background:none;border:0}
+.f-id{font-family:var(--mono);font-size:13px;color:var(--muted)}
+.f-title{font-weight:600;font-size:16px;line-height:1.35}
+.f-tags{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.sev{font-size:12px;font-weight:600;padding:2px 9px;border-radius:3px;white-space:nowrap}
+.sev.high{background:var(--red-soft);color:var(--red)}
+.sev.medium{background:var(--amber-soft);color:var(--amber)}
+.sev.low{background:var(--grey-soft);color:var(--muted)}
+.cat{font-size:12px;padding:2px 8px;border-radius:3px;white-space:nowrap;background:var(--blue-soft);color:var(--blue)}
+.chev{width:10px;height:10px;border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);transform:rotate(45deg);transition:transform .2s;margin-left:6px}
+.finding.open .chev{transform:rotate(-135deg)}
+.f-body{display:none;padding:0 14px 14px 78px}
+.finding.open .f-body{display:block}
+.f-body p{margin:0 0 10px;max-width:74ch}
+.refs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.refs code{font-size:12px}
+.triage{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+.triage select{padding:4px 8px;border:1px solid var(--rule);border-radius:4px;background:var(--paper);font-size:13px}
+.triage textarea{flex:1 1 100%;min-height:54px;padding:8px;border:1px solid var(--rule);border-radius:4px;background:var(--paper);font-size:14px;color:var(--ink);resize:vertical}
+@media (max-width:600px){.f-head{grid-template-columns:40px 1fr}.f-tags{grid-column:2}.f-body{padding-left:14px}}
+.empty{padding:28px;text-align:center;color:var(--muted);border:1px dashed var(--rule);border-radius:6px}
+.keep{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.keep li{padding:12px 16px 12px 44px;position:relative;background:var(--green-soft);border-radius:4px;max-width:80ch}
+.keep li::before{content:"";position:absolute;left:18px;top:19px;width:12px;height:7px;border-left:2px solid var(--green);border-bottom:2px solid var(--green);transform:rotate(-45deg)}
+.plan{list-style:none;counter-reset:s;margin:0;padding:0}
+.plan li{counter-increment:s;display:grid;grid-template-columns:36px 1fr;gap:14px;padding:16px 0;border-bottom:1px solid var(--rule)}
+.plan li:last-child{border-bottom:0}
+.plan input{appearance:none;width:26px;height:26px;border:1.5px solid var(--ink);border-radius:50%;margin:0;cursor:pointer;display:grid;place-items:center;position:relative}
+.plan input::after{content:counter(s);font-size:13px;font-weight:600}
+.plan input:checked{background:var(--green);border-color:var(--green)}
+.plan input:checked::after{content:"";width:10px;height:5px;border-left:2px solid var(--sheet);border-bottom:2px solid var(--sheet);transform:rotate(-45deg) translate(1px,-1px)}
+.plan li.done .ptext{color:var(--muted);text-decoration:line-through}
+.plan .ptext{max-width:76ch}
+.plan .ptext b{display:block;font-size:16px;margin-bottom:2px}
+footer{padding:36px 0 56px;color:var(--muted);font-size:13px;border-top:1px solid var(--rule)}
+</style>
+</head>
+<body>
+<script type="application/json" id="review-data">
+{
+ "title": "Adversarial Review",
+ "date": "2026-09-23",
+ "scope": "ai-ssdlc template, full repository sweep",
+ "lede": "Six independent reviewers found 79 defects in a template whose gate mechanism \u2014 its headline feature \u2014 cannot be trusted in either direction: it blocks approved gates and approves rejected ones. Nine of the findings were introduced earlier the same day by the author of the fixes.",
+ "method": "Method: six independent subagent reviewers, one per area, each given a self-contained brief with no session context and instructed to cite a file and line or drop the finding. 85 candidate findings were returned; 6 were merged as duplicates across reviewers, leaving 79. Every `high` finding was re-verified against the file by the aggregator, and the gate findings were reproduced in a scratch fixture rather than inferred. Standards IDs were checked against published ASVS 4.0.3, ISO 27001:2022 and PCI-DSS v4.0 text. Counts in the inventory table were measured, not quoted. **Conflict of interest:** every area reviewed was written or edited by the aggregator in the same session, which is why the reviewing was delegated; nine findings are defects that session introduced. No files were modified by this review. Line references are repo-relative.",
+ "inventory": [
+  [
+   "Agents",
+   "6, with `.claude/agents/dev-lead.md`",
+   "\u003cstrong\u003e5\u003c/strong\u003e \u2014 Dev Lead is a command"
+  ],
+  [
+   "Slash commands",
+   "9 / 11 / 18 across the guides",
+   "\u003cstrong\u003e11\u003c/strong\u003e, plus 1 skill"
+  ],
+  [
+   "Skill specs",
+   "`all 27` over a 29-row table",
+   "\u003cstrong\u003e29\u003c/strong\u003e, reference-only, never loaded"
+  ],
+  [
+   "Layer `CLAUDE.md`",
+   "`Fully populated` \u2014 Complete",
+   "6 files, \u003cstrong\u003e70\u003c/strong\u003e unresolved placeholders"
+  ],
+  [
+   "Layer `@import`s",
+   "`All 6 layers have @imported design documents` \u2014 Complete",
+   "\u003cstrong\u003e0\u003c/strong\u003e live; all commented, all targets absent"
+  ],
+  [
+   "Jest suite / coverage / CI",
+   "`9 passing tests`, `npm test -- --coverage`, GitHub Actions",
+   "\u003cstrong\u003eno package.json, no .github/, 0 test files\u003c/strong\u003e"
+  ],
+  [
+   "Eval suites",
+   "`five eval suites` with 8/8/9/9/10 cases",
+   "\u003cstrong\u003e0\u003c/strong\u003e \u2014 no `evals/` folder"
+  ],
+  [
+   "Gate decisions readable by commands",
+   "the gate mechanism enforces 7 gates",
+   "\u003cstrong\u003ebreaks\u003c/strong\u003e at \u003e5 rows, on `_v2`, and across systems"
+  ],
+  [
+   "SAST / lint config",
+   "`security/sast/semgrep.yml`, CI runs it",
+   "\u003cstrong\u003e0\u003c/strong\u003e config files"
+  ],
+  [
+   "Application source files",
+   "six populated capability layers",
+   "\u003cstrong\u003e0\u003c/strong\u003e (by design, but claimed Complete)"
+  ]
+ ],
+ "groups": {
+  "A": {
+   "name": "Harness and commands",
+   "note": "`.claude/` \u2014 do the commands and agents actually run? Reviewed by an independent agent with no session context."
+  },
+  "B": {
+   "name": "Gate mechanism",
+   "note": "The seven-gate HITL mechanism and its eight consumers. Every finding here was reproduced in a scratch fixture, not inferred."
+  },
+  "C": {
+   "name": "Layer context files",
+   "note": "The six auto-loaded `CLAUDE.md` files. These act as instructions on every prompt, so a contradiction between them is executed, not merely read."
+  },
+  "D": {
+   "name": "Security artifacts",
+   "note": "`security/` \u2014 the policies other layers must align to. Standards IDs were verified against published ASVS 4.0.3, ISO 27001:2022 and PCI-DSS v4.0 text, not recalled."
+  },
+  "E": {
+   "name": "Guides",
+   "note": "`docs/guides/` \u2014 every claim checked mechanically against disk."
+  },
+  "F": {
+   "name": "Worked example",
+   "note": "`examples/loan-portal/` \u2014 a design set teams are invited to copy. Several defects its own README claims were fixed are still present."
+  }
+ },
+ "categories": {
+  "broken": "Broken wiring",
+  "false": "False claim",
+  "security": "Security flaw",
+  "inconsistency": "Inconsistency",
+  "gap": "Gap",
+  "dup": "Duplication",
+  "hygiene": "Hygiene"
+ },
+ "findings": [
+  {
+   "id": "A1",
+   "sec": "A",
+   "severity": "medium",
+   "cat": "gap",
+   "title": "security-auditor must read a diff but has no git tool",
+   "detail": "The agent body says it reads \u201cthe threat model and the diff cold\u201d and SKILL SA3 says \u201ccheck the diff against each open finding\u201d; `/security-audit` advertises a `pr \u003cbranch\u003e` scope. Its `tools:` are Read, Write, Grep, Glob \u2014 no `Bash(git diff:*)`. code-reviewer, doing the same shape of job, was granted it, so this looks accidental. The auditor silently degrades to reading whole files.",
+   "refs": [
+    ".claude/agents/security-auditor.md:4",
+    ".claude/agents/security-auditor.md:125",
+    ".claude/commands/security-audit.md:3",
+    ".claude/agents/code-reviewer.md:8"
+   ]
+  },
+  {
+   "id": "A2",
+   "sec": "A",
+   "severity": "medium",
+   "cat": "gap",
+   "title": "security-auditor must append to the confidential register but has Write, not Edit",
+   "detail": "It is instructed four times to append to `security/pen-test/internal-findings-register.md` and \u201cnever overwrite existing entries\u201d, but holds `Write` (whole-file replace) and not `Edit`. The only path is read-then-rewrite, risking the register's 59 existing lines on every audit. This is audit evidence with a stated confidentiality guarantee, so silent truncation is the worst possible failure.",
+   "refs": [
+    ".claude/agents/security-auditor.md:4",
+    ".claude/agents/security-auditor.md:163"
+   ]
+  },
+  {
+   "id": "A3",
+   "sec": "A",
+   "severity": "medium",
+   "cat": "gap",
+   "title": "infrastructure-agent is told to run `mkdir` with no Bash tool granted",
+   "detail": "SKILL IA4's save instruction is `mkdir -p ./infrastructure/change-requests` and that folder does not exist. The agent holds Read, Write, Grep, Glob \u2014 no Bash. tech-researcher carries `Bash(mkdir:*)` for the identical instruction, so the grant was understood and missed here. IA4 fires automatically at the end of IA1, which `/infra-check plan` always invokes.",
+   "refs": [
+    ".claude/agents/infrastructure-agent.md:4",
+    ".claude/agents/infrastructure-agent.md:217",
+    ".claude/agents/tech-researcher.md:10"
+   ]
+  },
+  {
+   "id": "A4",
+   "sec": "A",
+   "severity": "medium",
+   "cat": "gap",
+   "title": "`/research` and `/write-adr` instruct WebSearch and a file save their allowed-tools omit",
+   "detail": "Both declare `allowed-tools: Read, Bash(grep/ls/cat), Agent` \u2014 no WebSearch, no Write. Yet the bodies say \u201cExecute the identified skill using WebSearch\u201d and \u201cSave to: docs/architecture/adr/\u2026\u201d in the imperative to the main session. The tech-researcher agent holds both tools, so the intent was delegation, but a model following the body literally has no tool for either step.",
+   "refs": [
+    ".claude/commands/research.md:4",
+    ".claude/commands/research.md:27",
+    ".claude/commands/write-adr.md:4",
+    ".claude/commands/write-adr.md:26"
+   ]
+  },
+  {
+   "id": "A5",
+   "sec": "A",
+   "severity": "medium",
+   "cat": "gap",
+   "title": "Three pipeline commands order \u201cExecute SKILL OA5/OA6/OA7\u201d without loading where those skills are defined",
+   "detail": "OA5\u2013OA7 \u2014 the step sequences, spawn prompts and the Gate pre-conditions table \u2014 exist only in `.claude/commands/dev-lead.md`. The three pipeline commands say \u201cSee `/dev-lead`\u201d then \u201cExecute SKILL OA6\u201d, but no step instructs reading that file and one command body does not pull in another's. The model is told to execute a named procedure whose definition is absent, so it improvises \u2014 defeating the TDD ordering these commands exist to enforce.",
+   "refs": [
+    ".claude/commands/new-api.md:28",
+    ".claude/commands/new-component.md:34",
+    ".claude/commands/new-feature.md:33",
+    ".claude/commands/dev-lead.md:270"
+   ]
+  },
+  {
+   "id": "A6",
+   "sec": "A",
+   "severity": "medium",
+   "cat": "inconsistency",
+   "title": "dev-lead's OA6/OA7 pre-checks are weaker than the commands that invoke them",
+   "detail": "SKILL OA6 and OA7 each state \u201cPre-check: Gate 5 approved\u201d, but `/new-api` requires Gates 2, 3 and 5 up front and `/new-component` requires 3 and 5. OA5 correctly says Gate 3 and Gate 5, matching `/new-feature`, which shows the intent. OA6 is the weaker one for the pipeline that always spawns the Security Auditor and so genuinely needs Gate 2.",
+   "refs": [
+    ".claude/commands/dev-lead.md:274",
+    ".claude/commands/dev-lead.md:306",
+    ".claude/commands/new-api.md:15"
+   ]
+  },
+  {
+   "id": "A7",
+   "sec": "A",
+   "severity": "medium",
+   "cat": "broken",
+   "title": "The review skill's own mandatory verifier validates the wrong file",
+   "detail": "Step 4 picks `sorted(glob.glob(\u2026))[-1]`, which is lexical, not newest. Reproduced: with `_v2` and `_v10` present it picks `_v2`, and the pre-existing `ai-ssdlc-adversarial-review.html` beats any report whose system name sorts before `ai-`. The skill says \u201cnever report a page as produced without this passing\u201d, so a silent miss becomes false assurance. Separately the check is a `python3` heredoc, which `settings.json` does not allow.",
+   "refs": [
+    ".claude/skills/ssdlc-review/SKILL.md:175",
+    ".claude/settings.json:4"
+   ]
+  },
+  {
+   "id": "A8",
+   "sec": "A",
+   "severity": "low",
+   "cat": "hygiene",
+   "title": "`/new-feature` frontmatter has an unquoted colon, making it invalid YAML",
+   "detail": "`description: Run the full new-feature pipeline: tests first, \u2026` fails a strict parser with \u201cmapping values are not allowed here\u201d. It is the only one of 17 frontmatter blocks in `.claude/` with this problem. Claude Code's loader is lenient so it loads today; the risk is future lint, CI validation or plugin packaging.",
+   "refs": [
+    ".claude/commands/new-feature.md:2"
+   ]
+  },
+  {
+   "id": "B1",
+   "sec": "B",
+   "severity": "high",
+   "cat": "broken",
+   "title": "The trail template matches the discovery glob, so `/gate` writes real decisions into the shipped template",
+   "detail": "`ssdlc/_TEMPLATE_hitl-audit-trail_v1.md` matches `ssdlc/*_hitl-audit-trail_v1.md` and is the only match today, so `/gate`'s \u201cno trail exists\u201d branch is unreachable. `/gate 1 approve` finds \u201cone trail\u201d and appends a dated, attributed decision above the template's own END marker. The template is git-tracked, so the pollution commits and every future copy ships a pre-approved gate. Once a real trail exists the glob matches two files and `/gate` stops to disambiguate on every call, forever.",
+   "refs": [
+    ".claude/commands/gate.md:22",
+    ".claude/commands/gate.md:30",
+    "ssdlc/_TEMPLATE_hitl-audit-trail_v1.md:28-30"
+   ]
+  },
+  {
+   "id": "B2",
+   "sec": "B",
+   "severity": "high",
+   "cat": "broken",
+   "title": "`tail -5` / `tail -8` on multi-gate greps silently discards approvals and blocks the pipeline",
+   "detail": "The multi-gate checks grep several gates into one stream then truncate. Reproduced in a fixture: with Gate 3 approved and Gate 5 re-signed five times, `grep -hE \u201c^Gate (3|5):\u201d \u2026 | tail -5` returns five Gate 5 rows and zero Gate 3 rows \u2014 so `/new-feature` stops with \u201cGate 3 not approved\u201d on a trail where Gate 3 is approved. `/new-api` and `/new-component` share the shape with `tail -8`. Rejection-then-reapproval is the normal case in a gated SSDLC, and an append-only trail only grows, so this is guaranteed over a project's life.",
+   "refs": [
+    ".claude/commands/new-feature.md:16",
+    ".claude/commands/new-api.md:16",
+    ".claude/commands/new-component.md:16"
+   ]
+  },
+  {
+   "id": "B3",
+   "sec": "B",
+   "severity": "high",
+   "cat": "broken",
+   "title": "The gate check is fail-open across systems \u2014 one system's approval unblocks another's commands",
+   "detail": "All eight consumers glob every trail in `ssdlc/` and strip filenames with `grep -h`, then take the last row. Reproduced: with `alpha` holding Gate 3 and 5 approvals and `beta` holding none, the check returns alpha's approvals, so `/new-feature` proceeds on beta. The inverse also reproduces \u2014 an unrelated rejection blocks an approved gate. Glob order, not the system under review, decides. `GATE-FORMAT.md:13` says \u201cone file per system\u201d but nothing scopes the check, and `-h` removes the only signal that would reveal the wrong source.",
+   "refs": [
+    ".claude/commands/code-review.md:14",
+    ".claude/commands/security-audit.md:14",
+    "ssdlc/GATE-FORMAT.md:13"
+   ]
+  },
+  {
+   "id": "B4",
+   "sec": "B",
+   "severity": "high",
+   "cat": "broken",
+   "title": "`/gate status` reports approved gates as not approved once the trail exceeds 20 rows",
+   "detail": "It reads all seven gates with `\u2026 | tail -20`, and its own rule says a gate with no row is not approved. On a realistic 23-row trail (Gates 1 and 2 signed early, then 12 Gate 3 iterations and 9 Gate 5 rows) only Gates 3 and 5 remain visible \u2014 so Gates 1, 2, 4, 6 and 7 read as not approved while 1 and 2 are approved in the file. This is the status command every other command points the human at.",
+   "refs": [
+    ".claude/commands/gate.md:32-36"
+   ]
+  },
+  {
+   "id": "B5",
+   "sec": "B",
+   "severity": "high",
+   "cat": "gap",
+   "title": "Any line starting `Gate N:` and containing \u201capproved\u201d is an approval \u2014 no validation exists",
+   "detail": "The contract defines four outcomes and specifies no field validation and no else-case. Proven with a crafted trail: `Gate 5: approved` (no date, no approver), `Gate 5: approved | not-a-date | | -` and `Gate 5: approvedish | \u2026` are all indistinguishable from a valid approval. \u201capproved\u201d is also a prefix of \u201capproved-with-conditions\u201d with no precedence rule. `/gate`'s human-confirmation rules bind only `/gate`; a hand-typed or pasted row bypasses them, and grep is fence-blind so an example row pasted into a code block in the trail is a live approval.",
+   "refs": [
+    "ssdlc/GATE-FORMAT.md:25-29",
+    "ssdlc/GATE-FORMAT.md:47-51",
+    ".claude/commands/gate.md:43-44"
+   ]
+  },
+  {
+   "id": "B6",
+   "sec": "B",
+   "severity": "high",
+   "cat": "inconsistency",
+   "title": "Every gate check hardcodes `_v1.md` while the project's own convention says versions increment",
+   "detail": "`CLAUDE.md:120` and `README.md:211` state `[system-name]_[artifact-type]_v[N].[ext]` \u2014 \u201cversions increment, never overwrite\u201d \u2014 and `README.md:133` documents the trail as `_vN.md`. But the contract, `/gate` and all seven gated greps hardcode `_v1.md`. Reproduced: renaming a trail with five approved gates to `_v2` made every gate read \u201cnot approved\u201d. `/dev-lead` uses the wider `_*.md` glob and still finds it, so two components disagree about gate state.",
+   "refs": [
+    "ssdlc/GATE-FORMAT.md:10",
+    ".claude/commands/gate.md:22",
+    ".claude/commands/dev-lead.md:44",
+    "CLAUDE.md:120",
+    "README.md:133"
+   ]
+  },
+  {
+   "id": "B7",
+   "sec": "B",
+   "severity": "medium",
+   "cat": "inconsistency",
+   "title": "The format contract documents a check no command implements, and its example breaks its own line shape",
+   "detail": "The contract \u2014 cited by name from every gated command as the single source of truth \u2014 documents `grep -E \u201c^Gate 5:\u201d \u2026 | tail -1`. No command uses `tail -1`; all use `-h` with `tail -5`/`-8`/`-20`. The documented form also omits `-h`, so on more than one trail grep prefixes each line with the filename, which does not match the fixed four-field shape the contract tells readers to parse.",
+   "refs": [
+    "ssdlc/GATE-FORMAT.md:44",
+    "ssdlc/GATE-FORMAT.md:22"
+   ]
+  },
+  {
+   "id": "B8",
+   "sec": "B",
+   "severity": "medium",
+   "cat": "broken",
+   "title": "\u201cLatest row wins\u201d is resolved by file position, never by date",
+   "detail": "The contract defines the rule semantically \u2014 \u201cthe latest row for a gate wins\u201d \u2014 but implements it positionally with `tail`. Reproduced: for rows dated 2026-09-20 (approved), 2026-09-25 (rejected, \u201cstandards regressed\u201d), 2026-09-10 (approved), `tail -1` returns the 2026-09-10 approval while the genuinely latest decision is the rejection. Since the trail is a plain markdown file, a revocation can be defeated by appending a back-dated approval, and nothing checks date monotonicity.",
+   "refs": [
+    "ssdlc/GATE-FORMAT.md:15",
+    "ssdlc/GATE-FORMAT.md:44"
+   ]
+  },
+  {
+   "id": "B9",
+   "sec": "B",
+   "severity": "medium",
+   "cat": "gap",
+   "title": "\u201cAppend-only\u201d and \u201c`/gate` is the only writer\u201d are prose with nothing enforcing them",
+   "detail": "`/gate` claims the trail is append-only and \u201cis the audit evidence\u201d, and six commands repeat that it is the only writer. Nothing enforces either: no hooks in `settings.json`, no CI, no checksum or signature anywhere, no commit requirement. `/gate`'s own allowed-tools grant Edit and Write \u2014 the ability to rewrite the history it must not touch \u2014 and `/dev-lead` plus four subagents hold unrestricted Write. The deny list blocks `git push`, `reset --hard` and `clean` but not Edit, Write or `commit --amend`. A silent edit is undetectable.",
+   "refs": [
+    ".claude/commands/gate.md:4",
+    ".claude/commands/gate.md:72-73",
+    ".claude/settings.json:1-20"
+   ]
+  },
+  {
+   "id": "B10",
+   "sec": "B",
+   "severity": "medium",
+   "cat": "gap",
+   "title": "Gates 4, 6 and 7 are defined but no command consumes them",
+   "detail": "Only Gates 1, 2, 3 and 5 appear in any consumer; the trail's own reference table honestly shows \u201c\u2014\u201d for 4, 6 and 7. But root `CLAUDE.md` presents the phases as a strict 1\u21927 sequence with Gate 4 closing Secure Design Specifications, and the commands forbid inferring one gate from another. So Gate 5 approved while Gate 4 is rejected is a legal state. Reproduced: with `Gate 4: rejected` alongside approved 2/3/5, `/new-api` builds an endpoint against a design the human explicitly rejected.",
+   "refs": [
+    "ssdlc/_TEMPLATE_hitl-audit-trail_v1.md:41-44",
+    ".claude/commands/new-api.md:16",
+    "CLAUDE.md:134-140"
+   ]
+  },
+  {
+   "id": "B11",
+   "sec": "B",
+   "severity": "medium",
+   "cat": "inconsistency",
+   "title": "The contract contradicts itself on the conditions field for a rejected row",
+   "detail": "Line 29 says conditions are \u201crequired when decision is `approved-with-conditions`, else `-`\u201d, mandating `-` for a rejection. Line 51 then says a rejected row means \u201cstop, and quote the conditions as the reason\u201d, and the worked example at line 36 puts a real reason there. Two people following this produce different rejected rows, and a consumer following line 29 has nothing to quote.",
+   "refs": [
+    "ssdlc/GATE-FORMAT.md:29",
+    "ssdlc/GATE-FORMAT.md:36",
+    "ssdlc/GATE-FORMAT.md:51"
+   ]
+  },
+  {
+   "id": "B12",
+   "sec": "B",
+   "severity": "medium",
+   "cat": "gap",
+   "title": "No escaping rule, so a `|` or a newline in a conditions note corrupts the row",
+   "detail": "The contract defines a four-field pipe-delimited line and gives no escaping, quoting or length rule for the free-text conditions field, while `/gate` accepts arbitrary notes. Proven: `Gate 5: approved-with-conditions | 2026-09-02 | bob | PCI scope | deferred | to v2` parses as six fields, so a naive split yields \u201cPCI scope\u201d and discards the rest \u2014 the part a command is required to echo. A multi-line note is worse: line 2 does not start with `Gate N:` and is invisible to every grep.",
+   "refs": [
+    "ssdlc/GATE-FORMAT.md:22",
+    "ssdlc/GATE-FORMAT.md:49",
+    ".claude/commands/gate.md:16"
+   ]
+  },
+  {
+   "id": "B13",
+   "sec": "B",
+   "severity": "medium",
+   "cat": "inconsistency",
+   "title": "Three incompatible spellings of the conditional-approval response",
+   "detail": "Root `CLAUDE.md:143` and `README.md:199` both teach the human that the valid response is `approve with conditions: [notes]`. `/gate` accepts only `approve`, `reject` or `conditions` and writes `approved-with-conditions`. A user who types the phrasing the README taught them matches no accepted argument form, and `/gate` stops on anything else.",
+   "refs": [
+    "CLAUDE.md:143",
+    "README.md:199",
+    ".claude/commands/gate.md:16"
+   ]
+  },
+  {
+   "id": "B14",
+   "sec": "B",
+   "severity": "low",
+   "cat": "hygiene",
+   "title": "`2\u003e/dev/null` does not suppress the glob failure under the project's own shell",
+   "detail": "All seven checks end `ssdlc/*_hitl-audit-trail_v1.md 2\u003e/dev/null`, intended to silence the missing-file case. The environment shell is zsh, where an unmatched glob is a shell-level error raised before grep's stderr is redirected. Reproduced: zsh prints `no matches found:` where bash prints nothing. Stdout is empty either way so the check still fails safe, but the operator sees a shell error instead of the documented \u201cgate not approved\u201d path.",
+   "refs": [
+    ".claude/commands/code-review.md:14",
+    ".claude/commands/new-feature.md:16"
+   ]
+  },
+  {
+   "id": "C1",
+   "sec": "C",
+   "severity": "high",
+   "cat": "inconsistency",
+   "title": "Three-way contradiction on the refresh-token model",
+   "detail": "`backend/CLAUDE.md` declares Option A (external IdP) the default, states this service has no `/auth/login` or `/auth/refresh`, and ends \u201cdo not build a refresh endpoint\u201d. But `frontend/CLAUDE.md` hard-codes the opposite as a security control \u2014 \u201crefresh token in httpOnly cookie managed by backend; on page reload call `/auth/refresh`\u201d \u2014 and `security/CLAUDE.md` codifies the same as the cross-cutting default. All three are auto-loaded, so Claude is instructed to call an endpoint the backend file forbids building.",
+   "refs": [
+    "backend/CLAUDE.md:158-164",
+    "backend/CLAUDE.md:201",
+    "frontend/CLAUDE.md:159",
+    "security/CLAUDE.md:113"
+   ]
+  },
+  {
+   "id": "C2",
+   "sec": "C",
+   "severity": "high",
+   "cat": "inconsistency",
+   "title": "The database layer hard-codes the self-issued-IdP data model as non-negotiable",
+   "detail": "`RefreshToken`/`refresh_tokens` is listed as a core entity, `password_hash` is classified Secret, and BCrypt-via-Spring-Security is named as a shipped control. All three exist only under backend Option B; under the recommended Option A the service never sees a password. These are also the only non-bracketed entity names in an otherwise placeholdered schema, so they read as mandatory rather than conditional.",
+   "refs": [
+    "database/CLAUDE.md:114",
+    "database/CLAUDE.md:174",
+    "database/CLAUDE.md:201",
+    "backend/CLAUDE.md:213"
+   ]
+  },
+  {
+   "id": "C3",
+   "sec": "C",
+   "severity": "high",
+   "cat": "inconsistency",
+   "title": "Frontend ships a `\u003cmeta\u003e` CSP that infrastructure and the policy both say is wrong, with a conflicting value",
+   "detail": "`frontend/CLAUDE.md` puts CSP in an `index.html` meta tag including `frame-ancestors 'none'`; `infrastructure/CLAUDE.md` states in its own nginx comment that browsers ignore `frame-ancestors` in a meta tag, and the secure coding standard assigns the control to Infrastructure. The two policies also differ: the frontend allows `connect-src https://api.yourdomain.com`, the nginx header sends `connect-src 'self'`. CSPs intersect rather than override, so shipping both blocks the app's own API.",
+   "refs": [
+    "frontend/CLAUDE.md:162",
+    "frontend/CLAUDE.md:175-183",
+    "infrastructure/CLAUDE.md:204-208",
+    "security/policies/secure-coding-standard.md:39"
+   ]
+  },
+  {
+   "id": "C4",
+   "sec": "C",
+   "severity": "high",
+   "cat": "inconsistency",
+   "title": "Frontend declares a CSRF implementation no backend control validates",
+   "detail": "The frontend commits to `HttpClientXsrfModule` reading `XSRF-TOKEN` and sending `X-XSRF-TOKEN` on all mutating requests. The backend Security Architecture table has no CSRF row and its documented filter chain has no `CsrfFilter`. Neither layer says who sets the cookie. The frontend emits a token nothing checks. `HttpClientXsrfModule` is also an NgModule, contradicting the same file's \u201cAngular 17, standalone components, no NgModules\u201d.",
+   "refs": [
+    "frontend/CLAUDE.md:161",
+    "frontend/CLAUDE.md:29",
+    "backend/CLAUDE.md:189-195"
+   ]
+  },
+  {
+   "id": "C5",
+   "sec": "C",
+   "severity": "high",
+   "cat": "broken",
+   "title": "The ufw allowlist blocks the monitoring path the same file describes",
+   "detail": "The topology says Prometheus scrapes `:8080/actuator/prometheus` on the app hosts, but the firewall permits inbound only `:443`, `:1433`, `:8200`, `:9090` with default deny-all. Port 8080 is closed, so no scrape succeeds; `:9090` is opened on the wrong side since Prometheus initiates. Grafana (3000), Loki (3100) and Alertmanager (9093) appear in no rule at all.",
+   "refs": [
+    "infrastructure/CLAUDE.md:163",
+    "infrastructure/CLAUDE.md:182",
+    "infrastructure/CLAUDE.md:137"
+   ]
+  },
+  {
+   "id": "C6",
+   "sec": "C",
+   "severity": "high",
+   "cat": "gap",
+   "title": "RabbitMQ and Redis are load-bearing but have no host, container or firewall rule",
+   "detail": "`integration/CLAUDE.md` makes Redis the mechanism for the replay-attack control and calls RabbitMQ a dedicated prod server; the backend's inbound boundary is RabbitMQ events; `security/CLAUDE.md` asserts RabbitMQ uses TLS 1.2. `infrastructure/CLAUDE.md` contains zero occurrences of rabbit, amqp, 5672 or redis \u2014 absent from the environment table, service table, topology, firewall and file structure. The repo's own example already flags this class of defect; the template still carries it unflagged.",
+   "refs": [
+    "integration/CLAUDE.md:31",
+    "integration/CLAUDE.md:128",
+    "backend/CLAUDE.md:284",
+    "infrastructure/CLAUDE.md:128-164"
+   ]
+  },
+  {
+   "id": "C7",
+   "sec": "C",
+   "severity": "medium",
+   "cat": "false",
+   "title": "Three layer files name an authoritative policy file that does not exist",
+   "detail": "In \u201cRelationship to other files\u201d, database cites `data-classification-policy.md`, infrastructure cites `infrastructure-security-policy.md` and integration cites `integration-security-policy.md` as authoritative. `security/policies/` holds only `encryption-policy.md` and `secure-coding-standard.md`. Each file's own Security Architecture header already says the correct thing (\u201cadd this policy if you need it\u201d), so the header and the relationship list contradict each other.",
+   "refs": [
+    "database/CLAUDE.md:22",
+    "infrastructure/CLAUDE.md:22",
+    "integration/CLAUDE.md:22"
+   ]
+  },
+  {
+   "id": "C8",
+   "sec": "C",
+   "severity": "medium",
+   "cat": "broken",
+   "title": "Flyway commands point at the wrong location and run Maven from a directory with no POM",
+   "detail": "The stack says migrations live in `database/migrations/`, but the seed command passes `-Dflyway.locations=classpath:db/migration,\u2026`, a classpath location that resolves inside the backend JAR; the filesystem form is never given. All four `mvn flyway:*` commands are documented for execution from `database/`, which has no `pom.xml`. Copy-pasting any of them fails.",
+   "refs": [
+    "database/CLAUDE.md:31",
+    "database/CLAUDE.md:64",
+    "backend/CLAUDE.md:35"
+   ]
+  },
+  {
+   "id": "C9",
+   "sec": "C",
+   "severity": "medium",
+   "cat": "broken",
+   "title": "The local JDBC URL omits both the TLS and Always Encrypted settings its own controls require",
+   "detail": "The connect command is `jdbc:sqlserver://localhost:1433;databaseName=appdb` with mssql-jdbc 12.4. Since 10.2 the `encrypt` default is true, so this fails against a local container with a self-signed cert unless `trustServerCertificate=true` is added. It also omits `columnEncryptionSetting=Enabled`, without which the driver-level encryption control does not engage and the Deterministic lookup the file insists on cannot work.",
+   "refs": [
+    "database/CLAUDE.md:34",
+    "database/CLAUDE.md:170"
+   ]
+  },
+  {
+   "id": "C10",
+   "sec": "C",
+   "severity": "medium",
+   "cat": "gap",
+   "title": "Backend\u2194SQL Server crosses hosts, so the policy requires mTLS, but no exception is recorded",
+   "detail": "The encryption policy splits the rule: mTLS required when crossing a host or trust boundary, plain permitted same-host \u201cprovided the exception is recorded in that layer's CLAUDE.md\u201d. The backend is on the app hosts and SQL Server on `db-prod-01` \u2014 a host boundary \u2014 yet the control is \u201cinternal traffic on isolated VLAN\u201d with no TLS and no recorded exception. The same file models the exception process correctly for the nginx hop, so this is an oversight.",
+   "refs": [
+    "security/policies/encryption-policy.md:38-39",
+    "infrastructure/CLAUDE.md:178"
+   ]
+  },
+  {
+   "id": "C11",
+   "sec": "C",
+   "severity": "medium",
+   "cat": "broken",
+   "title": "All 18 `@import`s sit inside HTML comments and every target is absent",
+   "detail": "Six are at column 1. Claude Code documents import suppression for code spans and code blocks, not HTML comments. If comments do not suppress, all six layer files attempt a dead import on every prompt; if they do, the risk is latent. Either way the safe construction is a fenced code block, which these files already use for every other illustrative snippet. Note: an earlier verification in this session reported \u201c0 broken live imports\u201d by stripping comments first, which assumed the answer to this very question.",
+   "refs": [
+    "frontend/CLAUDE.md:111",
+    "backend/CLAUDE.md:114",
+    "database/CLAUDE.md:98",
+    "security/CLAUDE.md:93"
+   ]
+  },
+  {
+   "id": "C12",
+   "sec": "C",
+   "severity": "medium",
+   "cat": "inconsistency",
+   "title": "Backend publishes its API contract at `docs/api/`; the frontend reads it from `docs/backend/design/`",
+   "detail": "The backend names `docs/api/` twice \u2014 in the tech stack and as the contract location in its integration table. The frontend points at `docs/backend/design/[system]_openapi-spec_v1.yaml`, which is also the path in the backend's own commented import. `docs/api/` does not exist. Two layers disagree about where the single shared contract lives, and the owning layer cites the wrong one.",
+   "refs": [
+    "backend/CLAUDE.md:32",
+    "backend/CLAUDE.md:292",
+    "frontend/CLAUDE.md:227"
+   ]
+  },
+  {
+   "id": "C13",
+   "sec": "C",
+   "severity": "medium",
+   "cat": "inconsistency",
+   "title": "The circuit-breaker threshold is specified twice with incompatible values",
+   "detail": "The Security Architecture control says \u201copens after 5 failures in 10s\u201d; the resilience-defaults table on the same page says \u201c50% in a 10-call sliding window\u201d. These are different policies, and the first is not expressible in Resilience4j 2, which exposes `failureRateThreshold` plus a count- or time-based window, not a time-to-open.",
+   "refs": [
+    "integration/CLAUDE.md:35",
+    "integration/CLAUDE.md:139"
+   ]
+  },
+  {
+   "id": "C14",
+   "sec": "C",
+   "severity": "medium",
+   "cat": "inconsistency",
+   "title": "Production is described as active-active while the frontend runs on one node",
+   "detail": "The environment table says both app hosts are \u201cactive-active behind Nginx load balancer\u201d, but the service table assigns the Angular build to \u201c`app-prod-01` only\u201d while the production vhost on both nodes declares `root /var/www/frontend/dist`. Half the pair would serve the SPA from an empty root. The topology also names a load balancer without placing it anywhere.",
+   "refs": [
+    "infrastructure/CLAUDE.md:134",
+    "infrastructure/CLAUDE.md:143-144",
+    "infrastructure/CLAUDE.md:211"
+   ]
+  },
+  {
+   "id": "C15",
+   "sec": "C",
+   "severity": "medium",
+   "cat": "hygiene",
+   "title": "An auto-loaded template file asserts an ISO certification, a sector and a jurisdiction as fact",
+   "detail": "`security/CLAUDE.md` hard-codes three compliance rows as `Yes` with factual justifications \u2014 \u201corganisation holds ISO 27001 certification\u201d, \u201ctarget assurance level for a financial application\u201d, \u201cserves Australian residents\u201d (Privacy Act 1988) \u2014 while GDPR and PCI in the same table are correctly `[Yes/No]`. Since the file is auto-loaded, every new project inherits an unverified certification claim. An earlier domain-leak sweep in this session missed this because it searched for business-domain nouns, not jurisdiction, sector or certification claims.",
+   "refs": [
+    "security/CLAUDE.md:99",
+    "security/CLAUDE.md:100",
+    "security/CLAUDE.md:102"
+   ]
+  },
+  {
+   "id": "C16",
+   "sec": "C",
+   "severity": "medium",
+   "cat": "gap",
+   "title": "The integration layer's context file can never load for the code it governs",
+   "detail": "It states it is auto-loaded whenever you work inside `integration/`, then notes all runtime code actually lives in `backend/src/main/java/\u2026/integration/`, leaving `integration/` holding only contracts and tests (three `.gitkeep` files). Every rule that constrains code \u2014 Vault credential loading, HMAC validation, mTLS SslContext, the no-raw-WebClient convention \u2014 is out of context while that code is written, and `backend/CLAUDE.md` restates none of them.",
+   "refs": [
+    "integration/CLAUDE.md:5",
+    "integration/CLAUDE.md:39",
+    "integration/CLAUDE.md:157"
+   ]
+  },
+  {
+   "id": "C17",
+   "sec": "C",
+   "severity": "low",
+   "cat": "inconsistency",
+   "title": "The Jenkinsfile location contradicts itself and neither path exists",
+   "detail": "The tech stack says \u201cJenkinsfile at project root\u201d; ninety lines later the deploy note says `infrastructure/Jenkinsfile`. Neither exists, and the layer's File Structure listing omits it \u2014 so the file the deployment rule makes the only permitted path to production is unlocated in two different places.",
+   "refs": [
+    "infrastructure/CLAUDE.md:35",
+    "infrastructure/CLAUDE.md:95"
+   ]
+  },
+  {
+   "id": "C18",
+   "sec": "C",
+   "severity": "low",
+   "cat": "inconsistency",
+   "title": "The \u201c3-step\u201d breaking-change migration is described as four steps in the same file",
+   "detail": "The Security Architecture control lists four steps (add column \u2192 dual-write \u2192 backfill \u2192 drop). The Migration Conventions section calls it a \u201c3-step pattern\u201d and collapses backfill and drop into one migration \u2014 exactly the separation the four-step version exists to enforce.",
+   "refs": [
+    "database/CLAUDE.md:202",
+    "database/CLAUDE.md:251-254"
+   ]
+  },
+  {
+   "id": "D1",
+   "sec": "D",
+   "severity": "high",
+   "cat": "false",
+   "title": "ASVS requirement IDs are systematically mis-cited across both policy files",
+   "detail": "Eight cited IDs point at different requirements, verified against ASVS 4.0.3: V2.1.1 (password length) cited for \u201cnever roll your own auth\u201d; V2.2.1 (anti-automation) for MFA; V5.1.1 (parameter pollution) for input validation; V6.2.1 (modules fail securely) twice for PII-at-rest (correct: V6.1.1); V1.14.1 (component segregation) twice for dependency gating (correct: V14.2.1); V9.1.2 and V9.1.3 swapped between key length and cipher suites; V6.2.3 (IV/block mode) for PBKDF2 iterations (correct: V2.4.3). Both policies state a rule without a control reference is not an obligation, so these IDs are the evidence chain an auditor traces.",
+   "refs": [
+    "security/policies/secure-coding-standard.md:47",
+    "security/policies/secure-coding-standard.md:51",
+    "security/policies/encryption-policy.md:34-37"
+   ]
+  },
+  {
+   "id": "D2",
+   "sec": "D",
+   "severity": "high",
+   "cat": "false",
+   "title": "ISO controls are cited in withdrawn 2013 numbering while 27001:2022 is declared applicable",
+   "detail": "`security/CLAUDE.md:99` declares ISO 27001:2022 applicable, and `security/README.md` itself says the 2022 standard has 93 controls in four themes. The policies then cite A.9.4, A.10.1, A.12.3, A.12.4 and A.12.6 \u2014 all 2013 numbers absent from 2022 (cryptography is A.8.24, backup A.8.13, logging A.8.15, access control A.5.15). Where 2022 numbering is used it is still wrong: A.8.2 is cited for data classification, but A.8.2 is Privileged access rights; classification is A.5.12.",
+   "refs": [
+    "security/CLAUDE.md:99",
+    "security/CLAUDE.md:120",
+    "security/policies/encryption-policy.md:49-50",
+    "security/policies/secure-coding-standard.md:59"
+   ]
+  },
+  {
+   "id": "D3",
+   "sec": "D",
+   "severity": "high",
+   "cat": "broken",
+   "title": "Four mutually incompatible SAST suppression schemas, and the enforcing agent scans for none of them",
+   "detail": "`security/CLAUDE.md` mandates `@SuppressFBWarnings` and `eslint-disable-next-line`; `suppression-rules.md` mandates `// nosemgrep` plus Dependency-Check XML and its register offers only Semgrep/OWASP DC/Trivy \u2014 omitting both SAST tools the project declares. The Security Auditor skill that enforces the policy scans for `@SuppressWarnings`, `// noinspection`, `# noqa`, `// nosec` and `// NOSONAR`, none of which appears in any documented format, and demands a fifth justification layout. Every suppression written to spec is invisible to the audit control whose stated purpose is that an untracked suppression is indistinguishable from a buried finding.",
+   "refs": [
+    "security/CLAUDE.md:143",
+    "security/sast/suppression-rules.md:19",
+    "docs/agent-skills/security-auditor/SA2-audit-sast-suppressions.md:8"
+   ]
+  },
+  {
+   "id": "D4",
+   "sec": "D",
+   "severity": "medium",
+   "cat": "broken",
+   "title": "The mandated ESLint suppression format does not suppress anything",
+   "detail": "The documented block puts `// eslint-disable-next-line no-restricted-syntax` first, then two justification comment lines, then the code. `eslint-disable-next-line` applies to the literal next line and comments count, so the directive disables the rule on the justification comment and the finding still fires. Anyone following the format exactly gets a red build and reaches for a broader disable \u2014 the outcome the policy exists to prevent.",
+   "refs": [
+    "security/CLAUDE.md:152-157"
+   ]
+  },
+  {
+   "id": "D5",
+   "sec": "D",
+   "severity": "medium",
+   "cat": "inconsistency",
+   "title": "PCI and GDPR are cited as live control refs while their applicability is an unfilled placeholder",
+   "detail": "`security/CLAUDE.md:101` leaves PCI as `[Yes/No]` and instructs \u201cdo not cite PCI requirements elsewhere as though they applied\u201d \u2014 yet the policies cite PCI Req 3.4, 4.2 and 6.3 as the refs that make three rules obligations, and GDPR Art 32 in three places against a `[Yes/No]` row. The PCI number is also wrong for the declared v4.0: rendering stored PAN unreadable is Req 3.5; 3.4 is the v3.2.1 number and now covers PAN display.",
+   "refs": [
+    "security/CLAUDE.md:98",
+    "security/CLAUDE.md:101",
+    "security/policies/encryption-policy.md:47"
+   ]
+  },
+  {
+   "id": "D6",
+   "sec": "D",
+   "severity": "medium",
+   "cat": "false",
+   "title": "The mTLS rule is contradicted by the control table, and the JDBC property named is not real",
+   "detail": "The encryption policy requires mTLS for any hop crossing a host boundary and `security/CLAUDE.md:184` makes the policy authoritative. That same file then specifies backend\u2194SQL Server as \u201c`Encrypted=true` in JDBC URL\u201d and RabbitMQ as plain TLS 1.2 \u2014 both cross host boundaries, neither is mutual. The setting is also not real: the mssql-jdbc property is `encrypt` (true/false/strict), so a URL written as documented configures no encryption at all.",
+   "refs": [
+    "security/policies/encryption-policy.md:38",
+    "security/CLAUDE.md:115",
+    "security/CLAUDE.md:184"
+   ]
+  },
+  {
+   "id": "D7",
+   "sec": "D",
+   "severity": "medium",
+   "cat": "inconsistency",
+   "title": "The two policies mandate mutually exclusive identity designs with no conditional",
+   "detail": "`secure-coding-standard.md:47` says unconditionally \u201cnever roll your own authentication\u201d. `encryption-policy.md:59` then unconditionally mandates bcrypt cost \u2265 12 or Argon2id for password hashing \u2014 a control that only exists if the app stores credentials, which the first rule forbids. The backend flags its Option B explicitly as an ADR-backed choice; the policies give no \u201cif you own credentials\u201d qualifier, so the layer files violate the standard by construction.",
+   "refs": [
+    "security/policies/secure-coding-standard.md:47",
+    "security/policies/encryption-policy.md:59",
+    "backend/CLAUDE.md:215"
+   ]
+  },
+  {
+   "id": "D8",
+   "sec": "D",
+   "severity": "medium",
+   "cat": "gap",
+   "title": "The README asserts a CI-enforced Semgrep config that does not exist",
+   "detail": "`security/README.md:30` gives \u201c`sast/semgrep.yml` (CI pipeline runs this)\u201d as its example of a live working file and `:44` states \u201cCI enforces them\u201d. There is no semgrep.yml, no dependency-check-suppressions.xml, no ESLint config, no Jenkinsfile, no CI directory. Eleven rules in the secure coding standard claim enforcement by SAST, an SCA CI gate or a pre-commit hook. The threat model was careful to label unimplemented controls `Planned (example)`; the README makes the opposite claim in the present tense.",
+   "refs": [
+    "security/README.md:30",
+    "security/README.md:44",
+    "security/policies/secure-coding-standard.md:29"
+   ]
+  },
+  {
+   "id": "D9",
+   "sec": "D",
+   "severity": "medium",
+   "cat": "broken",
+   "title": "Both pen-test registers sit in a git-ignored directory, so they do not ship",
+   "detail": "`.gitignore:49` ignores all of `security/pen-test/`, and `git ls-files security/` returns six files \u2014 neither register among them. Yet `security/README.md:56` advertises `findings-register.md` under \u201cTemplate provided\u201d and `security/CLAUDE.md:124` tells the user to create `scope.md` in the same ignored path. A fresh clone gets no pen-test folder, no register templates, and no file for the Security Auditor to append to at the path its skill hardcodes. This is a direct consequence of a gitignore entry added earlier in this session to keep confidential findings out of history \u2014 correct intent, unconsidered side effect.",
+   "refs": [
+    ".gitignore:49",
+    "security/README.md:56",
+    "security/CLAUDE.md:124"
+   ]
+  },
+  {
+   "id": "D10",
+   "sec": "D",
+   "severity": "low",
+   "cat": "inconsistency",
+   "title": "The prohibited-algorithms table forbids a primitive another layer mandates",
+   "detail": "`encryption-policy.md:81` says the listed algorithms \u201cmust never be used for any cryptographic purpose in this project\u201d, and line 90 lists \u201cHS256 JWT signing\u201d with rationale \u201cshared secret\u201d. `integration/CLAUDE.md:124` requires HMAC-SHA256 with a shared Vault secret for every inbound webhook \u2014 the identical primitive and key model \u2014 and the same policy approves SHA-256 for integrity at line 61. The row's scope and the table header disagree.",
+   "refs": [
+    "security/policies/encryption-policy.md:81",
+    "security/policies/encryption-policy.md:90",
+    "integration/CLAUDE.md:124"
+   ]
+  },
+  {
+   "id": "D11",
+   "sec": "D",
+   "severity": "low",
+   "cat": "hygiene",
+   "title": "The Semgrep example targets a React rule in an Angular-only project",
+   "detail": "`suppression-rules.md:30` gives `typescript.react.security.audit.react-dangerouslysetinnerhtml` as the TypeScript example, but the frontend is Angular 17 with no React, so that finding can never fire. The Angular analogue the security layer actually bans is `bypassSecurityTrustHtml`. The example teaches a suppression that can never be needed while omitting the one that will be. Lines 33-39 also fence an XML element as ```yaml.",
+   "refs": [
+    "security/sast/suppression-rules.md:30",
+    "frontend/CLAUDE.md:29",
+    "security/CLAUDE.md:118"
+   ]
+  },
+  {
+   "id": "E1",
+   "sec": "E",
+   "severity": "high",
+   "cat": "false",
+   "title": "Jest suite, coverage reporting and GitHub Actions CI are claimed; none exist",
+   "detail": "Layer 10 is scored Partial on \u201cJest test suite (9 tests)\u201d, \u201c9 passing tests\u201d, \u201ccoverage reporting (`npm test -- --coverage`)\u201d and \u201cGitHub Actions CI/CD pipeline\u201d; Layer 5 is justified by \u201cnpm scripts, Jest, TypeScript build\u201d. There is no `package.json`, no jest config, no CI directory and zero test files. `agents-and-skills-guide.md:52` says the opposite. A reader is told verification is systematic and automated when nothing runs.",
+   "refs": [
+    "docs/guides/quick-reference-agent-and-skills.md:20",
+    "docs/guides/quick-reference-agent-and-skills.md:32",
+    "docs/guides/quick-reference-agent-and-skills.md:37"
+   ]
+  },
+  {
+   "id": "E2",
+   "sec": "E",
+   "severity": "high",
+   "cat": "false",
+   "title": "\u201c6 specialist agents\u201d and `.claude/agents/dev-lead.md` \u2014 the sixth agent file does not exist",
+   "detail": "Five guides state six agents live in `.claude/agents/` and three name `dev-lead.md` explicitly, one marking it Implemented. That directory holds exactly five files; Dev Lead is a command. The same guide says \u201cfive\u201d at two other points and root `CLAUDE.md` says five. A reader who tries to edit the dev-lead agent file will not find it.",
+   "refs": [
+    "docs/guides/agents-and-skills-guide.md:50",
+    "docs/guides/agents-and-skills-guide.md:2075",
+    "docs/guides/quick-reference-agent-and-skills.md:18"
+   ]
+  },
+  {
+   "id": "E3",
+   "sec": "E",
+   "severity": "high",
+   "cat": "inconsistency",
+   "title": "A backlog table headed \u201cnone of these exist yet\u201d lists 11 items marked Implemented ten lines above",
+   "detail": "The Priority table is introduced with \u201cNone of the slash commands below exist yet \u2026 kept as a backlog.\u201d Eleven of its 23 rows are things the immediately preceding \u201cWhat is implemented\u201d table marks Implemented and which do exist: Dev Lead OA1/OA3/OA5-OA7, `/gate status`, QA Engineer, Code Reviewer, Infrastructure Agent, Security Auditor, Tech Researcher, QA2/QA3/QA5. Line 1539 separately asserts `/gate status` \u201cactually exists\u201d. The backlog framing was added earlier in this session and applied to a table that already contained shipped items.",
+   "refs": [
+    "docs/guides/agents-and-skills-guide.md:2109",
+    "docs/guides/agents-and-skills-guide.md:2075-2096"
+   ]
+  },
+  {
+   "id": "E4",
+   "sec": "E",
+   "severity": "high",
+   "cat": "false",
+   "title": "\u201cAll 6 layers have @imported design documents \u2014 Complete\u201d is false",
+   "detail": "Both guides tick this and name concrete files. On disk all six `@` lines sit inside HTML comment blocks, point at `[your-system]_*` placeholders, and all six target folders contain only `.gitkeep`. `external-services-summary_v1.md` exists under no name. The same file correctly labels these \u201c(ships commented out)\u201d 180 lines earlier.",
+   "refs": [
+    "docs/guides/agents-and-skills-guide.md:2172",
+    "docs/guides/quick-reference-agent-and-skills.md:570"
+   ]
+  },
+  {
+   "id": "E5",
+   "sec": "E",
+   "severity": "high",
+   "cat": "false",
+   "title": "\u201cAll 6 layer CLAUDE.md \u2014 fully populated\u201d while three carry a FILL THIS IN banner",
+   "detail": "The readiness tables assert all six are fully populated with tech stack, entry points, commands, conventions, security architecture and boundaries. Three open with an explicit placeholder warning, and the six together hold 70 unresolved backticked placeholders. A team reading \u201cComplete\u201d skips the population step the rest of the guide calls mandatory.",
+   "refs": [
+    "docs/guides/agents-and-skills-guide.md:2171",
+    "frontend/CLAUDE.md:114",
+    "database/CLAUDE.md:101"
+   ]
+  },
+  {
+   "id": "E6",
+   "sec": "E",
+   "severity": "high",
+   "cat": "inconsistency",
+   "title": "One RDE layer is rated three mutually exclusive ways in the same file",
+   "detail": "Layer 5 is \u201c\u274c Absent \u2014 no build, test or lint tooling ships\u201d at line 15, \u201c\u26a0 Partial \u2014 dev execution complete (npm scripts, Jest, TypeScript build)\u201d at 32, and headed \u201cWhy Layer 5 is Partial (acceptable)\u201d at 41. The headline score reads 8.5/10 while the table shows 8 \u2705 + 1 \u274c + 1 \u26a0, and the other guide scores the same layer 8/10.",
+   "refs": [
+    "docs/guides/quick-reference-agent-and-skills.md:15",
+    "docs/guides/quick-reference-agent-and-skills.md:32",
+    "docs/guides/agents-and-skills-guide.md:54"
+   ]
+  },
+  {
+   "id": "E7",
+   "sec": "E",
+   "severity": "high",
+   "cat": "inconsistency",
+   "title": "Five eval suites are presented as existing with case counts, then denied in the same files",
+   "detail": "\u201cThis project has five eval suites\u201d plus a table of five filenames with 8/8/9/9/10 cases and run commands; the cheat sheet repeats it. Both files then state \u201cNone are covered yet \u2014 `evals/` does not exist\u201d. Two \u201cRun when\u201d cells also cite skill files that do not exist (`IA1-plan-infra.md`, `TR1-research-library.md`; actual names differ).",
+   "refs": [
+    "docs/guides/agents-and-skills-guide.md:1671",
+    "docs/guides/agents-and-skills-guide.md:1887",
+    "docs/guides/quick-reference-agent-and-skills.md:418"
+   ]
+  },
+  {
+   "id": "E8",
+   "sec": "E",
+   "severity": "medium",
+   "cat": "false",
+   "title": "The \u201cout of the box\u201d tree invents four folders and lists `skills/` twice",
+   "detail": "The identical tree in both guides shows `.claude/skills/ \u2190 29 skill playbooks` and a second `.claude/skills/ \u2190 /ssdlc-review` row, plus top-level `evals/`, `architecture/`, `diagrams/` and `compliance/`. `.claude/skills/` holds exactly one skill; the 29 specs are in `docs/agent-skills/`. None of the four folders exist, and `template-guide.md`'s canonical tree omits all four. The duplicate `skills/` row was introduced earlier in this session.",
+   "refs": [
+    "docs/guides/agents-and-skills-guide.md:66",
+    "docs/guides/agents-and-skills-guide.md:68",
+    "docs/guides/quick-reference-agent-and-skills.md:59"
+   ]
+  },
+  {
+   "id": "E9",
+   "sec": "E",
+   "severity": "medium",
+   "cat": "false",
+   "title": "A table headed \u201call 27\u201d has 29 rows, and four skill descriptions are attached to the wrong ID",
+   "detail": "`quick-reference-agent-and-skills.md:97` reads \u201cSkills reference \u2014 all 27\u201d over a 29-row table. Within it OA3 and OA4 descriptions are transposed, QA2 and QA3 are transposed, and QA5 is named \u201cWrite security acceptance tests\u201d when the spec is test quality review. The same file gets all four right 90 lines later. A verification script run earlier in this session reported these consistent because it compared ID to name, not ID to description \u2014 the names are correct, the descriptions are not.",
+   "refs": [
+    "docs/guides/quick-reference-agent-and-skills.md:97",
+    "docs/guides/quick-reference-agent-and-skills.md:103-104",
+    "docs/guides/agents-and-skills-guide.md:120-121"
+   ]
+  },
+  {
+   "id": "E10",
+   "sec": "E",
+   "severity": "medium",
+   "cat": "inconsistency",
+   "title": "`isolation: \u201cworktree\u201d` is documented for three agents, contradicted by the same guide and by dev-lead",
+   "detail": "\u201cCode Reviewer, Security Auditor and Infrastructure Agent use `isolation: \u201cworktree\u201d`\u201d is stated as implementation fact. No agent file declares an isolation field, and `/dev-lead` explicitly rejects it with the reason (a worktree is cut from a commit, so uncommitted changes \u2014 the thing under review \u2014 are invisible). Line 2101 of the same document also says independence comes from freshness, not filesystem isolation.",
+   "refs": [
+    "docs/guides/agents-and-skills-guide.md:2147",
+    "docs/guides/agents-and-skills-guide.md:2101",
+    ".claude/commands/dev-lead.md:193-196"
+   ]
+  },
+  {
+   "id": "E11",
+   "sec": "E",
+   "severity": "medium",
+   "cat": "gap",
+   "title": "Broken cross-references, dead TOC anchors and an empty table",
+   "detail": "Two places send the reader to \u201cSection 7\u201d for slash commands, which is Section 8; one says evals are in Section 8 while another says Section 9 (9 is right). Three TOC anchors do not resolve after headings were renamed. Section 12 has a \u201cWhat is complete\u201d heading followed by a table header row and zero data rows. Most of these were introduced by a renumbering earlier in this session.",
+   "refs": [
+    "docs/guides/agents-and-skills-guide.md:108",
+    "docs/guides/agents-and-skills-guide.md:2189",
+    "docs/guides/agents-and-skills-guide.md:2181-2184"
+   ]
+  },
+  {
+   "id": "E12",
+   "sec": "E",
+   "severity": "low",
+   "cat": "false",
+   "title": "\u201c5 knowledge base docs + this guide\u201d over-counts, and an \u201c11 slash commands\u201d row lists 9",
+   "detail": "Both project-setup trees label `docs/guides/` as \u201c5 knowledge base docs + this guide\u201d, implying six; the folder holds exactly five `.md` including the guide making the claim. Separately a readiness row headed \u201c11 slash commands\u201d enumerates only nine, omitting `/dev-lead` and `/gate` \u2014 the two the same guide relies on elsewhere.",
+   "refs": [
+    "docs/guides/agents-and-skills-guide.md:74",
+    "docs/guides/quick-reference-agent-and-skills.md:65"
+   ]
+  },
+  {
+   "id": "E13",
+   "sec": "E",
+   "severity": "low",
+   "cat": "false",
+   "title": "`dev mode` is promoted as a session entry point with no mechanism behind it",
+   "detail": "`development-workflow.md` tells readers to start every session with `/new-feature`, `/new-api` or `dev mode`, and shows it resuming orchestration in four flows. The phrase appears nowhere in `.claude/` \u2014 not in dev-lead.md, not in settings.json. Its only non-guide occurrence is a skill spec the guides themselves state is never loaded.",
+   "refs": [
+    "docs/guides/development-workflow.md:411",
+    "docs/guides/quick-reference-agent-and-skills.md:137"
+   ]
+  },
+  {
+   "id": "E14",
+   "sec": "E",
+   "severity": "low",
+   "cat": "dup",
+   "title": "Duplication between the two agent guides measured at 20.6%",
+   "detail": "Of 471 non-blank lines in `quick-reference-agent-and-skills.md`, 97 are verbatim-identical to a line in `agents-and-skills-guide.md`. The largest runs are the 7-gate table (11 lines), the Gate 7 checklist (8 lines) and the Gate 3-5 checklists. This is the mechanism behind the OA3/OA4, QA2/QA3, agent-count and folder-tree errors above: each is present in both files identically, so every correction must be applied twice \u2014 and several were applied once.",
+   "refs": [
+    "docs/guides/quick-reference-agent-and-skills.md:244-256",
+    "docs/guides/agents-and-skills-guide.md:62-91"
+   ]
+  },
+  {
+   "id": "F1",
+   "sec": "F",
+   "severity": "high",
+   "cat": "false",
+   "title": "The two-auth-model defect the README claims was fixed is still fully present",
+   "detail": "README defect #2 states the design now has \u201cone model: the IdP issues, the backend validates\u201d, but every artefact of backend-as-IdP survives: a password login endpoint, a backend-issued RS256 token, a `password_hash` column, a backend-managed `refresh_tokens` table with its own rotation rule, and a Vault path holding `JWT_PRIVATE_KEY` (a validator needs only the public key). Meanwhile the integration doc and ASVS V1.2.1 assert the IdP issues and the backend only validates. A team copying this ships two credential stores and trusts a README that says the problem is gone.",
+   "refs": [
+    "examples/loan-portal/README.md:45-48",
+    "examples/loan-portal/backend/loan-portal_openapi-spec_v1.yaml:28-47",
+    "examples/loan-portal/database/loan-portal_data-dictionary_v1.md:157-175"
+   ]
+  },
+  {
+   "id": "F2",
+   "sec": "F",
+   "severity": "high",
+   "cat": "false",
+   "title": "The GUID rationale is garbled and states the opposite of the truth",
+   "detail": "The heading reads \u201cWhy `NEWID()` and not `NEWID()`\u201d \u2014 a find/replace overwrote both sides \u2014 and the body then claims \u201c`NEWID()` produces predictable, monotonically increasing values\u201d. That is false: `NEWID()` is a random v4 GUID; the sentence describes `NEWSEQUENTIALID()`. The ASVS mapping still prescribes `NEWSEQUENTIALID()` for PK performance on the very row about random GUIDs. A reader either learns a falsehood about a security primitive or copies the sequential PKs the README says were removed. This was introduced by a blanket substitution earlier in this session that rewrote the term inside its own explanation.",
+   "refs": [
+    "examples/loan-portal/database/loan-portal_data-dictionary_v1.md:7-12",
+    "examples/loan-portal/security/loan-portal_asvs-mapping_v1.md:116"
+   ]
+  },
+  {
+   "id": "F3",
+   "sec": "F",
+   "severity": "high",
+   "cat": "false",
+   "title": "Roughly a third of ASVS IDs in the mapping cite a different requirement",
+   "detail": "README defect #7 lists four mis-cited IDs as repaired, but ~25 remaining rows cite an ID covering something else in 4.0.3. Verified examples: V6.2.1 is modules-fail-securely not data-at-rest (V6.1.1); V6.3.1 is CSPRNG not GUID v4 (V6.3.2); V3.5.1 is user revocation not stateless-token signing (V3.5.3); V5.1.1 is parameter pollution not allow-list validation (V5.1.3); V5.4.1 is memory-safe strings in unmanaged code (N/A for a JVM app); V14.3.1 and V14.3.2 are swapped; V1.2.1 is low-privilege OS accounts not a trusted auth component (V1.2.3). An assessor reading the control text for each ID finds it does not match the implementation beside it.",
+   "refs": [
+    "examples/loan-portal/security/loan-portal_asvs-mapping_v1.md:50",
+    "examples/loan-portal/security/loan-portal_asvs-mapping_v1.md:116",
+    "examples/loan-portal/README.md:59-62"
+   ]
+  },
+  {
+   "id": "F4",
+   "sec": "F",
+   "severity": "high",
+   "cat": "security",
+   "title": "Two substituted ASVS IDs silently delete the control they were meant to cover",
+   "detail": "V4.3.1 in 4.0.3 is \u201cadministrative interfaces use appropriate multi-factor authentication\u201d; the mapping restates it as \u201cadmin interfaces do not allow internet access\u201d and satisfies it with VLAN placement \u2014 so admin MFA is mapped nowhere and the row goes green with no second factor on privileged accounts. V12.6.1 is the SSRF destination allow-list; the mapping restates it as \u201cdoes not execute arbitrary functionality\u201d and satisfies it with CSP \u2014 so SSRF is unaddressed in a backend that calls four internet providers and mounts an SMB share. Controls lost by substitution are invisible in review.",
+   "refs": [
+    "examples/loan-portal/security/loan-portal_asvs-mapping_v1.md:93",
+    "examples/loan-portal/security/loan-portal_asvs-mapping_v1.md:182"
+   ]
+  },
+  {
+   "id": "F5",
+   "sec": "F",
+   "severity": "high",
+   "cat": "security",
+   "title": "Row-Level Security is FILTER PREDICATE only, so cross-tenant writes are unblocked",
+   "detail": "Both `loan_applications` and `documents` declare only a FILTER PREDICATE on `applicant_id`. A SQL Server filter predicate excludes rows from SELECT/UPDATE/DELETE but does not prevent an INSERT or an UPDATE writing a row owned by another tenant \u2014 that needs a BLOCK PREDICATE, which appears nowhere. Combined with `POST /api/v1/documents` taking a client-supplied `applicationId` with no stated ownership check and no 403 declared, a caller can attach a document to another applicant's application; the row then vanishes from the victim's filtered view while still counting toward the all-documents-VERIFIED precondition on submit. Two ASVS rows cite this RLS as the IDOR defence.",
+   "refs": [
+    "examples/loan-portal/database/loan-portal_data-dictionary_v1.md:87",
+    "examples/loan-portal/backend/loan-portal_openapi-spec_v1.yaml:407-443",
+    "examples/loan-portal/security/loan-portal_asvs-mapping_v1.md:92"
+   ]
+  },
+  {
+   "id": "F6",
+   "sec": "F",
+   "severity": "high",
+   "cat": "broken",
+   "title": "The firewall table blocks the traffic the rest of the design depends on",
+   "detail": "The Application VLAN is \u201cno direct internet access\u201d, every server defaults to deny-all, and the rule table has no outbound HTTPS rule \u2014 yet the backend must reach four internet providers, and one must POST inbound to a webhook described as \u201cinternal\u201d, which an external SaaS cannot reach. Monitoring breaks the same way: the only 8080 rule is outbound from the app VLAN while Prometheus scrapes inbound from the monitoring VLAN, and the nginx and node exporters have no rule at all. Copied as-is, nothing external works and nothing is observable.",
+   "refs": [
+    "examples/loan-portal/infrastructure/loan-portal_infrastructure-design_v1.md:61",
+    "examples/loan-portal/infrastructure/loan-portal_infrastructure-design_v1.md:72-82"
+   ]
+  },
+  {
+   "id": "F7",
+   "sec": "F",
+   "severity": "high",
+   "cat": "broken",
+   "title": "The frontend runs on only one of two load-balanced production hosts",
+   "detail": "The load balancer is round-robin across both app hosts, both listed active in rotation, but the Angular build is deployed in an \u201c`app-prod-01` additionally runs\u201d table and the topology places the static files under that host alone. Half of all requests reach a host with no application shell, and the redundancy the two-host inventory exists to provide is gone. Not among the gaps the README discloses.",
+   "refs": [
+    "examples/loan-portal/infrastructure/loan-portal_infrastructure-design_v1.md:12-13",
+    "examples/loan-portal/infrastructure/loan-portal_infrastructure-design_v1.md:97-101"
+   ]
+  },
+  {
+   "id": "F8",
+   "sec": "F",
+   "severity": "medium",
+   "cat": "inconsistency",
+   "title": "Refresh-token transport contradicts itself and logout cannot revoke anything",
+   "detail": "The API returns `refreshToken` in the `TokenResponse` body and accepts it back in a request body, while ASVS V3.4.1 and V13.2.3 describe it as an httpOnly SameSite=Strict cookie needing double-submit CSRF \u2014 a token in a response body can never be HttpOnly, so V3.4.1 is unimplementable against this contract. `POST /auth/logout` declares no request body and says it revokes the presented token and clears the cookie, but no cookie exists in the contract and nothing identifies which row to revoke.",
+   "refs": [
+    "examples/loan-portal/backend/loan-portal_openapi-spec_v1.yaml:39-55",
+    "examples/loan-portal/security/loan-portal_asvs-mapping_v1.md:79"
+   ]
+  },
+  {
+   "id": "F9",
+   "sec": "F",
+   "severity": "medium",
+   "cat": "security",
+   "title": "Vault delivery is specified two incompatible ways, and a private key is put in an env var",
+   "detail": "The topology says Vault Agent renders secrets to a tmpfs volume and explicitly notes a sidecar cannot set a sibling's environment \u2014 then the rule immediately below states it \u201cinjects all secrets as environment variables at container startup\u201d, contradicting the constraint just stated. The integration doc compounds it: the mTLS client cert and key are labelled \u201cpath\u201d but described as injected as env vars, so the reader cannot tell whether the value is a path or PEM material. A private key in a container environment is readable via `docker inspect` and `/proc/\u003cpid\u003e/environ`.",
+   "refs": [
+    "examples/loan-portal/infrastructure/loan-portal_infrastructure-design_v1.md:44-46",
+    "examples/loan-portal/infrastructure/loan-portal_infrastructure-design_v1.md:113",
+    "examples/loan-portal/integration/loan-portal_external-services_v1.md:48-49"
+   ]
+  },
+  {
+   "id": "F10",
+   "sec": "F",
+   "severity": "medium",
+   "cat": "gap",
+   "title": "Financial and PII columns have a classification but no protection",
+   "detail": "`loan_amount` is Financial-Confidential with RLS as its only protection, and `full_name` is explicitly plaintext \u2014 violating the document's own rule three lines away (\u201cuse Randomized for every PII column you never look up by\u201d); nothing looks `full_name` up by equality. The ASVS mapping cannot catch either because the whole V6.1 family is absent: V6.1.1 (regulated private data at rest) and V6.1.3 (regulated financial data) are the two L2 requirements a lender is judged on. V8.3.2 (export/remove on demand) and V8.3.8 (retention) are also missing from a mapping whose header calls GDPR erasure a known gap.",
+   "refs": [
+    "examples/loan-portal/database/loan-portal_data-dictionary_v1.md:25",
+    "examples/loan-portal/database/loan-portal_data-dictionary_v1.md:39-40",
+    "examples/loan-portal/security/loan-portal_asvs-mapping_v1.md:109-117"
+   ]
+  },
+  {
+   "id": "F11",
+   "sec": "F",
+   "severity": "medium",
+   "cat": "broken",
+   "title": "Deterministic Always Encrypted on NVARCHAR with a unique index cannot be created as specified",
+   "detail": "SQL Server requires a binary2 collation on any character column encrypted Deterministic; without it both the column definition and the unique index over it are rejected. `email NVARCHAR(320)` is specified with no collation anywhere, so the migration creating `applicants` fails on first run \u2014 and the document builds two paragraphs of correct reasoning about equality lookups on top of a definition that will not deploy.",
+   "refs": [
+    "examples/loan-portal/database/loan-portal_data-dictionary_v1.md:23",
+    "examples/loan-portal/database/loan-portal_data-dictionary_v1.md:32-34"
+   ]
+  },
+  {
+   "id": "F12",
+   "sec": "F",
+   "severity": "medium",
+   "cat": "false",
+   "title": "The plaintext nginx hop the README says is \u201crecorded as an explicit exception\u201d is recorded nowhere",
+   "detail": "README defect #10 claims policy and config now agree with the same-host hop recorded as an exception. No exception appears in any of the five documents: the topology shows `HTTP :8080` unannotated, and ASVS V1.9.1 lists only external TLS and the SQL Server connection, omitting the hop. The topology also scopes it to a VLAN, implying network traffic, while the container table puts both on one host \u2014 so a reader cannot tell whether the plaintext leg crosses the wire.",
+   "refs": [
+    "examples/loan-portal/README.md:70-74",
+    "examples/loan-portal/infrastructure/loan-portal_infrastructure-design_v1.md:36",
+    "examples/loan-portal/security/loan-portal_asvs-mapping_v1.md:54"
+   ]
+  },
+  {
+   "id": "F13",
+   "sec": "F",
+   "severity": "medium",
+   "cat": "inconsistency",
+   "title": "The API contract drifts from the data model, and PATCH bypasses a claimed business limit",
+   "detail": "`loan_applications.status` allows `ADDITIONAL_INFO_REQUIRED` but the `ApplicationResponse` enum omits it, so a row in that state cannot be serialised by the contract the README calls the single source of truth. `UpdateApplicationRequest.termMonths` carries no min/max while create bounds it 6-360, so a PATCH sets any integer including zero or negative \u2014 against an ASVS row claiming the limits are \u201call enforced in service layer\u201d. The DocuSign webhook route is absent from the spec while the global bearer-auth requirement would apply to it.",
+   "refs": [
+    "examples/loan-portal/backend/loan-portal_openapi-spec_v1.yaml:81",
+    "examples/loan-portal/backend/loan-portal_openapi-spec_v1.yaml:106-107",
+    "examples/loan-portal/security/loan-portal_asvs-mapping_v1.md:170"
+   ]
+  },
+  {
+   "id": "F14",
+   "sec": "F",
+   "severity": "medium",
+   "cat": "gap",
+   "title": "A PII field is sent to a third party that exists in no table, against a consent record with no store",
+   "detail": "The Equifax contract declares PII sent as `full_name`, `date_of_birth`, `address` \u2014 but `address` appears in no table, so the design transmits a personal-data field with no classified, protected or retained home. The same line grounds the transfer in \u201cthe signed credit check consent form\u201d, yet no consent table, timestamp, version or withdrawal path exists anywhere, so the lawful basis this document is held up as demonstrating cannot be evidenced.",
+   "refs": [
+    "examples/loan-portal/integration/loan-portal_external-services_v1.md:54",
+    "examples/loan-portal/database/loan-portal_data-dictionary_v1.md:20-30"
+   ]
+  }
+ ],
+ "keep": [
+  "The six-layer context idea, and the design where security context reaches layers by translation rather than a global import. It matches how Claude Code loads subdirectory `CLAUDE.md` files on demand.",
+  "The `@import` path form. `@../docs/\u2026` is correct and the guides now teach it; only the commented-out state and the missing targets are at issue.",
+  "The gate mechanism's **shape**: one parsable line per decision, append-only, a single writer, latest-row-wins. Every finding in group B is an implementation defect, not an argument against the design.",
+  "The decision to make the layer files placeholder-based rather than domain-specific. Group C's findings are about placeholders not carried through consistently, not about the approach.",
+  "The worked example as a calibration reference, and its README's habit of naming its own known gaps. The problem is that the naming is now inaccurate, not that it exists.",
+  "`docs/agent-skills/README.md`, which states plainly that nothing in that folder loads and that the agent body wins on conflict. That is the honest kind of note the rest of the guides need.",
+  "This review method itself: six independent agents with no session context found 65 findings, including nine defects introduced in the same session by the author of the fixes."
+ ],
+ "plan": [
+  [
+   "Fix the gate mechanism or stop shipping it",
+   "Group B is seven high findings against a mechanism that is the template's headline feature. Minimum: per-gate `grep \u2026 | tail -1` instead of one multi-gate grep with `tail -N`; scope the glob to one system; rename the template so it cannot match; accept `_vN`; validate the four fields. Until then no gated command can be trusted in either direction."
+  ],
+  [
+   "Correct the two documents that teach falsehoods",
+   "`examples/loan-portal/database/\u2026:7-12` states the inverse of the truth about `NEWID()`, and `security/CLAUDE.md:152-157` documents an ESLint suppression that does not suppress. Both actively mislead a reader who trusts them."
+  ],
+  [
+   "Redo every standards citation against published text",
+   "Group D found 8 mis-cited ASVS IDs and 9 ISO controls in withdrawn 2013 numbering; group F found ~25 more ASVS errors plus two controls deleted by substitution (admin MFA, SSRF allow-list). Cite from the standard, not from memory, and mark the mapping Planned until code exists."
+  ],
+  [
+   "Resolve the identity model once, across all six layers",
+   "Groups C and F both found the same defect from different ends: backend Option A forbids a refresh endpoint that frontend and security both mandate, while database ships the Option B schema. Pick one, delete the other, and make the policies conditional on the choice."
+  ],
+  [
+   "Untangle the pen-test gitignore",
+   "`.gitignore` excludes `security/pen-test/`, so neither register ships, while the README advertises them and the Security Auditor hardcodes the path. Track the templates and ignore only the populated registers."
+  ],
+  [
+   "Delete one of the two overlapping guides",
+   "20.6% of the quick reference is verbatim from the long guide, and that duplication is the measured cause of the transposed skill IDs, the agent count and the folder tree being wrong in both places. One guide, one directory tree, one count of everything."
+  ],
+  [
+   "Fix the review skill before trusting its next run",
+   "Its mandatory verifier selects by lexical sort, so it validates the wrong file once a `_v10` exists, and it calls `python3` which `settings.json` does not allow. A verifier that silently checks a stale page is worse than none."
+  ],
+  [
+   "Reconcile infrastructure with what depends on it",
+   "Redis and RabbitMQ are load-bearing with no host anywhere; the ufw allowlist blocks Prometheus and omits the whole monitoring stack; the example's firewall blocks all outbound HTTPS and its frontend runs on one of two load-balanced nodes."
+  ]
+ ]
+}
+</script>
+<div class="wrap">
+  <header class="top">
+    <span class="repo" id="repoLine"></span>
+    <button class="theme-btn" id="themeBtn" type="button">Toggle theme</button>
+  </header>
+
+  <div class="hero">
+    <h1 id="heroTitle"></h1>
+    <p class="lede" id="heroLede"></p>
+    <div class="tally" id="tally"></div>
+  </div>
+
+  <div class="layout">
+    <aside class="side">
+      <h4>Sections</h4>
+      <nav id="sideNav"></nav>
+      <div class="progress">
+        <h4>Triage</h4>
+        <div class="track"><div id="triageBar"></div></div>
+        <small id="triageTxt"></small>
+      </div>
+      <div class="progress">
+        <h4>Remediation</h4>
+        <div class="track"><div id="planBar"></div></div>
+        <small id="planTxt"></small>
+      </div>
+    </aside>
+
+    <main>
+      <section class="block" id="inventory">
+        <h2>Claimed versus on disk</h2>
+        <p class="sub">What the documentation says exists, struck through, next to what was found.</p>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>Item</th><th>Claimed</th><th>Actual</th></tr></thead>
+          <tbody id="invBody"></tbody>
+        </table></div>
+      </section>
+
+      <section class="block" id="findings">
+        <h2>Findings</h2>
+        <p class="sub">Open any finding for detail, file references and a triage status. Status and notes are saved in this browser only.</p>
+        <div class="controls">
+          <input class="search" id="q" type="search" placeholder="Search findings or file paths" aria-label="Search findings">
+          <div class="chips" id="sevChips" role="group" aria-label="Severity"></div>
+          <select class="ctrl-select" id="catSel" aria-label="Category"></select>
+          <select class="ctrl-select" id="stSel" aria-label="Triage status"></select>
+          <span class="count" id="count"></span>
+          <button class="linkbtn" id="expandAll" type="button">Expand all</button>
+          <button class="linkbtn" id="copyBtn" type="button">Copy triage summary</button>
+        </div>
+        <div id="groups"></div>
+      </section>
+
+      <section class="block" id="keep">
+        <h2>What holds up</h2>
+        <p class="sub">The parts worth correcting rather than discarding.</p>
+        <ul class="keep" id="keepList"></ul>
+      </section>
+
+      <section class="block" id="plan">
+        <h2>Remediation plan</h2>
+        <p class="sub">In order. Tick steps off as they land; progress is saved in this browser.</p>
+        <ol class="plan" id="planList"></ol>
+      </section>
+    </main>
+  </div>
+
+  <footer id="footerLine"></footer>
+</div>
+
+<script>
+const D = JSON.parse(document.getElementById("review-data").textContent);
+const SEV = {high:"High", medium:"Medium", low:"Low"};
+const STATUSES = {open:"Open", accepted:"Accepted", disputed:"Disputed", fixed:"Fixed"};
+const KEY = "ai-ssdlc-review-" + (D.date || "x");
+
+let store = {triage:{}, notes:{}, plan:{}};
+try{ const raw = localStorage.getItem(KEY); if(raw) store = Object.assign(store, JSON.parse(raw)); }catch(e){}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(store)); }catch(e){} }
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt = s => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>");
+const fmtT = s => String(s).replace(/`([^`]+)`/g, (m,x)=>"<code>"+esc(x)+"</code>");
+
+document.title = D.title || "Adversarial Review";
+document.getElementById("repoLine").textContent = [D.scope, D.date].filter(Boolean).join(", ");
+document.getElementById("heroTitle").textContent = D.title || "Adversarial Review";
+document.getElementById("heroLede").textContent = D.lede || "";
+document.getElementById("footerLine").innerHTML = D.method ? fmt(D.method) : "";
+
+const F = D.findings || [];
+const tally = {high:0, medium:0, low:0};
+F.forEach(f => { if(tally[f.severity] !== undefined) tally[f.severity]++; });
+document.getElementById("tally").innerHTML =
+  `<span class="pill tot">${F.length} findings</span>` +
+  Object.entries(tally).filter(([,n])=>n>0).map(([k,n])=>`<span class="pill ${k}">${n} ${SEV[k]}</span>`).join("");
+
+document.getElementById("invBody").innerHTML = (D.inventory||[]).map(r =>
+  `<tr><td>${fmtT(r[0])}</td><td class="claim">${fmtT(r[1])}</td><td class="actual">${fmtT(r[2])}</td></tr>`).join("")
+  || `<tr><td colspan="3">No inventory recorded.</td></tr>`;
+
+const nav = document.getElementById("sideNav");
+Object.entries(D.groups||{}).forEach(([k,g]) => {
+  const n = F.filter(f=>f.sec===k).length;
+  nav.insertAdjacentHTML("beforeend", `<a href="#grp-${esc(k)}">${esc(k)}. ${esc(g.name)} <span>${n}</span></a>`);
+});
+nav.insertAdjacentHTML("beforeend",
+  `<a href="#keep">What holds up <span>${(D.keep||[]).length}</span></a><a href="#plan">Remediation <span>${(D.plan||[]).length}</span></a>`);
+
+const state = {q:"", sev:"all", cat:"all", st:"all"};
+const sevChips = document.getElementById("sevChips");
+[["all","All"],["high","High"],["medium","Medium"],["low","Low"]].forEach(([v,l]) => {
+  const b = document.createElement("button");
+  b.type="button"; b.className="chip"; b.textContent=l; b.dataset.v=v;
+  b.setAttribute("aria-pressed", String(v==="all"));
+  b.onclick = () => { state.sev=v; [...sevChips.children].forEach(c=>c.setAttribute("aria-pressed", String(c.dataset.v===v))); render(); };
+  sevChips.appendChild(b);
+});
+const cats = D.categories || {};
+const catSel = document.getElementById("catSel");
+catSel.innerHTML = `<option value="all">All categories</option>` + Object.entries(cats).map(([k,v])=>{
+  const n = F.filter(f=>f.cat===k).length; return `<option value="${esc(k)}">${esc(v)} (${n})</option>`;}).join("");
+catSel.onchange = () => { state.cat = catSel.value; render(); };
+const stSel = document.getElementById("stSel");
+stSel.innerHTML = `<option value="all">Any status</option>` + Object.entries(STATUSES).map(([k,v])=>`<option value="${k}">${v}</option>`).join("");
+stSel.onchange = () => { state.st = stSel.value; render(); };
+document.getElementById("q").addEventListener("input", e => { state.q = e.target.value.trim().toLowerCase(); render(); });
+
+const openSet = new Set();
+const statusOf = id => store.triage[id] || "open";
+
+function render(){
+  const list = F.filter(f => {
+    if(state.sev!=="all" && f.severity!==state.sev) return false;
+    if(state.cat!=="all" && f.cat!==state.cat) return false;
+    if(state.st!=="all" && statusOf(f.id)!==state.st) return false;
+    if(state.q){
+      const hay = (f.id+" "+f.title+" "+f.detail+" "+(f.refs||[]).join(" ")+" "+(store.notes[f.id]||"")).toLowerCase();
+      if(!hay.includes(state.q)) return false;
+    }
+    return true;
+  });
+  document.getElementById("count").textContent = `${list.length} of ${F.length} findings`;
+  const root = document.getElementById("groups");
+  if(!list.length){ root.innerHTML = `<div class="empty">No findings match these filters.</div>`; return; }
+  let html = "";
+  Object.entries(D.groups||{}).forEach(([k,g]) => {
+    const items = list.filter(f=>f.sec===k);
+    if(!items.length) return;
+    const total = F.filter(f=>f.sec===k).length;
+    html += `<div class="group" id="grp-${esc(k)}"><div class="group-head"><h3>${esc(k)}. ${esc(g.name)}</h3>`
+         +  `<span class="gmeta">${items.length===total ? total+" findings" : items.length+" of "+total+" shown"}</span></div>`;
+    if(g.note) html += `<p class="group-note">${fmt(g.note)}</p>`;
+    items.forEach(f => {
+      const st = statusOf(f.id), isOpen = openSet.has(f.id);
+      html += `<article class="finding st-${st}${isOpen?" open":""}" data-id="${esc(f.id)}">
+        <button class="f-head" type="button" aria-expanded="${isOpen}">
+          <span class="f-id">${esc(f.id)}</span>
+          <span class="f-title">${fmt(f.title)}</span>
+          <span class="f-tags">
+            <span class="sev ${esc(f.severity)}">${SEV[f.severity]||esc(f.severity)}</span>
+            ${f.cat?`<span class="cat">${esc(cats[f.cat]||f.cat)}</span>`:""}
+            <span class="chev" aria-hidden="true"></span>
+          </span>
+        </button>
+        <div class="f-body">
+          <p>${fmt(f.detail)}</p>
+          ${(f.refs||[]).length?`<div class="refs">${f.refs.map(r=>`<code>${esc(r)}</code>`).join("")}</div>`:""}
+          <div class="triage">
+            <label>Status <select data-t="${esc(f.id)}">${Object.entries(STATUSES).map(([k2,v])=>`<option value="${k2}"${k2===st?" selected":""}>${v}</option>`).join("")}</select></label>
+            <textarea data-n="${esc(f.id)}" placeholder="Notes, owner, or reason for dispute" aria-label="Notes for ${esc(f.id)}">${esc(store.notes[f.id]||"")}</textarea>
+          </div>
+        </div></article>`;
+    });
+    html += `</div>`;
+  });
+  root.innerHTML = html;
+}
+
+const groupsEl = document.getElementById("groups");
+groupsEl.addEventListener("click", e => {
+  const head = e.target.closest(".f-head"); if(!head) return;
+  const art = head.parentElement, id = art.dataset.id;
+  const isOpen = !art.classList.contains("open");
+  art.classList.toggle("open", isOpen); head.setAttribute("aria-expanded", String(isOpen));
+  isOpen ? openSet.add(id) : openSet.delete(id);
+});
+groupsEl.addEventListener("change", e => {
+  const id = e.target.dataset.t; if(!id) return;
+  store.triage[id] = e.target.value; save();
+  const art = e.target.closest(".finding");
+  art.className = art.className.replace(/st-\w+/, "st-"+e.target.value);
+  updateProgress();
+  if(state.st!=="all") render();
+});
+groupsEl.addEventListener("input", e => {
+  const id = e.target.dataset.n; if(!id) return;
+  store.notes[id] = e.target.value; save();
+});
+
+const expandBtn = document.getElementById("expandAll");
+expandBtn.onclick = () => {
+  const allOpen = openSet.size >= F.length;
+  openSet.clear();
+  if(!allOpen) F.forEach(f=>openSet.add(f.id));
+  expandBtn.textContent = allOpen ? "Expand all" : "Collapse all";
+  render();
+};
+
+document.getElementById("copyBtn").onclick = async () => {
+  const lines = [(D.title||"Review")+" — triage summary", D.date||"", ""];
+  Object.entries(STATUSES).forEach(([k,v]) => {
+    const items = F.filter(f=>statusOf(f.id)===k);
+    lines.push(`${v} (${items.length})`);
+    items.forEach(f => lines.push(`  ${f.id}  [${f.severity}]  ${f.title}${store.notes[f.id]?"  |  "+store.notes[f.id].replace(/\n/g," "):""}`));
+    lines.push("");
+  });
+  const done = (D.plan||[]).filter((_,i)=>store.plan[i]).length;
+  lines.push(`Remediation: ${done} of ${(D.plan||[]).length} steps done`);
+  const btn = document.getElementById("copyBtn");
+  try{ await navigator.clipboard.writeText(lines.join("\n")); btn.textContent="Copied"; }
+  catch(e){ btn.textContent="Copy failed"; }
+  setTimeout(()=>btn.textContent="Copy triage summary", 1600);
+};
+
+document.getElementById("keepList").innerHTML = (D.keep||[]).map(k=>`<li>${fmt(k)}</li>`).join("")
+  || `<li>Nothing recorded.</li>`;
+const planList = document.getElementById("planList");
+planList.innerHTML = (D.plan||[]).map(([t,d],i)=>
+  `<li class="${store.plan[i]?"done":""}"><input type="checkbox" data-p="${i}" aria-label="Step ${i+1}: ${esc(t)}" ${store.plan[i]?"checked":""}><div class="ptext"><b>${esc(t)}</b>${fmt(d)}</div></li>`).join("");
+planList.addEventListener("change", e => {
+  const i = e.target.dataset.p; if(i===undefined) return;
+  store.plan[i] = e.target.checked; save();
+  e.target.closest("li").classList.toggle("done", e.target.checked);
+  updateProgress();
+});
+
+function updateProgress(){
+  const triaged = F.filter(f=>statusOf(f.id)!=="open").length;
+  const fixed = F.filter(f=>statusOf(f.id)==="fixed").length;
+  document.getElementById("triageBar").style.width = (F.length? triaged/F.length*100 : 0)+"%";
+  document.getElementById("triageTxt").textContent = `${triaged} of ${F.length} triaged, ${fixed} fixed`;
+  const P = D.plan||[];
+  const done = P.filter((_,i)=>store.plan[i]).length;
+  document.getElementById("planBar").style.width = (P.length? done/P.length*100 : 0)+"%";
+  document.getElementById("planTxt").textContent = `${done} of ${P.length} steps done`;
+}
+
+document.getElementById("themeBtn").onclick = () => {
+  const r = document.documentElement;
+  const cur = r.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  r.dataset.theme = cur==="dark" ? "light" : "dark";
+};
+
+render(); updateProgress();
+</script>
+</body>
+</html>

@@ -196,7 +196,7 @@ A common source of confusion. Each serves a distinct purpose:
 
 ## SSDLC phase sequence
 
-Each phase ends with a mandatory human approval gate. Requires an explicit `approve`, `reject`, or `approve with conditions: [notes]` — "OK" or "continue" are not valid responses.
+Each phase ends with a mandatory human approval gate. Requires an explicit `approve`, `reject`, or `conditions [notes]` (via `/gate N <response>`) — "OK" or "continue" are not valid responses.
 
 ```
 Phase 1: Architecture Intake & Validation    → Gate 1

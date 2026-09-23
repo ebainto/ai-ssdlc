@@ -19,10 +19,10 @@ The format contract is `ssdlc/GATE-FORMAT.md`. Read it before writing anything.
 
 ## Steps
 
-1. Locate the trail: `ls ssdlc/*_hitl-audit-trail_v1.md 2>/dev/null`.
+1. Locate the trail: `ls ssdlc/*_hitl-audit-trail_v*.md 2>/dev/null`.
    - If none exists and the request is a `status` request: report "No audit
      trail exists. No gate is approved. Copy
-     `ssdlc/_TEMPLATE_hitl-audit-trail_v1.md` to
+     `ssdlc/TEMPLATE-hitl-audit-trail.md` to
      `ssdlc/[system-name]_hitl-audit-trail_v1.md` to open one." Stop.
    - If none exists and the request records a decision: ask for the system name,
      copy the template to `ssdlc/[system-name]_hitl-audit-trail_v1.md`, fill the
