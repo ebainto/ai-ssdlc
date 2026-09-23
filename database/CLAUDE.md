@@ -79,7 +79,7 @@ docker compose -f ../infrastructure/docker/docker-compose.yml up sqlserver
     docs/database/design/         ← data dictionary (.md), ER diagrams (PDF — human reference)
 
   For data dictionaries and entity definitions, convert to Markdown and @import here:
-  @./docs/database/design/loan-portal_data-dictionary_v1.md
+  @../docs/database/design/loan-portal_data-dictionary_v1.md
 
   For ER diagrams (PDF/images), reference in the prompt when needed:
     @docs/database/design/loan-portal_er-diagram_v2.pdf
@@ -90,7 +90,7 @@ docker compose -f ../infrastructure/docker/docker-compose.yml up sqlserver
   - See docs/guides/template-guide.md → "Storing supporting documents" for full guidance
 -->
 
-@./docs/database/design/loan-portal_data-dictionary_v1.md
+@../docs/database/design/loan-portal_data-dictionary_v1.md
 
 **Core entities:**
 

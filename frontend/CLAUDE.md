@@ -95,7 +95,7 @@ ng generate component features/loan-application/components/step-one --standalone
     docs/frontend/design/         ← wireframes, screen flows (PDF/images — human reference only)
 
   For requirements documents (text/Markdown), @import here:
-  @./docs/frontend/requirements/loan-portal_ux-requirements_v1.md
+  @../docs/frontend/requirements/loan-portal_ux-requirements_v1.md
 
   For wireframes and mockups (PDF/images), reference in the prompt when needed:
     @docs/frontend/design/apply-screen-wireframe-v2.pdf
@@ -106,7 +106,7 @@ ng generate component features/loan-application/components/step-one --standalone
   - See docs/guides/template-guide.md → "Storing supporting documents" for full guidance
 -->
 
-@./docs/backend/design/openapi-spec_v1.yaml
+@../docs/backend/design/openapi-spec_v1.yaml
 
 **Purpose:** Customer-facing loan application portal. Authenticated users can apply for loans, upload supporting documents, and track their application status in real time.
 

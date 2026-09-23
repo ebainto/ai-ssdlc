@@ -77,7 +77,7 @@ This file is automatically loaded by Claude Code whenever you work on any file i
   that apply to this project into the Compliance Obligations table below.
 
   For project-specific compliance mappings (e.g. OWASP ASVS control mapping), @import here:
-  @./docs/security/design/loan-portal_asvs-mapping_v1.md
+  @../docs/security/design/loan-portal_asvs-mapping_v1.md
 
   Reference regulatory PDFs explicitly only when asking a specific compliance question:
     @docs/security/requirements/gdpr-recitals.pdf
@@ -89,7 +89,7 @@ This file is automatically loaded by Claude Code whenever you work on any file i
   - See docs/guides/template-guide.md → "Storing supporting documents" for full guidance
 -->
 
-@./docs/security/design/loan-portal_asvs-mapping_v1.md
+@../docs/security/design/loan-portal_asvs-mapping_v1.md
 
 | Framework | Applies | Reason | Key obligation |
 |---|---|---|---|

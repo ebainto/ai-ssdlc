@@ -98,10 +98,10 @@ mvn checkstyle:check
 
   Then @import the Markdown file here so Claude loads it automatically:
 
-    @./docs/backend/requirements/your-requirements-file.md
+    @../docs/backend/requirements/your-requirements-file.md
 
   Example (replace with your actual file name when ready):
-  @./docs/backend/requirements/loan-portal_business-requirements_v1.md
+  @../docs/backend/requirements/loan-portal_business-requirements_v1.md
 
   Rules:
   - Claude cannot read .docx or .xlsx — always convert to .md first
@@ -110,7 +110,7 @@ mvn checkstyle:check
   - See docs/guides/template-guide.md → "Storing supporting documents" for full guidance
 -->
 
-@./docs/backend/design/openapi-spec_v1.yaml
+@../docs/backend/design/openapi-spec_v1.yaml
 
 **Purpose:** Processes loan applications, manages applicant profiles, and orchestrates document verification and status updates. This is the only layer authorised to read or write the database.
 

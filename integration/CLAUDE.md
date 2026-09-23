@@ -75,7 +75,7 @@ docker compose -f ../infrastructure/docker/docker-compose.yml up rabbitmq
     docs/integration/design/         ← integration design docs, sequence diagrams
 
   For vendor API guides: extract only what Claude needs into a Markdown summary, then @import:
-  @./docs/integration/requirements/equifax_api-summary_v2.md
+  @../docs/integration/requirements/equifax_api-summary_v2.md
 
   Do NOT @import full vendor PDF guides (100+ pages) — they consume context on every conversation.
   Instead, reference them in the prompt only when needed:
@@ -87,7 +87,7 @@ docker compose -f ../infrastructure/docker/docker-compose.yml up rabbitmq
   - See docs/guides/template-guide.md → "Storing supporting documents" for full guidance
 -->
 
-@./docs/integration/requirements/external-services-summary_v1.md
+@../docs/integration/requirements/external-services-summary_v1.md
 
 **External services this application integrates with:**
 
