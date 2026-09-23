@@ -19,7 +19,7 @@ The format contract is `ssdlc/GATE-FORMAT.md`. Read it before writing anything.
 
 ## Steps
 
-1. Locate the trail: `ls ssdlc/*_hitl-audit-trail_v*.md 2>/dev/null`.
+1. Locate the trail: `ls ssdlc/*_hitl-audit-trail_v*.md(N) 2>/dev/null` (zsh: `(N)` = no error if no match).
    - If none exists and the request is a `status` request: report "No audit
      trail exists. No gate is approved. Copy
      `ssdlc/TEMPLATE-hitl-audit-trail.md` to
@@ -29,19 +29,26 @@ The format contract is `ssdlc/GATE-FORMAT.md`. Read it before writing anything.
      header, then continue.
    - If more than one exists: list them and ask which system. Never guess.
 
-2. For a `status` request, read the current decision for each gate:
-   `grep -E "^Gate [1-7]:" <trail> | tail -20`
-   For each gate 1-7, the **last** matching row wins. Report as a table:
-   gate, name, decision, date, approver, conditions. A gate with no row is
-   `not approved`. Then stop — a status request never writes.
+2. For a `status` request, read the current decision for each gate by finding the
+   chronologically-latest row for each. For each gate N (1 to 7):
+   - `grep -E "^Gate N:" <trail> | sort -t'|' -k2 -r | head -1`
+   - Parse the row by `|` field delimiter to extract: decision, date, approver, conditions
+   - If no row exists, gate is `not approved`
+   
+   Report as a table: gate, name, decision, date, approver, conditions.
+   Then stop — a status request never writes.
 
 3. For a decision request, before writing:
-   - Confirm the gate number is 1-7. Anything else: stop.
-   - Confirm the decision word is `approve`, `reject` or `conditions`.
+   - Confirm the gate number is 1-7. Anything else: stop with "Gate N must be 1-7."
+   - Confirm the decision word is exactly one of: `approve`, `reject`, `conditions`.
+     Anything else: stop with "Decision must be approve, reject, or conditions."
    - If `conditions`, require non-empty notes. Conditions with no text is not a
-     valid decision — ask for them.
+     valid decision — ask for them and confirm they contain no pipe `|` characters
+     or newlines (single line only).
+   - If `reject`, require notes. Rejections must have a reason.
    - Ask the human to confirm their name or email for the approver field. Do not
      invent it, and do not reuse a name from an earlier row without asking.
+   - Use today's date (YYYY-MM-DD format) — do not accept past or future dates.
 
 4. Append one line, in exactly the `ssdlc/GATE-FORMAT.md` shape, immediately
    above the `<!-- END GATE DECISIONS -->` marker:

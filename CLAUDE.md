@@ -142,6 +142,15 @@ Phase 7: Release Readiness Review            → Gate 7
 
 Each gate requires an explicit `approve`, `reject`, or `conditions [notes]` response (via `/gate N <response>`) before the next phase begins. "OK" or "continue" are not valid gate responses.
 
+**Gate enforcement by phase:**
+- **Gate 1** — Architecture sign-off. Required by `/infra-check`.
+- **Gate 2** — Threat model sign-off. Required by `/security-audit`, `/new-api`.
+- **Gate 3** — Requirements sign-off. Required by `/run-tests`, `/new-feature`, `/new-api`, `/new-component`.
+- **Gate 4** — Design sign-off. **Currently not enforced by any command** (future extension).
+- **Gate 5** — Development standards sign-off. Required by `/new-feature`, `/new-api`, `/new-component`, `/code-review`.
+- **Gate 6** — Security testing plan sign-off. **Currently not enforced by any command** (future extension).
+- **Gate 7** — Release readiness sign-off. **Currently not enforced by any command** (future extension).
+
 ## Key Artifacts
 
 These are the phase outputs the gated commands read. **You produce them** — no

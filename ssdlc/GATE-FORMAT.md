@@ -22,11 +22,11 @@ Every gate decision is one line, exactly this shape:
 Gate <N>: <decision> | <YYYY-MM-DD> | <approver> | <conditions or "-">
 ```
 
-- `<N>` — 1 to 7
-- `<decision>` — `approved`, `rejected`, or `approved-with-conditions`
-- `<YYYY-MM-DD>` — date of the decision
-- `<approver>` — name or email of the human who decided
-- `<conditions>` — required when decision is `approved-with-conditions`, else `-`
+- `<N>` — 1 to 7. Required. **Validation: exactly one of [1-7].**
+- `<decision>` — must be exactly one of: `approved`, `rejected`, `approved-with-conditions`. **Validation: no other values accepted.**
+- `<YYYY-MM-DD>` — date of the decision in ISO 8601 format. **Required. Validation: must be a valid date.**
+- `<approver>` — name or email of the human who decided. Required.
+- `<conditions>` — **Required when decision is `approved-with-conditions` or `rejected` (the reason); else must be `-` for `approved`**. **Validation: no pipe `|` characters, no newlines (single line only).**
 
 Examples:
 
@@ -38,17 +38,31 @@ Gate 3: rejected | 2026-09-25 | erwin.bainto@rrd.com | No story covers GDPR eras
 
 ## How a command checks a gate
 
-A gated command greps for the latest row for that gate:
+A gated command must find the chronologically-latest row for that gate (not position-latest):
 
 ```bash
-grep -E "^Gate 5:" ssdlc/*_hitl-audit-trail_v1.md | tail -1
+grep -E "^Gate 5:" ssdlc/[system]_hitl-audit-trail_v*.md | sort -t'|' -k2 -r | head -1
 ```
 
+Parse the matching row by `|` field delimiter: `Gate N | decision | date | approver | conditions`
+
 - No file, or no matching row  → gate is **not approved**. Stop.
-- Row says `approved`           → proceed.
-- Row says `approved-with-conditions` → proceed, and echo the conditions to the
+- Row decision is `approved`           → proceed.
+- Row decision is `approved-with-conditions` → proceed, and echo the conditions to the
   developer before doing anything else.
-- Row says `rejected`           → stop, and quote the conditions as the reason.
+- Row decision is `rejected`           → stop, and quote the conditions as the reason.
+
+## Design assumptions
+
+**Append-only by convention, not by enforcement.** This template assumes `/gate` is the only writer
+and that the trail is never edited. Production deployments should add:
+- CI/hook validation to reject edits (e.g., git push hook checking file timestamps)
+- Checksum or signature protection
+- Commit requirement (`git config commit.gpgsign=true`)
+
+**System scope:** Each system has its own trail file. Commands must verify they are reading the correct 
+system's trail before making decisions. A multi-system deployment can check multiple trails but must 
+explicitly scope to the system under review (never glob all trails and pick arbitrarily).
 
 ## Why a plain grep
 

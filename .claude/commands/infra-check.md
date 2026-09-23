@@ -14,9 +14,16 @@ Scope: $ARGUMENTS
 
 Steps to follow:
 1. Confirm Gate 1 is approved before doing anything else.
-   Run: `grep -hE "^Gate 1:" ssdlc/*_hitl-audit-trail_v1.md 2>/dev/null | tail -5`
-   The **last** matching row wins. Format contract:
-   `ssdlc/GATE-FORMAT.md` (Gate 1 = architecture sign-off).
+   Find the chronologically-latest row (not position-latest):
+   
+   `grep -E "^Gate 1:" ssdlc/*_hitl-audit-trail_v*(N) 2>/dev/null | sort -t'|' -k2 -r | head -1`
+   
+   Check the decision field (2nd field after `|`):
+   - `approved` → proceed
+   - `approved-with-conditions` → proceed, echo conditions first
+   - `rejected` or no row → stop
+   
+   Reference: `ssdlc/GATE-FORMAT.md` (Gate 1 = architecture sign-off).
    - No trail file, or no row for this gate → stop:
      "Gate 1 is not approved. No HITL audit trail entry exists. Run `/gate status`
      to see current gate state, then `/gate 1 approve` once the human has

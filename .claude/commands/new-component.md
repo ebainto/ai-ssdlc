@@ -13,9 +13,18 @@ Component to build: $ARGUMENTS
 
 Steps to follow:
 1. Confirm Gate 3 and Gate 5 are approved before doing anything else.
-   Run: `grep -hE "^Gate (3|5):" ssdlc/*_hitl-audit-trail_v*.md 2>/dev/null | tail -8`
-   For each required gate the **last** matching row wins. Format contract:
-   `ssdlc/GATE-FORMAT.md` (Gate 3 = requirements sign-off; Gate 5 = dev standards sign-off).
+   For each gate, find the chronologically-latest row (not position-latest):
+   
+   **Gate 3:** `grep -E "^Gate 3:" ssdlc/*_hitl-audit-trail_v*(N) 2>/dev/null | sort -t'|' -k2 -r | head -1`
+   
+   **Gate 5:** `grep -E "^Gate 5:" ssdlc/*_hitl-audit-trail_v*(N) 2>/dev/null | sort -t'|' -k2 -r | head -1`
+   
+   For each row, check the decision field (2nd field after `|`):
+   - `approved` → proceed
+   - `approved-with-conditions` → proceed, echo conditions first
+   - `rejected` or no row → stop
+   
+   Reference: `ssdlc/GATE-FORMAT.md` (Gate 3 = requirements sign-off; Gate 5 = dev standards sign-off).
    - This pipeline always spawns QA Engineer (Gate 3) and Code Reviewer (Gate 5).
      Security Auditor and Infrastructure are conditional and are gate-checked at
      spawn time if used.
