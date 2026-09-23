@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pip/
+
+# Build outputs
+dist/
+build/
+out/
+.next/
+target/
+
+# Environment and secrets — never commit these
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs and temp files
+*.log
+logs/
+tmp/
+temp/
+
+# Large binary files
+*.zip
+*.tar.gz
+*.jar
+*.class
+
+# Test coverage artifacts (regenerable via: npm test -- --coverage)
+coverage/
+
+# Confidential security artifacts — pen test findings must not enter git history
+security/pen-test/
+
+# Machine-local Claude Code settings — never share
+.claude/settings.local.json

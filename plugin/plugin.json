@@ -1,0 +1,54 @@
+{
+  "name": "ai-ssdlc-plugin",
+  "version": "1.0.0",
+  "description": "Claude plugin for AI-powered Secure Software Development Lifecycle assistance",
+  "author": "SSDLC Team",
+  "license": "MIT",
+  "entry_point": "src/index.ts",
+  "capabilities": [
+    "threat-modeling",
+    "security-assessment",
+    "architecture-review",
+    "compliance-mapping"
+  ],
+  "tools": [
+    {
+      "name": "threat_model_generator",
+      "description": "Generate STRIDE threat models for system components",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "system_description": {
+            "type": "string",
+            "description": "Description of the system to threat model"
+          },
+          "scope": {
+            "type": "string",
+            "enum": ["component", "layer", "full-system"],
+            "description": "Scope of threat modeling"
+          }
+        },
+        "required": ["system_description", "scope"]
+      }
+    },
+    {
+      "name": "security_assessment",
+      "description": "Assess security posture of an architecture",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "architecture_doc": {
+            "type": "string",
+            "description": "Architecture documentation or diagram"
+          },
+          "framework": {
+            "type": "string",
+            "enum": ["NIST", "ISO27001", "PCI-DSS", "GDPR"],
+            "description": "Compliance framework to assess against"
+          }
+        },
+        "required": ["architecture_doc", "framework"]
+      }
+    }
+  ]
+}

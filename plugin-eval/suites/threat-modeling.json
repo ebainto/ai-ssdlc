@@ -1,0 +1,105 @@
+{
+  "name": "Threat Modeling Tests",
+  "version": "1.0.0",
+  "description": "Verify threat modeling tool functionality and output quality",
+  "test_cases": [
+    {
+      "id": "threat-001",
+      "name": "Component threat model generation",
+      "description": "Generate STRIDE threats for a single component",
+      "tool": "threat_model_generator",
+      "input": {
+        "system_description": "REST API endpoint that processes user authentication requests using JWT tokens stored in a relational database",
+        "scope": "component"
+      },
+      "assertions": [
+        {
+          "path": "$.status",
+          "operator": "equals",
+          "value": "success"
+        },
+        {
+          "path": "$.threats",
+          "operator": "length_gte",
+          "value": 3,
+          "description": "Should identify at least 3 STRIDE threats"
+        },
+        {
+          "path": "$.threats[*].category",
+          "operator": "contains_all",
+          "value": ["Spoofing", "Tampering", "Information_Disclosure"],
+          "description": "Should cover multiple STRIDE categories"
+        }
+      ],
+      "timeout": 15000,
+      "retry_count": 1
+    },
+    {
+      "id": "threat-002",
+      "name": "Layer threat model generation",
+      "description": "Generate STRIDE threats for an architecture layer",
+      "tool": "threat_model_generator",
+      "input": {
+        "system_description": "API Gateway layer handling all external traffic with rate limiting, WAF protection, and JWT validation",
+        "scope": "layer"
+      },
+      "assertions": [
+        {
+          "path": "$.threats",
+          "operator": "length_gte",
+          "value": 5
+        },
+        {
+          "path": "$.threat_coverage.categories",
+          "operator": "contains_all",
+          "value": ["S", "T", "R", "I", "D", "E"]
+        }
+      ],
+      "timeout": 20000,
+      "retry_count": 1
+    },
+    {
+      "id": "threat-003",
+      "name": "Full system threat model",
+      "description": "Generate comprehensive STRIDE threat model for full system",
+      "tool": "threat_model_generator",
+      "input": {
+        "system_description": "Multi-tier web application: Angular frontend → Spring Boot backend → SQL Server database, with RabbitMQ messaging and HashiCorp Vault for secrets",
+        "scope": "full-system"
+      },
+      "assertions": [
+        {
+          "path": "$.threats",
+          "operator": "length_gte",
+          "value": 10
+        },
+        {
+          "path": "$.has_mitigations",
+          "operator": "equals",
+          "value": true
+        }
+      ],
+      "timeout": 30000,
+      "retry_count": 1
+    },
+    {
+      "id": "threat-004",
+      "name": "Threat output validation",
+      "description": "Verify threat output contains required fields",
+      "tool": "threat_model_generator",
+      "input": {
+        "system_description": "User authentication service",
+        "scope": "component"
+      },
+      "assertions": [
+        {
+          "path": "$.threats[0]",
+          "operator": "has_keys",
+          "value": ["id", "category", "description", "attack_vector", "likelihood", "impact", "mitigation"],
+          "description": "Each threat must have required fields"
+        }
+      ],
+      "timeout": 15000
+    }
+  ]
+}

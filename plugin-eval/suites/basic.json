@@ -1,0 +1,72 @@
+{
+  "name": "Basic Plugin Functionality",
+  "version": "1.0.0",
+  "description": "Verify core plugin functionality and API compliance",
+  "test_cases": [
+    {
+      "id": "basic-001",
+      "name": "Plugin initialization",
+      "description": "Verify plugin initializes without errors",
+      "tool": "plugin_health_check",
+      "input": {},
+      "expected_output": {
+        "status": "healthy",
+        "version": "1.0.0"
+      },
+      "timeout": 5000,
+      "retry_count": 0
+    },
+    {
+      "id": "basic-002",
+      "name": "Tool availability check",
+      "description": "Verify all declared tools are accessible",
+      "tool": "list_tools",
+      "input": {},
+      "expected_output": {
+        "tool_count": 2,
+        "tools": ["threat_model_generator", "security_assessment"]
+      },
+      "timeout": 5000,
+      "retry_count": 1
+    },
+    {
+      "id": "basic-003",
+      "name": "Input validation",
+      "description": "Verify input schema validation works correctly",
+      "tool": "threat_model_generator",
+      "input": {
+        "system_description": "Test system",
+        "scope": "component"
+      },
+      "expected_output": {
+        "status": "success",
+        "has_threats": true
+      },
+      "timeout": 10000,
+      "retry_count": 1
+    },
+    {
+      "id": "basic-004",
+      "name": "Error handling",
+      "description": "Verify graceful error handling for invalid input",
+      "tool": "threat_model_generator",
+      "input": {
+        "system_description": ""
+      },
+      "expected_error": "INVALID_INPUT",
+      "timeout": 5000
+    }
+  ],
+  "setup": {
+    "pre_test_steps": [
+      "log: Starting basic functionality test suite",
+      "verify: plugin is loaded"
+    ]
+  },
+  "teardown": {
+    "post_test_steps": [
+      "cleanup: remove test artifacts",
+      "log: Test suite completed"
+    ]
+  }
+}

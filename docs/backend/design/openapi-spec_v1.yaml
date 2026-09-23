@@ -1,0 +1,418 @@
+openapi: 3.1.0
+
+info:
+  title: Loan Portal API
+  version: 1.0.0
+  description: |
+    Backend REST API for the Loan Portal application.
+    All endpoints require JWT Bearer authentication (RS256) unless marked public.
+    Access tokens expire after 15 minutes. Use /auth/refresh to rotate.
+
+servers:
+  - url: http://localhost:8080
+    description: Local dev (Spring DevTools, port 8080)
+  - url: https://api.staging.internal
+    description: Staging
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    TokenResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: RS256-signed JWT, 15-minute expiry
+        refreshToken:
+          type: string
+          description: Opaque token, 7-day expiry, rotated on every use
+
+    RefreshRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken:
+          type: string
+
+    CreateApplicationRequest:
+      type: object
+      required: [loanAmount, purpose]
+      properties:
+        loanAmount:
+          type: number
+          minimum: 1000
+          maximum: 500000
+          description: Must be between $1,000 and $500,000
+        purpose:
+          type: string
+          maxLength: 500
+        termMonths:
+          type: integer
+          minimum: 6
+          maximum: 360
+
+    ApplicationResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [DRAFT, SUBMITTED, UNDER_REVIEW, APPROVED, REJECTED]
+        loanAmount:
+          type: number
+        purpose:
+          type: string
+        termMonths:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    UpdateApplicationRequest:
+      type: object
+      description: Only allowed when application is in DRAFT status
+      properties:
+        loanAmount:
+          type: number
+          minimum: 1000
+          maximum: 500000
+        purpose:
+          type: string
+          maxLength: 500
+        termMonths:
+          type: integer
+
+    PagedApplications:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApplicationResponse'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+        totalPages:
+          type: integer
+
+    CreateDocumentRequest:
+      type: object
+      required: [applicationId, documentType, fileReference]
+      properties:
+        applicationId:
+          type: string
+          format: uuid
+        documentType:
+          type: string
+          enum: [IDENTITY, INCOME, BANK_STATEMENT, OTHER]
+        fileReference:
+          type: string
+          description: Storage path reference — actual file stored by infrastructure layer
+
+    DocumentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        applicationId:
+          type: string
+          format: uuid
+        documentType:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, VERIFIED, REJECTED]
+        uploadedAt:
+          type: string
+          format: date-time
+
+    ApplicantProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        roles:
+          type: array
+          items:
+            type: string
+            enum: [APPLICANT, REVIEWER, ADMIN]
+        identityVerified:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+          description: User-safe message — no stack trace, no internal path
+        correlationId:
+          type: string
+
+paths:
+
+  /api/v1/auth/login:
+    post:
+      summary: Issue access and refresh token
+      security: []
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Tokens issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/auth/refresh:
+    post:
+      summary: Rotate refresh token and issue new access token
+      security: []
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: New tokens issued; old refresh token invalidated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          description: Refresh token invalid, expired, or already used
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/applications:
+    post:
+      summary: Create new loan application
+      tags: [Applications]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateApplicationRequest'
+      responses:
+        '201':
+          description: Application created in DRAFT status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationResponse'
+        '400':
+          description: Validation failure (amount out of range, missing field)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Applicant already has 3 active applications
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      summary: List own applications (paginated)
+      tags: [Applications]
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Paginated list of applications belonging to the authenticated applicant
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedApplications'
+
+  /api/v1/applications/{id}:
+    get:
+      summary: Get application by ID
+      description: Accessible by the owning applicant or any user with ADMIN role
+      tags: [Applications]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Application detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationResponse'
+        '403':
+          description: Caller does not own this application and is not ADMIN
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Application not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    patch:
+      summary: Update application
+      description: Only allowed when application is in DRAFT status
+      tags: [Applications]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateApplicationRequest'
+      responses:
+        '200':
+          description: Application updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationResponse'
+        '409':
+          description: Application is not in DRAFT status — updates rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/applications/{id}/submit:
+    post:
+      summary: Submit application for review
+      description: Transitions status from DRAFT to SUBMITTED. All required documents must be in VERIFIED status.
+      tags: [Applications]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Application submitted — status is now SUBMITTED
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationResponse'
+        '409':
+          description: Not all required documents are in VERIFIED status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/documents:
+    post:
+      summary: Upload document reference
+      description: Stores the file reference and triggers document verification. Actual file storage is handled by the infrastructure layer.
+      tags: [Documents]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDocumentRequest'
+      responses:
+        '201':
+          description: Document reference stored — status starts as PENDING
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentResponse'
+        '400':
+          description: Invalid document type or missing file reference
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/applicants/me:
+    get:
+      summary: Get own applicant profile
+      tags: [Applicants]
+      responses:
+        '200':
+          description: Profile of the authenticated applicant
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicantProfile'

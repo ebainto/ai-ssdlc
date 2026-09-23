@@ -1,0 +1,111 @@
+name: Plugin Evaluation
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'plugin/**'
+      - 'plugin-eval/**'
+      - '.github/workflows/plugin-eval.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'plugin/**'
+      - 'plugin-eval/**'
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        working-directory: ./plugin
+        run: npm install
+
+      - name: Install eval tooling
+        run: npm install --save-dev @anthropic-ai/plugin-eval
+
+      - name: Run plugin eval - basic tests
+        id: eval_basic
+        run: |
+          npx claude plugin eval run \
+            --config plugin-eval/eval.config.json \
+            --suite plugin-eval/suites/basic.json \
+            --output plugin-eval/reports/basic-report.json
+
+      - name: Run plugin eval - threat modeling
+        id: eval_threats
+        run: |
+          npx claude plugin eval run \
+            --config plugin-eval/eval.config.json \
+            --suite plugin-eval/suites/threat-modeling.json \
+            --output plugin-eval/reports/threat-report.json
+
+      - name: Run plugin eval - security assessment
+        id: eval_security
+        run: |
+          npx claude plugin eval run \
+            --config plugin-eval/eval.config.json \
+            --suite plugin-eval/suites/security-assessment.json \
+            --output plugin-eval/reports/security-report.json
+
+      - name: Generate combined report
+        run: |
+          npx claude plugin eval report \
+            --config plugin-eval/eval.config.json \
+            --input plugin-eval/reports/*.json \
+            --output plugin-eval/reports/combined-report.html
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-eval-reports
+          path: plugin-eval/reports/
+          retention-days: 30
+
+      - name: Publish test results
+        if: always()
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: plugin-eval/reports/*-report.json
+          check_name: Plugin Eval Results
+
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = JSON.parse(fs.readFileSync('plugin-eval/reports/combined-report.json', 'utf8'));
+
+            const comment = `## 🧪 Plugin Evaluation Results
+
+            - ✅ Passed: ${report.passed}
+            - ❌ Failed: ${report.failed}
+            - ⏭️ Skipped: ${report.skipped}
+            - 📊 Success Rate: ${(report.passed / (report.passed + report.failed) * 100).toFixed(2)}%
+
+            [View Full Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Fail if tests failed
+        if: failure()
+        run: |
+          echo "Plugin evaluation tests failed. See details above."
+          exit 1
