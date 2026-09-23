@@ -73,7 +73,7 @@ None of them exist in the bare template — do not assume their contents.
 - **Save discipline** — Act on save instructions before moving to next task
 - **Security first** — All layer changes must align with `security/CLAUDE.md` policies
 - **Version artifacts** — `[system]_[type]_v[N].[ext]` — never overwrite
-- **Self-contained surface** — eleven commands in `.claude/commands/`, the `/critique` skill in `.claude/skills/`, and five agents in `.claude/agents/` are the complete set. Do not invoke workflows, agents or artifact conventions from outside this repository.
+- **Self-contained surface** — eleven commands in `.claude/commands/`, the `/critique` skill in `.claude/skills/` (single-artifact review, or `report` for a full sweep rendered as HTML), and five agents in `.claude/agents/` are the complete set. Do not invoke workflows, agents or artifact conventions from outside this repository.
 
 ---
 
