@@ -353,7 +353,7 @@ Trigger a new Phase 2 snapshot when: new external integration, auth model change
 
 ## Agent and skills system
 
-This template ships with a six-agent Claude Code AI system. Every agent is a fresh, specialist context — the Dev Lead coordinates; QA Engineer, Code Reviewer, Security Auditor, Infrastructure Agent, and Tech Researcher execute in their domain.
+This template ships with a five-agent Claude Code AI system plus a Dev Lead coordinator. Every agent is a fresh, specialist context — the Dev Lead is a command-line coordinator role that spins up the other agents as needed: QA Engineer, Code Reviewer, Security Auditor, Infrastructure Agent, and Tech Researcher execute in their domain.
 
 | To learn about | Read |
 |---|---|
