@@ -32,7 +32,7 @@ If `infrastructure/CLAUDE.md` is unpopulated: "infrastructure/CLAUDE.md is not p
 
 ## Skills
 
-Skill files: `.claude/skills/infrastructure/`
+Written specs (reference only, not loaded): `docs/agent-skills/infrastructure/`
 
 ---
 
@@ -152,6 +152,11 @@ Result definitions:
 2. Read `infrastructure/monitoring/prometheus.yml` — identify scrape jobs.
 3. Read `infrastructure/monitoring/alertmanager/` or equivalent — identify alert rules.
 4. Produce the monitoring coverage table.
+
+If none of these files exist, `infrastructure/` has not been populated yet. Stop
+and report: "No Docker Compose or monitoring config found — infrastructure is not
+yet populated, so there is no monitoring coverage to validate." Do not report
+100% coverage of zero services, and do not treat an absent file as a finding.
 
 **Output format:**
 

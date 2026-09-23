@@ -1,7 +1,7 @@
 # QA1 — Write unit tests for a story
 
 **Agent:** QA Engineer
-**Trigger:** `"write tests for story [ID]"`, `/run-tests`, or spawned by Dev Lead Agent
+**Trigger:** `"write tests for story [ID]"`, `/run-tests`, or spawned by the Dev Lead coordinator
 
 ## Inputs required
 

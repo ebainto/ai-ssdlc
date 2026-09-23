@@ -21,7 +21,7 @@
 
 ## On missing justification block OR missing register entry
 
-→ Fire SA4 — produce Critical finding, append to `security/pen-test/findings-register.md`
+→ Fire SA4 — produce Critical finding, append to `security/pen-test/internal-findings-register.md`
 
 ## Conversation output
 

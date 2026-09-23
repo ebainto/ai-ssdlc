@@ -25,11 +25,20 @@
 
 | STRIDE Threat | Component | Mitigation control | In diff? | Status |
 |---|---|---|---|---|
-| [threat] | [component] | [control] | Yes / No / Partial | Covered / GAP / Unmodelled |
+| [threat] | [component] | [control] | Yes / No / Partial | Covered / GAP / Planned / Unmodelled |
 
 ## On each GAP
 
-→ Fire SA4 — produce finding card, append to `security/pen-test/findings-register.md`
+→ Fire SA4 — produce finding card, append to `security/pen-test/internal-findings-register.md`
+
+A GAP requires all three: the threat row says `Mitigated`, the component has
+code, and the control is absent. If the row says `Planned`, or the component is
+not implemented yet, it is **not** a GAP and must not reach the register.
+
+## On each Planned control
+
+→ Count it in the summary line. Write nothing to the register — there is no code
+  for the control to be missing from.
 
 ## On each Unmodelled path
 

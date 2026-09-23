@@ -337,13 +337,13 @@ Trigger a new Phase 2 snapshot when: new external integration, auth model change
 |---|---|
 | `docs/guides/template-guide.md` | Full guide — start here for a new project |
 | `docs/guides/quick-reference.md` | This file — short training guide for layer structure, security propagation, SSDLC gates |
-| `docs/guides/agents-and-skills-guide.md` | Six development agents and 27 skills — design, decision rationale, eval suites, and implementation priority |
+| `docs/guides/agents-and-skills-guide.md` | Six development agents and 29 skill specs — design, decision rationale, eval suites, and implementation priority |
 | `docs/guides/quick-reference-agent-and-skills.md` | One-page cheat sheet for agents, skills, commands, and @import state |
 | `security/README.md` | Security layer overview — three locations explained |
 | `security/policies/secure-coding-standard.md` | Coding rules template with compliance control refs |
 | `security/policies/encryption-policy.md` | Algorithm and key management requirements |
 | `security/sast/suppression-rules.md` | SAST suppression register — every suppression tracked |
-| `security/pen-test/findings-register.md` | Pen test findings tracker — confidential |
+| `security/pen-test/internal-findings-register.md` | Pen test findings tracker — confidential |
 | `security/threat-model/stride-model.md` | Operational STRIDE working copy |
 | `docs/<layer>/README.md` | How to connect team documents to Claude for each layer |
 | `ssdlc/` | Phase-gated outputs — threat model snapshot, user stories, design specs, audit trail |

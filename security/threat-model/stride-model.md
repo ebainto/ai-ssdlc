@@ -17,6 +17,17 @@
 >
 > Delete this notice once the model is in active use.
 
+> **⚠ The threat register below is EXAMPLE CONTENT.**
+> Rows T-01 to T-07 illustrate the expected shape and depth for a loan portal.
+> Their controls are **not implemented anywhere in this repository** — there is
+> no nginx `limit_req` block, no append-only audit table, and no SAST ruleset.
+> Their status is therefore `Planned`, not `Mitigated`.
+>
+> Before your first security audit: replace these rows with your real threats,
+> and set each Status honestly. A row marked `Mitigated` asserts that a
+> reviewer can point at the control in code — `/security-audit` trusts that
+> claim and will raise a confidential finding when the control is absent.
+
 ---
 
 ## System overview
@@ -64,18 +75,24 @@ EXTERNAL SERVICES ZONE (semi-trusted — third-party APIs)
 
 | ID | Threat category | STRIDE | Affected component | Trust boundary crossed | Attack vector | Likelihood | Impact | Mitigation control | Control owner | Status |
 |---|---|---|---|---|---|---|---|---|---|---|
-| T-01 | Spoofing user identity | S | API Gateway | External → Internal | Forged JWT token | Medium | High | RS256 JWT validation via Spring Security `JwtDecoder`; token expiry 15 min | Backend | Mitigated |
-| T-02 | Tampering with loan application data | T | Database | Internal | SQL injection via unvalidated input | Low | Critical | Parameterised queries (Hibernate); input validation at service layer | Backend | Mitigated |
-| T-03 | Repudiation of financial transaction | R | Backend — loan approval service | Internal | Absence of audit trail | Low | High | Immutable audit log written to append-only table; log forwarded to Loki | Backend | Mitigated |
-| T-04 | Information disclosure of PII | I | Database | Internal | Unauthorised DB query returning PII columns | Medium | Critical | Always Encrypted on PII columns; RLS enforcing user-scoped access | Database | Mitigated |
-| T-05 | Denial of service — API flooding | D | Nginx / API Gateway | External → Internal | Unauthenticated request flooding | High | High | Rate limiting at Nginx (100 req/s per IP); circuit breaker (Resilience4j) | Infrastructure | Mitigated |
-| T-06 | Elevation of privilege — admin endpoint access | E | Backend — admin API | Internal | Missing role check on admin endpoints | Low | Critical | `@PreAuthorize("hasRole('ADMIN')")` on all admin endpoints; verified by SAST | Backend | Mitigated |
-| T-07 | Information disclosure — secrets in logs | I | Backend | Internal | Developer accidentally logs a JWT or API key | Medium | High | SAST rule flags log statements with credential patterns; log review in code review | Backend | Mitigated |
+| T-01 | Spoofing user identity | S | API Gateway | External → Internal | Forged JWT token | Medium | High | RS256 JWT validation via Spring Security `JwtDecoder`; token expiry 15 min | Backend | Planned (example) |
+| T-02 | Tampering with loan application data | T | Database | Internal | SQL injection via unvalidated input | Low | Critical | Parameterised queries (Hibernate); input validation at service layer | Backend | Planned (example) |
+| T-03 | Repudiation of financial transaction | R | Backend — loan approval service | Internal | Absence of audit trail | Low | High | Immutable audit log written to append-only table; log forwarded to Loki | Backend | Planned (example) |
+| T-04 | Information disclosure of PII | I | Database | Internal | Unauthorised DB query returning PII columns | Medium | Critical | Always Encrypted on PII columns; RLS enforcing user-scoped access | Database | Planned (example) |
+| T-05 | Denial of service — API flooding | D | Nginx / API Gateway | External → Internal | Unauthenticated request flooding | High | High | Rate limiting at Nginx (100 req/s per IP); circuit breaker (Resilience4j) | Infrastructure | Planned (example) |
+| T-06 | Elevation of privilege — admin endpoint access | E | Backend — admin API | Internal | Missing role check on admin endpoints | Low | Critical | `@PreAuthorize("hasRole('ADMIN')")` on all admin endpoints; verified by SAST | Backend | Planned (example) |
+| T-07 | Information disclosure — secrets in logs | I | Backend | Internal | Developer accidentally logs a JWT or API key | Medium | High | SAST rule flags log statements with credential patterns; log review in code review | Backend | Planned (example) |
 | T-08 | [Add threat] | | | | | | | | | Open |
 
 **Likelihood:** High / Medium / Low
 **Impact:** Critical / High / Medium / Low
-**Status:** Mitigated / Partially mitigated / Open / Risk accepted
+**Status:** Mitigated / Partially mitigated / Planned / Open / Risk accepted
+
+- `Mitigated` — control is implemented and a reviewer can point at it in code.
+  Only use this once that is true; `/security-audit` treats it as a claim to verify.
+- `Planned` — control is designed but not yet built. Audits will not raise a
+  finding against it, because there is no code to find it missing from.
+- `Partially mitigated` — implemented for some paths only; name which in the row.
 
 ---
 

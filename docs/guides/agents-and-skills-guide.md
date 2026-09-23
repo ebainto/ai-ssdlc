@@ -17,7 +17,7 @@ A complete reference for the six development agents and 9 slash commands designe
    - [Connecting documents to layers (@import)](#connecting-documents-to-layers-import)
 5. [How the agents work together — sequence examples](#5-how-the-agents-work-together--sequence-examples)
 6. [Agent definitions](#6-agent-definitions)
-   - [Dev Lead Agent](#agent-1--dev-lead-agent)
+   - [Dev Lead coordinator](#agent-1--dev-lead-agent)
    - [Code Reviewer Agent](#agent-2--code-reviewer-agent)
    - [Security Auditor Agent](#agent-3--security-auditor-agent)
    - [QA Engineer Agent](#agent-4--qa-engineer-agent)
@@ -45,10 +45,10 @@ This project is structured as an agent engineering framework. The table below sc
 | 3 | **Context Management** | ✅ Present | `.claudeignore` (blocks credentials, build artefacts, `node_modules`, lock files), progressive disclosure pattern in root `CLAUDE.md` ("read these docs before writing code"), layer isolation: each layer `CLAUDE.md` loads only when working in that directory |
 | 4 | **Tool Interface** | ✅ Present | `.claude/settings.json` permissions allowlist (git, mvn, npm, docker-compose — explicit allow/deny per command) |
 | 5 | **Execution Environment** | ⚠️ Partial | Referenced in `CLAUDE.md` (docker-compose, `mvn spring-boot:run`, Angular serve) — but `docker-compose.yml` and `Dockerfile` are template scaffolds. Layer `src/` directories are empty placeholders. App code not yet scaffolded for the specific project. |
-| 6 | **Durable State** | ✅ Present | Layer `CLAUDE.md` files (source of truth per layer), `ssdlc/` phase outputs (gates 1–7), `docs/architecture/adr/` (ADRs), `security/pen-test/findings-register.md` (append-only) |
+| 6 | **Durable State** | ✅ Present | Layer `CLAUDE.md` files (source of truth per layer), `ssdlc/` phase outputs (gates 1–7), `docs/architecture/adr/` (ADRs), `security/pen-test/internal-findings-register.md` (append-only) |
 | 7 | **Orchestration** | ✅ Present | `.claude/commands/` (9 slash commands routing to agents + skills), Dev Lead as the only agent with the Agent tool (correct orchestrator pattern), `CLAUDE.md` routing table |
 | 8 | **Subagents** | ✅ Present | `.claude/agents/` — 6 specialist agents: dev-lead, code-reviewer, qa-engineer, security-auditor, tech-researcher, infrastructure-agent |
-| 9 | **Skills** | ✅ Present | `.claude/skills/` — 27 skills across 6 agent subfolders (OA1–OA7, CR1–CR4, QA1–QA5, SA1–SA4, TR1–TR5, IA1–IA4) |
+| 9 | **Skills** | ✅ Present | Implemented inline in the 6 agent bodies. Written specs for all 29 in `docs/agent-skills/` (reference only — not loaded) |
 | 10 | **Verification & Observability** | ⚠️ Partial | Eval suites to be created in `evals/` (project root) via `claude plugin eval` — 5 suites defined (Dev Lead ×2, QA Engineer, Code Reviewer, Security Auditor), not yet recreated in correct location. Security test plan in `ssdlc/` (Phase 6), `/security-audit` command, IA3 monitoring coverage validation. No CI/CD pipeline YAML or runtime monitoring config yet — infrastructure layer scaffolded, awaiting project population. |
 
 **Score: 8 of 10 fully present. Layers 5 and 10 are Partial — Layer 5 expected for a template (app code not yet scaffolded); Layer 10 evals to be set up in `evals/` (project root) via `claude plugin eval`. Remaining gap: all eval suites plus CI/CD pipeline YAML.**
@@ -63,7 +63,7 @@ What this template provides out of the box:
 ai-ssdlc/                              ← SSDLC template project
 ├── .claude/
 │   ├── agents/        ← 6 specialist agents
-│   ├── skills/        ← 27 skill playbooks
+│   ├── skills/        ← 29 skill playbooks
 │   ├── commands/      ← 9 slash commands
 │   └── settings.json  ← shared team permissions
 ├── evals/             ← eval suites (project root — run via claude plugin eval)
@@ -110,14 +110,14 @@ These are the six specialist agents built into this template. Slash commands on 
 
 ### Skills reference
 
-All 27 skills in this project. Skills are internal procedures — they are never typed directly. They run when an agent is activated by a slash command or spawned by the Dev Lead.
+All 29 skill specs in this project. Skills are internal procedures — they are never typed directly. They run when an agent is activated by a slash command or spawned by the Dev Lead.
 
 | Skill | Used by | Does |
 |---|---|---|
 | **OA1 — Triage and route** | dev-lead | Checks gate pre-conditions, identifies what you need, routes to the right skill |
 | **OA2 — Session status** | dev-lead | Table of work done this session and what's next |
-| **OA3 — Plan a feature** | dev-lead | Maps a story to affected layers and recommended execution sequence |
-| **OA4 — Check gate status** | dev-lead | Reads HITL audit trail, reports all 7 gates and any outstanding conditions |
+| **OA3 — Check gate status** | dev-lead | Maps a story to affected layers and recommended execution sequence |
+| **OA4 — Plan a feature** | dev-lead | Reads HITL audit trail, reports all 7 gates and any outstanding conditions |
 | **OA5 — New feature pipeline** | dev-lead | Full pipeline: QA first → implement → review → audit → PR |
 | **OA6 — New API pipeline** | dev-lead | Spec check → QA → implement → review → security audit → PR |
 | **OA7 — New component pipeline** | dev-lead | Layer-aware pipeline: frontend component or backend service variant |
@@ -126,8 +126,8 @@ All 27 skills in this project. Skills are internal procedures — they are never
 | **CR3 — Review test coverage** | code-reviewer | AC to test mapping — missing security AC = Critical DoD violation |
 | **CR4 — Review report** | code-reviewer | Structured verdict: APPROVED / CHANGES REQUIRED / REJECTED |
 | **QA1 — Write unit tests** | qa-engineer | One passing + one failing case per AC; security ACs always included |
-| **QA2 — Write integration tests** | qa-engineer | Real database only — no persistence-layer mocks |
-| **QA3 — Write contract tests** | qa-engineer | Consumer-driven, matches OpenAPI spec exactly |
+| **QA2 — Write contract tests** | qa-engineer | Real database only — no persistence-layer mocks |
+| **QA3 — Write integration tests** | qa-engineer | Consumer-driven, matches OpenAPI spec exactly |
 | **QA4 — Audit test coverage** | qa-engineer | AC to test gap table — flags DoD and Gate 6 blockers |
 | **QA5 — Write security acceptance tests** | qa-engineer | Auth, input validation, audit log, PII exclusion, rate limit |
 | **SA1 — Audit threat model** | security-auditor | Verifies every Mitigated STRIDE control is present in the diff |
@@ -173,16 +173,16 @@ Both agents and procedural skills are invoked via slash commands in Claude Code.
 
 ### Who calls who
 
-The developer never directly calls the Code Reviewer, Security Auditor, QA Engineer, or Infrastructure Agent. The **Dev Lead Agent spawns them** internally via the Claude Code Agent tool. The developer interacts only with the Dev Lead Agent and procedural commands.
+The developer never directly calls the Code Reviewer, Security Auditor, QA Engineer, or Infrastructure Agent. The **Dev Lead coordinator spawns them** internally via the Claude Code Agent tool. The developer interacts only with the Dev Lead coordinator and procedural commands.
 
 ```
 DEVELOPER TYPES                    WHAT HAPPENS INTERNALLY
 ===============                    ========================
 
-/orchestrate                  -->  Dev Lead Agent activates
-/new-feature [story]          -->  Dev Lead Agent activates
-/new-api [method] [path]      -->  Dev Lead Agent activates      +-- spawns --> QA Engineer Agent
-/new-component [name] [layer] -->  Dev Lead Agent activates      |
+/dev-lead                     -->  Dev Lead coordinator (main session)
+/new-feature [story]          -->  Dev Lead coordinator runs
+/new-api [method] [path]      -->  Dev Lead coordinator runs      +-- spawns --> QA Engineer Agent
+/new-component [name] [layer] -->  Dev Lead coordinator runs      |
 /research [topic]             -->  Tech Researcher Agent activates    +-- spawns --> Code Reviewer Agent
 /security-audit               -->  Security Auditor Agent activates   |
 /code-review                  -->  Code Reviewer Agent activates      +-- spawns --> Security Auditor Agent
@@ -196,7 +196,7 @@ DEVELOPER TYPES                    WHAT HAPPENS INTERNALLY
 ... (all other /commands)     -->  Procedural script — no agent
 ```
 
-**Rule:** if you want to call a sub-agent directly (skip orchestration), you can — use its direct slash command. But bypassing the Dev Lead Agent means you bypass the gate checks and TDD sequence enforcement. Only do this when you know exactly what you need.
+**Rule:** if you want to call a sub-agent directly (skip orchestration), you can — use its direct slash command. But bypassing the Dev Lead coordinator means you bypass the gate checks and TDD sequence enforcement. Only do this when you know exactly what you need.
 
 ### When to call what — decision table by scenario
 
@@ -273,7 +273,7 @@ DEVELOPER TYPES                    WHAT HAPPENS INTERNALLY
 
 ```
 +-------------------------------------------------------------+
-|  Dev Lead Agent                                        |
+|  Dev Lead coordinator                                        |
 |  Entry point — plans work, checks gate status, routes       |
 |                                                             |
 |  /new-feature   /new-api   /new-component                   |
@@ -380,7 +380,7 @@ The security layer's ASVS mapping is the compliance evidence layer — it is wha
 **Trigger:** Developer says `"I need to add POST /api/v1/loans/apply"`
 
 ```
-Developer → Dev Lead Agent (SKILL OA6 — /new-api)
+Developer → Dev Lead coordinator (SKILL OA6 — /new-api)
     |
     | OA checks: Gate 5 approved? Yes.
     | OA identifies layers: backend (controller + service + repo),
@@ -424,7 +424,7 @@ Developer → Dev Lead Agent (SKILL OA6 — /new-api)
 **Trigger:** Developer says `"Spring Boot 3.2 may need upgrading — should we?"`
 
 ```
-Developer → Dev Lead Agent (SKILL OA1 — triage and route)
+Developer → Dev Lead coordinator (SKILL OA1 — triage and route)
     |
     | OA routes to: Tech Researcher Agent
     |
@@ -448,7 +448,7 @@ Developer → Dev Lead Agent (SKILL OA1 — triage and route)
     |       Updates existing ADR-002 (does not create a new one)
     |       Documents: CVEs, target version, breaking changes, migration steps
     |
-    +-- Returns to Dev Lead Agent
+    +-- Returns to Dev Lead coordinator
     |
     +-- 5. Developer implements upgrade
     |       backend/CLAUDE.md guides Spring Boot 3.3 patterns automatically
@@ -475,7 +475,7 @@ Developer → /pentest-intake (slash command)
     |
     | Developer: @security/pen-test/pentest-report-2026-09.pdf
     | Command parses: 3 High findings, 1 Critical finding
-    | Command populates: security/pen-test/findings-register.md
+    | Command populates: security/pen-test/internal-findings-register.md
     | Command flags: "Finding SF-001 (Critical) — 24-hour SLA applies"
     |
     +-- /threat-model-trigger-check (slash command)
@@ -484,7 +484,7 @@ Developer → /pentest-intake (slash command)
     |       Output: PHASE 2 RE-RUN REQUIRED for admin endpoint scope
     |
     +-- For SF-001 (Critical — 24h SLA):
-    |       Developer → Dev Lead Agent (SKILL OA1)
+    |       Developer → Dev Lead coordinator (SKILL OA1)
     |       OA routes to: Security Auditor (SKILL SA3)
     |       Security Auditor confirms finding, produces structured finding card
     |       Developer implements fix
@@ -505,7 +505,7 @@ Developer → /pentest-intake (slash command)
 **Trigger:** Developer says `"I need a LoanStatusCard component in Angular"`
 
 ```
-Developer → Dev Lead Agent (SKILL OA7 — /new-component)
+Developer → Dev Lead coordinator (SKILL OA7 — /new-component)
     |
     | OA checks: Gate 5 approved? Yes.
     | OA identifies: layer = frontend, story = FE-08
@@ -584,11 +584,11 @@ Developer → Infrastructure Agent (SKILL IA1)
 
 ---
 
-### Agent 1 — Dev Lead Agent
+### Agent 1 — Dev Lead coordinator
 
 **Identity and role**
 
-You are the **Dev Lead Agent** — the entry point for the development workflow. You plan work across affected layers, check gate status before routing, and coordinate sequences of specialist agents for features, APIs, and components. You do not write code, review code, or produce security findings yourself.
+You are the **Dev Lead coordinator** — the entry point for the development workflow. You plan work across affected layers, check gate status before routing, and coordinate sequences of specialist agents for features, APIs, and components. You do not write code, review code, or produce security findings yourself.
 
 You own three pipeline triggers:
 - `/new-feature` — full development pipeline for a user story touching multiple layers
@@ -658,21 +658,7 @@ Below the table:
 
 ---
 
-#### SKILL OA3 — Plan a feature (generic)
-**Trigger:** `"plan feature [name]"`, `"what layers does this touch"`, `"map this story"`.
-
-**Behaviour:**
-1. Ask for the user story ID and summary.
-2. Identify which layers are affected.
-3. For each affected layer, identify the CLAUDE.md sections to read before starting.
-4. Recommend the sequence: QA Engineer (tests first) → development → Code Review → Security Audit → PR.
-5. Flag any story touching the Security Architecture section — these require the Security Auditor.
-
-Use this skill when none of OA5, OA6, or OA7 precisely fits. For new APIs use OA6; for new components use OA7; for multi-layer user stories use OA5.
-
----
-
-#### SKILL OA4 — Check gate status
+#### SKILL OA3 — Check gate status
 **Trigger:** `"what gates are approved"`, `"check gate status"`, `"can we proceed to [phase]"`.
 
 **Behaviour:**
@@ -690,6 +676,20 @@ Use this skill when none of OA5, OA6, or OA7 precisely fits. For new APIs use OA
 | Gate 7 | Release sign-off | | | |
 
 3. Flag any gate approved with conditions — list the outstanding conditions and which agent or skill resolves each one.
+
+---
+
+#### SKILL OA4 — Plan a feature (generic)
+**Trigger:** `"plan feature [name]"`, `"what layers does this touch"`, `"map this story"`.
+
+**Behaviour:**
+1. Ask for the user story ID and summary.
+2. Identify which layers are affected.
+3. For each affected layer, identify the CLAUDE.md sections to read before starting.
+4. Recommend the sequence: QA Engineer (tests first) → development → Code Review → Security Audit → PR.
+5. Flag any story touching the Security Architecture section — these require the Security Auditor.
+
+Use this skill when none of OA5, OA6, or OA7 precisely fits. For new APIs use OA6; for new components use OA7; for multi-layer user stories use OA5.
 
 ---
 
@@ -829,7 +829,7 @@ You are the **Code Reviewer Agent** — an independent reviewer who has NOT seen
 
 You are always spawned as a **fresh agent** (not a fork) in a **worktree** — ensuring you have no memory of the implementation context.
 
-**Activate:** Via Dev Lead Agent, or directly: `"code review"`, `"review this PR"`, `/code-review`.
+**Activate:** Via Dev Lead coordinator, or directly: `"code review"`, `"review this PR"`, `/code-review`.
 
 **Implementation:** `.claude/agents/code-reviewer.md` | Direct command: `.claude/commands/code-review.md` | Tools: `Read` only | Isolation: worktree (when spawned by Dev Lead)
 
@@ -918,12 +918,12 @@ You are the **Security Auditor Agent** — a specialist security reviewer who cr
 
 Always spawned as a **fresh agent in a worktree**.
 
-**Activate:** Via Dev Lead Agent, or directly: `"security audit"`, `"security review"`, `/security-audit`.
+**Activate:** Via Dev Lead coordinator, or directly: `"security audit"`, `"security review"`, `/security-audit`.
 
-**Implementation:** `.claude/agents/security-auditor.md` | Direct command: `.claude/commands/security-audit.md` | Tools: `Read`, `Write` (findings register only) | Isolation: worktree (when spawned by Dev Lead) | Skill files: `.claude/skills/security-auditor/`
+**Implementation:** `.claude/agents/security-auditor.md` | Direct command: `.claude/commands/security-audit.md` | Tools: `Read`, `Write` (findings register only) | Isolation: worktree (when spawned by Dev Lead) | Skill files: `docs/agent-skills/security-auditor/`
 
 **Guardrails**
-- **All findings are confidential** — never in PR descriptions, commit messages, or any public channel. Findings go to `security/pen-test/findings-register.md` only.
+- **All findings are confidential** — never in PR descriptions, commit messages, or any public channel. Findings go to `security/pen-test/internal-findings-register.md` only.
 - Never rate a compliance gap below Must priority.
 - Never approve a code path where a STRIDE threat is "Mitigated" in the threat model but the mitigation control is absent from the code.
 - Never add a SAST suppression without the full justification block (rule, justification, approver, review date).
@@ -954,7 +954,7 @@ Scans the diff for any SAST suppression. For each: verifies the full justificati
 #### SKILL SA3 — Check pen test findings
 **Trigger:** `"check pen test findings"`, `"does this fix an open finding"`.
 
-Reads `security/pen-test/findings-register.md`. Checks whether the diff addresses an open finding. If yes: marks finding as "Fix implemented — pending re-test". If the diff introduces a new vulnerability pattern: produces a finding card via SA4.
+Reads `security/pen-test/internal-findings-register.md`. Checks whether the diff addresses an open finding. If yes: marks finding as "Fix implemented — pending re-test". If the diff introduces a new vulnerability pattern: produces a finding card via SA4.
 
 ---
 
@@ -980,7 +980,7 @@ Status:          Open
 ```
 
 **Save instruction:**
-  File: `security/pen-test/findings-register.md` — append only.
+  File: `security/pen-test/internal-findings-register.md` — append only.
   Do NOT include in PR description or commit message.
 
 ---
@@ -991,11 +991,11 @@ Status:          Open
 
 You are the **QA Engineer Agent** — a specialist in writing tests. You are framework-agnostic: you adapt to whatever testing stack the layer CLAUDE.md defines (JUnit, Jest, Playwright, Spring Cloud Contract, or any other). Your job is to write tests that are correct, deterministic, and directly traceable to acceptance criteria.
 
-You write tests BEFORE the feature is implemented — tests drive implementation (TDD). The Dev Lead Agent enforces this sequence.
+You write tests BEFORE the feature is implemented — tests drive implementation (TDD). The Dev Lead coordinator enforces this sequence.
 
-**Activate:** Via Dev Lead Agent, or directly: `"write tests"`, `"qa mode"`, `"test coverage for [story]"`, `/run-tests`.
+**Activate:** Via Dev Lead coordinator, or directly: `"write tests"`, `"qa mode"`, `"test coverage for [story]"`, `/run-tests`.
 
-**Implementation:** `.claude/agents/qa-engineer.md` | Direct command: `.claude/commands/run-tests.md` | Tools: `Read`, `Write` | Skill files: `.claude/skills/qa-engineer/`
+**Implementation:** `.claude/agents/qa-engineer.md` | Direct command: `.claude/commands/run-tests.md` | Tools: `Read`, `Write` | Skill files: `docs/agent-skills/qa-engineer/`
 
 **Guardrails**
 - **Never modify production code** — test files only. If a production change is needed to make a test pass, flag it and route back to the developer.
@@ -1010,7 +1010,7 @@ You write tests BEFORE the feature is implemented — tests drive implementation
 ---
 
 #### SKILL QA1 — Write unit tests
-**Trigger:** `"write unit tests for [component]"`, fires from Dev Lead Agent OA5/OA6/OA7.
+**Trigger:** `"write unit tests for [component]"`, fires from Dev Lead coordinator OA5/OA6/OA7.
 
 1. Read the layer CLAUDE.md — identify testing framework, naming convention, test folder.
 2. Read the story's acceptance criteria.
@@ -1031,21 +1031,21 @@ You write tests BEFORE the feature is implemented — tests drive implementation
 
 ---
 
-#### SKILL QA2 — Write integration tests
-**Trigger:** `"write integration tests"`, `"test the full flow for [story]"`.
-
-Exercises real components end-to-end (no mocks at the persistence layer). Includes at least one unhappy path per flow and boundary condition tests for numeric or string length constraints.
-
-**Save instruction:** `[layer]/tests/integration/[FlowName]IntegrationTest.[ext]`
-
----
-
-#### SKILL QA3 — Write contract tests
+#### SKILL QA2 — Write consumer contract tests
 **Trigger:** `"write contract tests"`, `"consumer contract for [API]"`.
 
 Writes a consumer-driven contract test matching the OpenAPI spec in `docs/backend/design/`. Every contract test defines: request (method, path, headers, body), response (status, headers, body), and provider state.
 
 **Save instruction:** `integration/tests/[ServiceName]ConsumerContractTest.[ext]`
+
+---
+
+#### SKILL QA3 — Write integration tests
+**Trigger:** `"write integration tests"`, `"test the full flow for [story]"`.
+
+Exercises real components end-to-end (no mocks at the persistence layer). Includes at least one unhappy path per flow and boundary condition tests for numeric or string length constraints.
+
+**Save instruction:** `[layer]/tests/integration/[FlowName]IntegrationTest.[ext]`
 
 ---
 
@@ -1077,9 +1077,9 @@ You are the **Tech Researcher Agent** — a specialist in technology research, l
 
 Spawned as a **fresh agent with web search enabled**.
 
-**Activate:** Via Dev Lead Agent, or directly: `"research mode"`, `"check library versions"`, `"should we upgrade [library]"`, `/research`, `/write-adr`.
+**Activate:** Via Dev Lead coordinator, or directly: `"research mode"`, `"check library versions"`, `"should we upgrade [library]"`, `/research`, `/write-adr`.
 
-**Implementation:** `.claude/agents/tech-researcher.md` | Commands: `.claude/commands/research.md`, `.claude/commands/write-adr.md` | Tools: `Read`, `Write`, `WebSearch` | Skill files: `.claude/skills/tech-researcher/`
+**Implementation:** `.claude/agents/tech-researcher.md` | Commands: `.claude/commands/research.md`, `.claude/commands/write-adr.md` | Tools: `Read`, `Write`, `WebSearch` | Skill files: `docs/agent-skills/tech-researcher/`
 
 **Guardrails**
 - Never recommend an upgrade without checking for breaking changes in the changelog or migration guide.
@@ -1158,9 +1158,9 @@ You are the **Infrastructure Agent** — a specialist in planning and reviewing 
 
 You are always spawned as a **fresh agent in a worktree**.
 
-**Activate:** Via Dev Lead Agent, or directly: `"infra mode"`, `"plan infra for [feature]"`, `"review infra changes"`, `/infra-check`.
+**Activate:** Via Dev Lead coordinator, or directly: `"infra mode"`, `"plan infra for [feature]"`, `"review infra changes"`, `/infra-check`.
 
-**Implementation:** `.claude/agents/infrastructure-agent.md` | Command: `.claude/commands/infra-check.md` | Tools: `Read`, `Write` | Isolation: worktree (when spawned by Dev Lead) | Skill files: `.claude/skills/infrastructure/`
+**Implementation:** `.claude/agents/infrastructure-agent.md` | Command: `.claude/commands/infra-check.md` | Tools: `Read`, `Write` | Isolation: worktree (when spawned by Dev Lead) | Skill files: `docs/agent-skills/infrastructure/`
 
 **Guardrails**
 - Never suggest a Vault policy that grants broader access than the minimum required for the operation — least privilege is non-negotiable.
@@ -1175,7 +1175,7 @@ You are always spawned as a **fresh agent in a worktree**.
 ---
 
 #### SKILL IA1 — Plan infrastructure for a feature
-**Trigger:** `"plan infra for [feature]"`, `"what infra does [story/API] need"`, fires from Dev Lead Agent OA5/OA6.
+**Trigger:** `"plan infra for [feature]"`, `"what infra does [story/API] need"`, fires from Dev Lead coordinator OA5/OA6.
 
 **Behaviour:**
 1. Ask: what does the feature add or change (new service, new external call, new data store)?
@@ -1195,7 +1195,7 @@ You are always spawned as a **fresh agent in a worktree**.
 ---
 
 #### SKILL IA2 — Review infrastructure changes
-**Trigger:** `"review infra changes"`, `"review vault policy"`, `"review docker config"`, fires from Dev Lead Agent pipelines.
+**Trigger:** `"review infra changes"`, `"review vault policy"`, `"review docker config"`, fires from Dev Lead coordinator pipelines.
 
 **Behaviour:**
 Review infrastructure diffs against `infrastructure/CLAUDE.md` standards. Check per component:
@@ -1334,7 +1334,7 @@ An undocumented approval is not an approval. If the audit trail has no entry, th
 "check gate status"
 ```
 
-Dev Lead runs OA4 — reads `ssdlc/[system]_hitl-audit-trail_vN.md` and reports all 7 gates, dates, and outstanding conditions.
+Dev Lead runs OA3 — reads `ssdlc/[system]_hitl-audit-trail_vN.md` and reports all 7 gates, dates, and outstanding conditions.
 
 ### Gate pre-conditions enforced per agent
 
@@ -1441,7 +1441,7 @@ Use `/gate-readiness-check [N]` to run the automated pre-conditions check before
 In this project, **slash commands and skills are the same thing** — just at different levels:
 
 - **Slash commands** (`.claude/commands/`) are the entry points — the phrase you type. Every `/command-name` maps to a `.md` file that Claude Code reads automatically. This is the Claude Code native mechanism.
-- **Skills** (`.claude/skills/`) are the canonical, numbered procedures inside each agent (OA1, CR2, QA3, etc.) — they run when a command fires or when the Dev Lead spawns a sub-agent. They are documented in skill files but do not auto-execute on their own.
+- **Skills** are the numbered procedures inside each agent (OA1, CR2, QA3, etc.). The copy that **runs** is the `### SKILL <ID>` section inside `.claude/agents/<agent>.md`, because that is what loads when the agent is spawned. `docs/agent-skills/` holds the fuller written spec for each one; nothing in that folder loads or executes. When the two disagree, the agent body is authoritative.
 
 You never type a skill ID directly. You type a slash command — the correct skill runs automatically.
 
@@ -1466,7 +1466,7 @@ This project uses three folders under `.claude/`. Understanding which folder doe
 |---|---|---|---|
 | `.claude/agents/` | Agent definitions — identity, tools, system prompt, skill references | Yes | One `.md` file per agent |
 | `.claude/commands/` | Slash command entry points — what you type as `/name` to trigger an agent or pipeline | Yes | One `.md` file per command |
-| `.claude/skills/` | Standalone skill definition files — the canonical per-skill procedure | No — project convention | One subfolder per agent, one `.md` per skill |
+| `docs/agent-skills/` | Written spec per skill — reference only, never loaded | No | One subfolder per agent, one `.md` per skill |
 
 **How they relate:**
 
@@ -1475,19 +1475,19 @@ User types /new-feature
       ↓
 .claude/commands/new-feature.md    ← Claude Code reads this and activates the instruction
       ↓
-Activates the Dev Lead agent (dev-lead.md)
+Activates the Dev Lead coordinator (dev-lead.md)
       ↓
-Dev Lead runs SKILL OA5 — defined in dev-lead.md (inline) and documented in .claude/skills/dev-lead/OA5-new-feature-pipeline.md
+Dev Lead runs SKILL OA5 — defined in dev-lead.md (inline) and documented in docs/agent-skills/dev-lead/OA5-new-feature-pipeline.md
       ↓
 Dev Lead spawns Code Reviewer agent (code-reviewer.md)
       ↓
-Code Reviewer runs CR1, CR2, CR3 — defined in code-reviewer.md and documented in .claude/skills/code-reviewer/
+Code Reviewer runs CR1, CR2, CR3 — defined in code-reviewer.md and documented in docs/agent-skills/code-reviewer/
 ```
 
-**Key distinction — `.claude/commands/` vs `.claude/skills/`:**
+**Key distinction — `.claude/commands/` vs `docs/agent-skills/`:**
 - `.claude/commands/` is a **Claude Code native mechanism** — files here become `/slash-commands` automatically. This is how users invoke agents and pipelines.
-- `.claude/skills/` is a **project convention** — not natively loaded by Claude Code. Skill files are the authoritative written definition of each numbered skill (CR1, OA5, QA3, etc.). They serve as documentation and can be referenced explicitly in prompts or via `@` import. They do NOT auto-execute.
-- Skills within an agent (CR1, OA5, etc.) are implemented inside the agent's `.claude/agents/` file. The `.claude/skills/` file is the canonical reference — it documents the same skill at the right level of detail for team use.
+- `docs/agent-skills/` is **documentation** — never loaded by Claude Code. Claude Code loads a skill only from `.claude/skills/<name>/SKILL.md`; these files match no loader. Reference them explicitly in a prompt or via `@` import when you need the detail.
+- Skills within an agent (CR1, OA5, etc.) are implemented inside the agent's `.claude/agents/` file — that implementation is authoritative because it is the one that executes. The `docs/agent-skills/` file documents the same skill at the level of detail a human needs when changing it.
 
 Implemented in `.claude/commands/`. Procedural, no dialogue, no persona. Gate-gated commands read the HITL audit trail first and refuse to run if the required gate is not approved.
 
@@ -1516,7 +1516,7 @@ Implemented in `.claude/commands/`. Procedural, no dialogue, no persona. Gate-ga
 | `/security-propagation-check` | Verify every mitigated STRIDE threat has a corresponding layer Security Architecture entry | Gate 5 approved |
 | `/policy-propagation` | Identify which layer Security Architecture sections need updating when a policy changes | Gate 5 approved |
 | `/suppression-audit` | Audit the SAST suppression register for entries past their 90-day review date | None |
-| `/pentest-intake` | Parse a pen test report and populate `security/pen-test/findings-register.md` | None |
+| `/pentest-intake` | Parse a pen test report and populate `security/pen-test/internal-findings-register.md` | None |
 
 ### Document management
 
@@ -1612,7 +1612,7 @@ The eval harness sends a prompt to the agent and checks whether the response con
 |---|---|---|
 | **What they are** | Instruction files — what the agent must do | Test cases — does the agent actually do it |
 | **Written in** | Markdown | YAML |
-| **Lives in** | `.claude/skills/[agent]/` | `evals/[agent]/` (project root) |
+| **Lives in** | `docs/agent-skills/[agent]/` | `evals/[agent]/` (project root) |
 | **Used when** | Agent reads them at every session start | Run by `claude plugin eval` after skill changes |
 | **Written by** | Tech Lead / Solutions Architect | Tech Lead (new eval per new skill) |
 | **Who runs them** | Nobody — automatically loaded | Tech Lead runs after any skill change |
@@ -1730,7 +1730,7 @@ claude plugin eval evals/code-reviewer/layer-review.yaml
 | `no-finding-detail-in-chat` | Finding identified → detail stays out of conversation | Vulnerability details visible in chat history — risk of exposure in shared sessions or logs |
 | `conversation-summary-is-exact` | Summary is "N finding(s) recorded — see findings register (confidential)" | Severity or remediation details appear in chat — developers learn about vulnerabilities through informal channels |
 | `no-finding-in-pr-description` | Developer asks for PR summary → refused | Finding details in PR description — visible to everyone with repo access, including external reviewers |
-| `save-instruction-targets-findings-register` | Save instruction points to `security/pen-test/findings-register.md` | Finding written to the wrong file — not tracked, not picked up in the monthly review |
+| `save-instruction-targets-findings-register` | Save instruction points to `security/pen-test/internal-findings-register.md` | Finding written to the wrong file — not tracked, not picked up in the monthly review |
 | `appends-never-overwrites` | Register has existing entries → new finding appended | Existing findings overwritten — audit trail destroyed, historical record lost |
 | `assigns-sequential-finding-id` | Last ID is SF-007 → new finding gets SF-008 | Duplicate IDs or ID gaps make the register unreliable for audit purposes |
 | `finding-card-has-required-fields` | Finding card contains all required fields | Incomplete finding card — remediation SLA not set, owner unknown, finding stays open indefinitely |
@@ -1837,7 +1837,7 @@ Eval suite YAML files live in `evals/` at the project root (not inside `.claude/
 | `evals/infrastructure-agent/vault-enforcement.yaml` | Infrastructure Agent | IA1 | Not yet written | `IA1-plan-infra.md` changes |
 | `evals/tech-researcher/version-research.yaml` | Tech Researcher | TR1 | Not yet written | `TR1-research-library.md` changes |
 
-**Coverage target:** Every skill that gates a pipeline stage must have at least one eval case. Gate skills are: OA1, OA4, OA5, OA6, OA7, QA1, CR1, SA1, SA4. All are covered.
+**Coverage target:** Every skill that gates a pipeline stage should have at least one eval case. Gate skills are: OA1, OA3, OA5, OA6, OA7, QA1, CR1, SA1, SA4. **None are covered yet** — `evals/` does not exist in this template; you create it.
 
 ---
 
@@ -1862,7 +1862,7 @@ Follow these steps in order. Do not skip steps.
 Answer these questions before writing anything:
 - What does this agent do that none of the existing six agents do?
 - Is this a specialist role that benefits from a distinct persona and guardrails, or is it a procedural task that should be a slash command instead?
-- What gate pre-conditions should the Dev Lead Agent enforce before routing to this agent?
+- What gate pre-conditions should the Dev Lead coordinator enforce before routing to this agent?
 - Does this agent need web search? Worktree isolation? Fresh start (no fork)?
 
 If the answers do not clearly justify a new agent, add a skill to an existing agent instead.
@@ -1882,9 +1882,9 @@ Assign the next available agent number. Assign a two-letter prefix for skill IDs
 
 **Step 3 — Update the architecture overview diagram**
 
-Add the new agent box to the diagram in Section 2 under the Dev Lead Agent. Add the spawn pattern note (fresh / fork / worktree / web search).
+Add the new agent box to the diagram in Section 2 under the Dev Lead coordinator. Add the spawn pattern note (fresh / fork / worktree / web search).
 
-**Step 4 — Update the Dev Lead Agent**
+**Step 4 — Update the Dev Lead coordinator**
 
 Add the new agent to:
 - The gate pre-conditions table in OA guardrails
@@ -1930,9 +1930,9 @@ Assign the next available skill number for that agent (e.g. if CR4 exists, add C
 
 **Step 3 — Check gate dependency**
 
-Does this skill require a gate to be approved first? If yes: add the gate check as Step 1 of the Behaviour, and add it to the Dev Lead Agent's gate pre-conditions table.
+Does this skill require a gate to be approved first? If yes: add the gate check as Step 1 of the Behaviour, and add it to the Dev Lead coordinator's gate pre-conditions table.
 
-**Step 4 — Update the Dev Lead Agent if needed**
+**Step 4 — Update the Dev Lead coordinator if needed**
 
 If the new skill should be invoked during a standard pipeline (OA5, OA6, or OA7), update the relevant pipeline skill to include it.
 
@@ -1992,7 +1992,7 @@ The guide is the source of truth. Update the skill definition here before touchi
 
 **Step 3 — Update downstream references**
 
-If the skill's output format changes: update any pipeline skill (OA5, OA6, OA7) that references it. If the skill's gate dependency changes: update the Dev Lead Agent pre-conditions table.
+If the skill's output format changes: update any pipeline skill (OA5, OA6, OA7) that references it. If the skill's gate dependency changes: update the Dev Lead coordinator pre-conditions table.
 
 **Step 4 — Update the implementation**
 
@@ -2025,7 +2025,7 @@ At the bottom of this guide, add a changelog entry:
 
 | Item | File | Status |
 |---|---|---|
-| Dev Lead Agent | `.claude/agents/dev-lead.md` | **Implemented** |
+| Dev Lead coordinator | `.claude/agents/dev-lead.md` | **Implemented** |
 | `/new-feature` command | `.claude/commands/new-feature.md` | **Implemented** |
 | `/new-api` command | `.claude/commands/new-api.md` | **Implemented** |
 | `/new-component` command | `.claude/commands/new-component.md` | **Implemented** |
@@ -2033,29 +2033,29 @@ At the bottom of this guide, add a changelog entry:
 | `/code-review` command | `.claude/commands/code-review.md` | **Implemented** |
 | QA Engineer Agent | `.claude/agents/qa-engineer.md` | **Implemented** |
 | `/run-tests` command | `.claude/commands/run-tests.md` | **Implemented** |
-| QA Engineer skill files | `.claude/skills/qa-engineer/QA1–QA5` | **Implemented** |
-| `.claude/skills/` folder structure | `.claude/skills/` | **Implemented** |
-| Dev Lead skill files | `.claude/skills/dev-lead/OA1–OA7` | **Implemented** |
-| Code Reviewer skill files | `.claude/skills/code-reviewer/CR1–CR4` | **Implemented** |
+| QA Engineer skill files | `docs/agent-skills/qa-engineer/QA1–QA5` | **Implemented** |
+| `docs/agent-skills/` folder structure | `docs/agent-skills/` | **Implemented** |
+| Dev Lead skill files | `docs/agent-skills/dev-lead/OA1–OA7` | **Implemented** |
+| Code Reviewer skill files | `docs/agent-skills/code-reviewer/CR1–CR4` | **Implemented** |
 | Security Auditor Agent | `.claude/agents/security-auditor.md` | **Implemented** |
 | `/security-audit` command | `.claude/commands/security-audit.md` | **Implemented** |
-| Security Auditor skill files | `.claude/skills/security-auditor/SA1–SA4` | **Implemented** |
+| Security Auditor skill files | `docs/agent-skills/security-auditor/SA1–SA4` | **Implemented** |
 | Tech Researcher Agent | `.claude/agents/tech-researcher.md` | **Implemented** |
 | `/research` command | `.claude/commands/research.md` | **Implemented** |
 | `/write-adr` command | `.claude/commands/write-adr.md` | **Implemented** |
-| Tech Researcher skill files | `.claude/skills/tech-researcher/TR1–TR5` | **Implemented** |
+| Tech Researcher skill files | `docs/agent-skills/tech-researcher/TR1–TR5` | **Implemented** |
 | Infrastructure Agent | `.claude/agents/infrastructure-agent.md` | **Implemented** |
 | `/infra-check` command | `.claude/commands/infra-check.md` | **Implemented** |
-| Infrastructure skill files | `.claude/skills/infrastructure/IA1–IA4` | **Implemented** |
+| Infrastructure skill files | `docs/agent-skills/infrastructure/IA1–IA4` | **Implemented** |
 | All slash commands listed in Section 7 tables | `.claude/commands/` | Pending — see priority table below |
 
-The Dev Lead Agent is the only agent with the `Agent` tool. It spawns all sub-agents (QA Engineer, Code Reviewer, Security Auditor, Infrastructure, Tech Researcher) inline via the Agent tool using the prompt definitions in its skills. Sub-agents do not need separate `.claude/agents/` files to work — they are spawned with scoped prompts. Create individual agent files only when a sub-agent needs to be called directly (bypassing the Dev Lead).
+The Dev Lead coordinator is the only agent with the `Agent` tool. It spawns all sub-agents (QA Engineer, Code Reviewer, Security Auditor, Infrastructure, Tech Researcher) inline via the Agent tool using the prompt definitions in its skills. Sub-agents do not need separate `.claude/agents/` files to work — they are spawned with scoped prompts. Create individual agent files only when a sub-agent needs to be called directly (bypassing the Dev Lead).
 
 The Code Reviewer Agent (`code-reviewer.md`) has `Read` only tools — it cannot modify any file. When spawned by the Dev Lead, it runs in a worktree (isolated read-only copy). When invoked directly via `/code-review`, it reads the current working tree without isolation. Both paths produce the same structured CR4 review report.
 
-The QA Engineer Agent (`qa-engineer.md`) has `Read` and `Write` tools — it reads layer CLAUDE.md files and writes test files. It is always invoked before implementation (TDD). Skill files in `.claude/skills/qa-engineer/` are the canonical per-skill definitions; the agent file references them.
+The QA Engineer Agent (`qa-engineer.md`) has `Read` and `Write` tools — it reads layer CLAUDE.md files and writes test files. It is always invoked before implementation (TDD). Skill files in `docs/agent-skills/qa-engineer/` are the canonical per-skill definitions; the agent file references them.
 
-**`.claude/skills/` folder:** This project-level skills folder holds standalone skill definition files, one per skill per agent. Subfolders match agent names. Skill files are the authoritative documentation for each numbered skill (QA1, CR1, OA5, etc.). Agent files contain the identity, guardrails, and skill references; skill files contain the full procedure. As each agent is implemented, its skill files are created in the corresponding subfolder.
+**`docs/agent-skills/` folder:** This project-level skills folder holds standalone skill definition files, one per skill per agent. Subfolders match agent names. Skill files are the authoritative documentation for each numbered skill (QA1, CR1, OA5, etc.). Agent files contain the identity, guardrails, and skill references; skill files contain the full procedure. As each agent is implemented, its skill files are created in the corresponding subfolder.
 
 ### Priority table
 
@@ -2063,12 +2063,12 @@ The QA Engineer Agent (`qa-engineer.md`) has `Read` and `Write` tools — it rea
 |---|---|---|---|
 | 1 | `/template-health-check` | Slash command | Immediately useful; no dependencies; catches most common template mistakes |
 | 2 | `/layer-setup` | Slash command | Used at every new project kickoff — high frequency |
-| 3 | Dev Lead Agent (OA1, OA4) | Agent | Entry point; gate-status check needed before anything else |
+| 3 | Dev Lead coordinator (OA1, OA3) | Command | Entry point; gate-status check needed before anything else |
 | 4 | `/gate-readiness-check` | Slash command | Pre-gate ritual; builds on health-check |
 | 5 | `/populate-security-arch` | Slash command | Highest impact on Claude output quality |
 | 6 | QA Engineer Agent (QA1, QA4) | Agent | TDD — tests before implementation; QA4 surfaces coverage gaps fast |
 | 7 | Code Reviewer Agent (CR1, CR4) | Agent | Core development workflow; blocks PR creation |
-| 8 | Dev Lead Agent (OA5, OA6, OA7) | Agent skills | Multi-agent pipelines; depends on CR and QA being ready |
+| 8 | Dev Lead coordinator (OA5, OA6, OA7) | Agent skills | Multi-agent pipelines; depends on CR and QA being ready |
 | 9 | `/threat-model-trigger-check` | Slash command | Prevents the most dangerous error — missing a Phase 2 re-run |
 | 10 | `/security-propagation-check` | Slash command | Detects drift between threat model and layer CLAUDE.md |
 | 11 | Infrastructure Agent (IA1, IA2) | Agent | High value for infra-heavy changes; requires CLAUDE.md to be populated |
@@ -2091,19 +2091,19 @@ The QA Engineer Agent (`qa-engineer.md`) has `Read` and `Write` tools — it rea
 
 **Fresh agent vs fork:**
 - Code Reviewer, Security Auditor, QA Engineer, Tech Researcher, and Infrastructure Agent: always fresh — they must not inherit the development session context.
-- Dev Lead Agent: fork when it needs session state (it inherits context to know what has already been done this session).
+- Dev Lead coordinator: fork when it needs session state (it inherits context to know what has already been done this session).
 
 **Worktree isolation:**
 - Code Reviewer, Security Auditor, and Infrastructure Agent: use `isolation: "worktree"`. They read the repo without affecting the working tree and cannot accidentally modify code.
 
 **QA Engineer — TDD sequence:**
-- The Dev Lead Agent enforces the sequence: QA Engineer writes tests BEFORE development starts. Never change this sequence in OA5, OA6, or OA7. Tests that are written before implementation are more honest than tests written after.
+- The Dev Lead coordinator enforces the sequence: QA Engineer writes tests BEFORE development starts. Never change this sequence in OA5, OA6, or OA7. Tests that are written before implementation are more honest than tests written after.
 
 **Gate-gated slash commands:**
 - Every command with a gate dependency must read `ssdlc/[system]_hitl-audit-trail_vN.md` as its first step and refuse with a clear message if the gate is not met. This enforces the SSDLC sequence automatically without human remembering to check.
 
 **Security Auditor confidentiality:**
-- The Security Auditor Agent must never produce finding details in the conversation output. All findings go directly to `security/pen-test/findings-register.md` via a Save instruction. The conversation-visible summary is: "N findings recorded — see findings register (confidential)."
+- The Security Auditor Agent must never produce finding details in the conversation output. All findings go directly to `security/pen-test/internal-findings-register.md` via a Save instruction. The conversation-visible summary is: "N findings recorded — see findings register (confidential)."
 
 **Save instruction pattern:**
 - Every skill and command that produces a file must end with a Save instruction block. Skills without a Save instruction produce output that is lost between sessions.
@@ -2121,7 +2121,7 @@ This template is **production grade as an agent engineering framework**. The tab
 | All 6 layer CLAUDE.md files | Fully populated: tech stack, entry points, commands, conventions, security architecture, layer boundaries |
 | All 6 layers have @imported design documents | `openapi-spec_v1.yaml` (backend+frontend), `data-dictionary_v1.md` (database), `infrastructure-design_v1.md` (infrastructure), `external-services-summary_v1.md` (integration), `asvs-mapping_v1.md` (security) |
 | 6 specialist agents | `.claude/agents/` — dev-lead, code-reviewer, qa-engineer, security-auditor, tech-researcher, infrastructure-agent |
-| 27 skills | `.claude/skills/` — OA1–OA7, CR1–CR4, QA1–QA5, SA1–SA4, TR1–TR5, IA1–IA4 |
+| 29 skill specs | `docs/agent-skills/` — OA1–OA7, CR1–CR4, QA1–QA5, SA1–SA4, TR1–TR5, IA1–IA4 |
 | 9 slash commands | `.claude/commands/` — `/new-feature`, `/new-api`, `/new-component`, `/code-review`, `/run-tests`, `/security-audit`, `/research`, `/write-adr`, `/infra-check` |
 | SSDLC 7-gate structure | Enforced by gate-gated commands reading `ssdlc/[system]_hitl-audit-trail_vN.md` before allowing execution |
 | Security layer policy files | `secure-coding-standard.md`, `encryption-policy.md`, `suppression-rules.md`, `findings-register.md`, `stride-model.md` — all present |
@@ -2180,12 +2180,12 @@ For someone new to this project or this template, read in this order:
 | Date | Change |
 |---|---|
 | 2026-09-20 | Initial version — six agents, 18 slash commands, sequence examples, maintenance guide |
-| 2026-09-20 | Renamed Orchestration Agent → Dev Lead Agent. Added Section 2 (calling model — two types of slash commands, who calls who, decision table, five scenario sequences). Added Infrastructure Agent (Agent 6). Added OA5/OA6/OA7 pipeline skills. Implemented Dev Lead Agent in `.claude/agents/dev-lead.md` with `/new-feature`, `/new-api`, `/new-component` entry-point commands. |
+| 2026-09-20 | Renamed Orchestration Agent → Dev Lead coordinator. Added Section 2 (calling model — two types of slash commands, who calls who, decision table, five scenario sequences). Added Infrastructure Agent (Agent 6). Added OA5/OA6/OA7 pipeline skills. Implemented Dev Lead coordinator in `.claude/agents/dev-lead.md` with `/new-feature`, `/new-api`, `/new-component` entry-point commands. |
 | 2026-09-20 | Implemented Code Reviewer Agent in `.claude/agents/code-reviewer.md` (Read-only tools, worktree isolation when spawned by Dev Lead). Added `/code-review` direct command. Added Implementation lines to Agent 1 and Agent 2 sections. Updated implementation status table. |
-| 2026-09-20 | Created `.claude/skills/` project-level folder with subfolders for all six agents (skill files to be populated per agent). Implemented QA Engineer Agent in `.claude/agents/qa-engineer.md` (Read + Write tools). Created QA1–QA5 skill files in `.claude/skills/qa-engineer/`. Added `/run-tests` direct command. Added Implementation line to Agent 4 section. |
-| 2026-09-20 | Created skill files for Dev Lead (OA1–OA7) and Code Reviewer (CR1–CR4) in `.claude/skills/`. Implemented Security Auditor Agent in `.claude/agents/security-auditor.md` (Read + Write tools, confidential findings-register-only output). Created SA1–SA4 skill files in `.claude/skills/security-auditor/`. Added `/security-audit` direct command. Added Implementation line to Agent 3 section. Added three-folder model explanation to Section 7. |
+| 2026-09-20 | Created `docs/agent-skills/` project-level folder with subfolders for all six agents (skill files to be populated per agent). Implemented QA Engineer Agent in `.claude/agents/qa-engineer.md` (Read + Write tools). Created QA1–QA5 skill files in `docs/agent-skills/qa-engineer/`. Added `/run-tests` direct command. Added Implementation line to Agent 4 section. |
+| 2026-09-20 | Created skill files for Dev Lead (OA1–OA7) and Code Reviewer (CR1–CR4) in `docs/agent-skills/`. Implemented Security Auditor Agent in `.claude/agents/security-auditor.md` (Read + Write tools, confidential findings-register-only output). Created SA1–SA4 skill files in `docs/agent-skills/security-auditor/`. Added `/security-audit` direct command. Added Implementation line to Agent 3 section. Added three-folder model explanation to Section 7. |
 | 2026-09-20 | Implemented Tech Researcher Agent (`.claude/agents/tech-researcher.md`, Tools: Read + Write + WebSearch). Created TR1–TR5 skill files. Added `/research` and `/write-adr` commands. Implemented Infrastructure Agent (`.claude/agents/infrastructure-agent.md`, Tools: Read + Write, worktree isolation). Created IA1–IA4 skill files. Added `/infra-check` command. Added Implementation lines to Agent 5 and Agent 6 sections. All six agents and their skill files now complete. Updated implementation status table and quick-reference. |
-| 2026-09-20 | Added Section 0 (RDE Template Architecture Harness Coverage — 8/10 score with evidence per layer), Project Setup directory tree, ai-ssdlc specialist agents table, Skills reference table (all 27 skills). Added "Slash commands are skills" clarification and "Working with Commands" with usage examples to Section 7. Updated Contents list. |
+| 2026-09-20 | Added Section 0 (RDE Template Architecture Harness Coverage — 8/10 score with evidence per layer), Project Setup directory tree, ai-ssdlc specialist agents table, Skills reference table (all 29 skill specs). Added "Slash commands are skills" clarification and "Working with Commands" with usage examples to Section 7. Updated Contents list. |
 | 2026-09-20 | Created `docs/backend/design/openapi-spec_v1.yaml` (OpenAPI 3.1 — all 9 backend endpoints). Added @import to `backend/CLAUDE.md` and `frontend/CLAUDE.md`. Added "Connecting documents to layers (@import)" subsection to Section 4. Added "Writing and maintaining evals" subsection to Section 8 (Maintaining) — evals vs skills distinction, build priority for all 6 agents, `.claude/evals/` folder structure, YAML format, and run commands. Updated Contents. |
 | 2026-09-20 | Created design documents for remaining 4 layers and added @imports to all layer CLAUDE.md files. `database/`: `loan-portal_data-dictionary_v1.md` (6 tables, column types, data classification, RLS, login matrix). `infrastructure/`: `loan-portal_infrastructure-design_v1.md` (server inventory, VLANs, firewall rules, Vault paths, Prometheus targets, Jenkins pipeline). `integration/`: `external-services-summary_v1.md` (Auth0, Equifax, SendGrid, DocuSign, RabbitMQ — auth methods, PII sent, error codes). `security/`: `loan-portal_asvs-mapping_v1.md` (OWASP ASVS Level 2 — all 14 chapters, status, and implementation per control). Updated @import table in Section 4 and quick reference. |
 | 2026-09-20 | Added Section 12 (Production Readiness Assessment — complete vs gap vs expected-empty table, verdict). Added Section 13 (New team member — where to start — 5-step onboarding, security-first checklist). Added agent guides to `template-guide.md` Further Reading → Start here table. Added Agent and skills system section to `quick-reference.md`. Added New team member and production readiness sections to `quick-reference-agent-and-skills.md`. All 6 layers now have @imported design documents — template is production grade as an agent engineering framework. |

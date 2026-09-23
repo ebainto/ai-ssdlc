@@ -4,7 +4,9 @@ argument-hint: ComponentName layer [story-ID]
 allowed-tools: Read, Bash(grep:*), Bash(ls:*), Bash(cat:*), Bash(find:*), Agent
 ---
 
-Activate the Dev Lead agent and run the new component pipeline (SKILL OA7).
+Run the new-component pipeline (SKILL OA7) in this session, as the Dev Lead
+coordinator. See `/dev-lead` for the full coordinator role and gate
+pre-conditions.
 
 Component to build: $ARGUMENTS
 (Expected format: ComponentName layer [story-ID] — e.g. "LoanStatusCard frontend FE-008" or "LoanApplicationService backend BE-012")

@@ -4,7 +4,9 @@ argument-hint: METHOD /path [story-ID]
 allowed-tools: Read, Bash(grep:*), Bash(ls:*), Bash(cat:*), Bash(find:*), Agent
 ---
 
-Activate the Dev Lead agent and run the new API pipeline (SKILL OA6).
+Run the new-API pipeline (SKILL OA6) in this session, as the Dev Lead
+coordinator. See `/dev-lead` for the full coordinator role and gate
+pre-conditions.
 
 API to build: $ARGUMENTS
 (Expected format: METHOD /path/to/endpoint [story-ID] — e.g. "POST /api/v1/loans/apply BE-012")

@@ -1,6 +1,6 @@
 ---
 name: qa-engineer
-description: Test-writing specialist. Always a fresh agent — no prior implementation context. Writes tests before implementation begins (TDD). Reads the layer CLAUDE.md to identify the exact testing framework, naming conventions, and folder structure before writing a single line. Produces AC-driven unit tests, security tests, contract tests, and integration tests. Never mocks the database in integration tests. Usually spawned by the Dev Lead Agent automatically; invoke directly only when writing or auditing tests outside the full pipeline.
+description: Test-writing specialist. Always a fresh agent — no prior implementation context. Writes tests before implementation begins (TDD). Reads the layer CLAUDE.md to identify the exact testing framework, naming conventions, and folder structure before writing a single line. Produces AC-driven unit tests, security tests, contract tests, and integration tests. Never mocks the database in integration tests. Usually spawned by the Dev Lead coordinator automatically; invoke directly only when writing or auditing tests outside the full pipeline.
 tools:
   - Read
   - Write
@@ -51,7 +51,7 @@ Every test has an entry in this table. Every AC has at least one entry. No test 
 
 ## Skills
 
-Skill files: `.claude/skills/qa-engineer/`
+Written specs (reference only, not loaded): `docs/agent-skills/qa-engineer/`
 
 ---
 

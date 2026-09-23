@@ -1127,7 +1127,7 @@ Not every change to `security/threat-model/stride-model.md` requires a new Gate 
 |---|---|---|
 | **Quick reference** | `docs/guides/quick-reference.md` | Short training guide — key points, visual flows, all sections at a glance |
 | **Full template guide** | `docs/guides/template-guide.md` | This document — complete detail for every decision in the template |
-| **Agents and skills guide** | `docs/guides/agents-and-skills-guide.md` | Six specialist Claude Code agents and 27 skills — design rationale, implementation, and operational guidance |
+| **Agents and skills guide** | `docs/guides/agents-and-skills-guide.md` | Six specialist Claude Code agents and 29 skill specs — design rationale, implementation, and operational guidance |
 | **Agent quick reference** | `docs/guides/quick-reference-agent-and-skills.md` | One-page cheat sheet for agents, skills, commands, and @import state |
 
 ### Layer guides
@@ -1162,7 +1162,7 @@ Not every change to `security/threat-model/stride-model.md` requires a new Gate 
 | Secure coding standard | `security/policies/secure-coding-standard.md` | Rules for input validation, auth, secrets, encryption, logging — with compliance control refs |
 | Encryption policy | `security/policies/encryption-policy.md` | Approved algorithms, key lengths, prohibited algorithms |
 | SAST suppression register | `security/sast/suppression-rules.md` | Active suppression tracker with 90-day review cycle |
-| Pen test findings register | `security/pen-test/findings-register.md` | Per-engagement findings tracker with SLA compliance table |
+| Pen test findings register | `security/pen-test/internal-findings-register.md` | Per-engagement findings tracker with SLA compliance table |
 | STRIDE threat model (working copy) | `security/threat-model/stride-model.md` | Operational threat model with trust boundary map and re-review triggers |
 
 ### SSDLC artifacts

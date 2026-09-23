@@ -16,7 +16,7 @@ Training highlights. For full documentation, see [`agents-and-skills-guide.md`](
 | 6 | Durable State | ✅ Present | Layer `CLAUDE.md` files, `ssdlc/` phase outputs, `docs/architecture/adr/`, findings register |
 | 7 | Orchestration | ✅ Present | 9 slash commands, Dev Lead as sole orchestrator with `Agent` tool |
 | 8 | Subagents | ✅ Present | 6 specialist agents in `.claude/agents/` |
-| 9 | Skills | ✅ Present | 27 skills in `.claude/skills/` (OA1–OA7, CR1–CR4, QA1–QA5, SA1–SA4, TR1–TR5, IA1–IA4) |
+| 9 | Skills | ✅ Present | Implemented inline in the 6 agent bodies; 29 written specs in `docs/agent-skills/` (reference only — not loaded) |
 | 10 | Verification & Observability | ⚠️ Partial | Jest test suite (9 tests + 17+ reference patterns), test guides, coverage reporting; Prometheus/Grafana/Alertmanager/Loki scaffolded but not configured |
 
 **Score: 8.5/10 fully present.**
@@ -30,10 +30,10 @@ Training highlights. For full documentation, see [`agents-and-skills-guide.md`](
 | 3. Context Management | ✅ Present | Mechanisms for controlling context size: `.claudeignore` filters, progressive disclosure in CLAUDE.md, strict layer isolation prevents unnecessary files from loading. |
 | 4. Tool Interface | ✅ Present | `.claude/settings.json` defines exactly which CLI tools are allowed (git, mvn, npm, docker-compose). Permissions explicitly configured and enforced. |
 | 5. Execution Environment | ⚠️ Partial | **Dev execution complete** (npm scripts, Jest, TypeScript build). **Production execution scaffolded** (Docker Compose, Nginx, Vault folders exist but configs not populated). Non-critical gap — app code and container configs are project-specific, not template. |
-| 6. Durable State | ✅ Present | Persistent storage across sessions: layer CLAUDE.md files, `ssdlc/` phase outputs (versioned), `docs/architecture/adr/` (ADRs), `security/pen-test/findings-register.md`. No data loss on session break. |
+| 6. Durable State | ✅ Present | Persistent storage across sessions: layer CLAUDE.md files, `ssdlc/` phase outputs (versioned), `docs/architecture/adr/` (ADRs), `security/pen-test/internal-findings-register.md`. No data loss on session break. |
 | 7. Orchestration | ✅ Present | 9 slash commands (`/new-feature`, `/code-review`, `/run-tests`, etc.) route work to specialist agents. Dev Lead is single orchestrator — no conflicting agent routing. |
 | 8. Subagents | ✅ Present | 6 specialist agents defined in `.claude/agents/`: Dev Lead (OA), Code Reviewer (CR), QA Engineer (QA), Security Auditor (SA), Tech Researcher (TR), Infrastructure Agent (IA). Each has defined role and tool access. |
-| 9. Skills | ✅ Present | 27 skills across 6 agents: OA1–OA7 (orchestration), CR1–CR4 (review), QA1–QA5 (testing), SA1–SA4 (security audit), TR1–TR5 (research), IA1–IA4 (infrastructure). Complete skill inventory with no gaps. |
+| 9. Skills | ✅ Present | 29 skill specs across 6 agents: OA1–OA7 (orchestration), CR1–CR4 (review), QA1–QA5 (testing), SA1–SA4 (security audit), TR1–TR5 (research), IA1–IA4 (infrastructure). Complete skill inventory with no gaps. |
 | 10. Verification & Observability | ⚠️ Partial | **Verification ✅ Complete:** Jest test suite (9 tests), test guides (4 docs), coverage reporting (`npm test -- --coverage`), GitHub Actions CI/CD. **Observability ❌ Missing:** Prometheus/Grafana/Alertmanager/Loki scaffolded in `infrastructure/monitoring/` but configs not created. |
 
 ---
@@ -56,7 +56,7 @@ Training highlights. For full documentation, see [`agents-and-skills-guide.md`](
 ai-ssdlc/
 ├── .claude/
 │   ├── agents/        ← 6 specialist agents
-│   ├── skills/        ← 27 skill playbooks
+│   ├── skills/        ← 29 skill playbooks
 │   ├── commands/      ← 9 slash commands
 │   └── settings.json  ← shared team permissions
 ├── .claudeignore      ← filters Claude's context
@@ -99,8 +99,8 @@ Slash commands are the trigger. Skills run internally — never typed directly.
 |---|---|---|
 | OA1 — Triage and route | dev-lead | Checks gate pre-conditions, identifies what you need, routes to the right skill |
 | OA2 — Session status | dev-lead | Table of work done this session and what's next |
-| OA3 — Plan a feature | dev-lead | Maps a story to affected layers and recommended execution sequence |
-| OA4 — Check gate status | dev-lead | Reads HITL audit trail, reports all 7 gates and any outstanding conditions |
+| OA3 — Check gate status | dev-lead | Maps a story to affected layers and recommended execution sequence |
+| OA4 — Plan a feature | dev-lead | Reads HITL audit trail, reports all 7 gates and any outstanding conditions |
 | OA5 — New feature pipeline | dev-lead | Full pipeline: QA first → implement → review → audit → PR |
 | OA6 — New API pipeline | dev-lead | Spec check → QA → implement → review → security audit → PR |
 | OA7 — New component pipeline | dev-lead | Layer-aware pipeline: frontend component or backend service variant |
@@ -109,8 +109,8 @@ Slash commands are the trigger. Skills run internally — never typed directly.
 | CR3 — Review test coverage | code-reviewer | AC to test mapping — missing security AC = Critical DoD violation |
 | CR4 — Review report | code-reviewer | Structured verdict: APPROVED / CHANGES REQUIRED / REJECTED |
 | QA1 — Write unit tests | qa-engineer | One passing + one failing case per AC; security ACs always included |
-| QA2 — Write integration tests | qa-engineer | Real database only — no persistence-layer mocks |
-| QA3 — Write contract tests | qa-engineer | Consumer-driven, matches OpenAPI spec exactly |
+| QA2 — Write contract tests | qa-engineer | Real database only — no persistence-layer mocks |
+| QA3 — Write integration tests | qa-engineer | Consumer-driven, matches OpenAPI spec exactly |
 | QA4 — Audit test coverage | qa-engineer | AC to test gap table — flags DoD and Gate 6 blockers |
 | QA5 — Write security acceptance tests | qa-engineer | Auth, input validation, audit log, PII exclusion, rate limit |
 | SA1 — Audit threat model | security-auditor | Verifies every Mitigated STRIDE control is present in the diff |
@@ -152,7 +152,7 @@ Slash commands are the trigger. Skills run internally — never typed directly.
 ```
 
 - Type `/name` → Claude Code reads `.claude/commands/name.md` → activates the instruction
-- Skill files in `.claude/skills/` are documentation and reference — they do not auto-execute
+- Skill files in `docs/agent-skills/` are documentation only — Claude Code never loads them. The copy that runs is the `### SKILL <ID>` section in the agent body
 - Skills are implemented inside `.claude/agents/` files; the skills folder documents them
 
 ---
@@ -280,7 +280,7 @@ Ask the Dev Lead at any time:
 ```
 "check gate status"
 ```
-Dev Lead runs OA4 — reads `ssdlc/[system]_hitl-audit-trail_vN.md` and reports all 7 gates with dates and any outstanding conditions.
+Dev Lead runs OA3 — reads `ssdlc/[system]_hitl-audit-trail_vN.md` and reports all 7 gates with dates and any outstanding conditions.
 
 ### Gate pre-conditions — quick check
 
@@ -407,7 +407,7 @@ When you add an @import to a layer CLAUDE.md, every agent that loads that layer 
 |---|---|---|
 | **What** | What the agent must do | Does the agent actually do it |
 | **Format** | Markdown instruction file | YAML test cases |
-| **Lives in** | `.claude/skills/[agent]/` | `evals/[agent]/` (project root) |
+| **Lives in** | `docs/agent-skills/[agent]/` | `evals/[agent]/` (project root) |
 | **Run** | Loaded at session start automatically | `claude plugin eval evals/` — run manually after skill changes |
 
 **Both are always required.** Skills without evals are untested. Evals without skills have nothing to test.
@@ -488,7 +488,7 @@ When an agent makes a mistake in a real session, add a case to the relevant eval
 |---|---|
 | QA Engineer is ALWAYS first | Tests drive implementation (TDD). Dev Lead enforces this in OA5/OA6/OA7. |
 | Code Reviewer and Security Auditor are always fresh agents | No prior context = unbiased review. Never fork these agents. |
-| Security Auditor findings are confidential | Goes to `security/pen-test/findings-register.md` only. Never in conversation, PR, or commit. |
+| Security Auditor findings are confidential | Goes to `security/pen-test/internal-findings-register.md` only. Never in conversation, PR, or commit. |
 | Never mock the database in integration tests | Mock at HTTP boundary only. Real database for persistence tests. |
 | Every violation cites a CLAUDE.md rule | "Bad practice" is not a finding. "Violates backend/CLAUDE.md Security Architecture — Audit Logging" is. |
 | Security ACs are never optional | A security AC with no test = Critical DoD violation. Non-negotiable. |
@@ -556,7 +556,7 @@ Read in this order. Each step takes less than 30 minutes.
 
 **Three things to know before writing any code:**
 1. Never hardcode a secret — all secrets come from Vault via the sidecar (see `infrastructure/CLAUDE.md`)
-2. Never write a security finding in a PR or commit — findings go to `security/pen-test/findings-register.md` only
+2. Never write a security finding in a PR or commit — findings go to `security/pen-test/internal-findings-register.md` only
 3. Never approve a gate without reading what it produced — `ssdlc/[system]_hitl-audit-trail_vN.md` is the record
 
 ---
@@ -567,7 +567,7 @@ Read in this order. Each step takes less than 30 minutes.
 |---|---|
 | All 6 layer CLAUDE.md files (populated) | ✅ Complete |
 | All 6 layers have @imported design documents | ✅ Complete |
-| 6 specialist agents + 27 skills | ✅ Complete |
+| 6 specialist agents + 29 skill specs | ✅ Complete |
 | 9 slash commands | ✅ Complete |
 | Security policy files (5) | ✅ Complete |
 | SSDLC 7-gate structure enforced | ✅ Complete |

@@ -5,7 +5,7 @@
 
 ## CONFIDENTIALITY — absolute rule
 
-Finding details are NEVER shown in the conversation. They are ONLY written to `security/pen-test/findings-register.md`.
+Finding details are NEVER shown in the conversation. They are ONLY written to `security/pen-test/internal-findings-register.md`.
 
 Conversation-visible output after SA4 completes: "1 finding recorded — see findings register (confidential)."
 
@@ -13,7 +13,7 @@ Conversation-visible output after SA4 completes: "1 finding recorded — see fin
 
 1. Assign the next sequential Finding ID: read the register to find the highest SF-NNN, increment by 1.
 2. Produce the finding card.
-3. Append to `security/pen-test/findings-register.md`.
+3. Append to `security/pen-test/internal-findings-register.md`.
 
 ## Finding card format
 
@@ -38,7 +38,7 @@ Status:          Open
 
 ## Save instruction
 
-Append to `security/pen-test/findings-register.md` — never overwrite.
+Append to `security/pen-test/internal-findings-register.md` — never overwrite.
 Create the file if it does not exist with this header:
 ```
 # Security Findings Register — CONFIDENTIAL

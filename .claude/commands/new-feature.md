@@ -4,7 +4,10 @@ argument-hint: <story-ID or feature description>
 allowed-tools: Read, Bash(grep:*), Bash(ls:*), Bash(cat:*), Bash(find:*), Agent
 ---
 
-Activate the Dev Lead agent and run the new feature pipeline (SKILL OA5).
+Run the new-feature pipeline (SKILL OA5) in this session, as the Dev Lead
+coordinator. See `/dev-lead` for the full coordinator role and gate
+pre-conditions. The pipeline runs here, not in a subagent, because it has to
+wait on you between steps; the specialists it spawns are subagents.
 
 Story or feature to build: $ARGUMENTS
 

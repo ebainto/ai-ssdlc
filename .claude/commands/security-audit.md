@@ -29,11 +29,11 @@ Steps to follow:
 4. Execute SKILL SA1 — audit against threat model (verify all Mitigated threat controls are present in the diff).
 5. Execute SKILL SA2 — audit SAST suppressions (if any suppression annotations exist in the diff).
 6. Execute SKILL SA3 — check pen test findings (cross-reference open findings against the diff).
-7. All findings are written to security/pen-test/findings-register.md only.
+7. All findings are written to security/pen-test/internal-findings-register.md only.
 
 Conversation output rules:
 - NEVER output finding details, vulnerability descriptions, or code evidence in the conversation.
-- Report only: "N finding(s) recorded — see security/pen-test/findings-register.md (confidential)."
+- Report only: "N finding(s) recorded — see security/pen-test/internal-findings-register.md (confidential)."
 
 Key rules:
 - Read the threat model before reading any source file.

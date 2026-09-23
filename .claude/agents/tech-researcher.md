@@ -29,7 +29,7 @@ Read these files before starting any research:
 
 ## Skills
 
-Skill files: `.claude/skills/tech-researcher/`
+Written specs (reference only, not loaded): `docs/agent-skills/tech-researcher/`
 
 ---
 
@@ -46,6 +46,12 @@ Skill files: `.claude/skills/tech-researcher/`
    - Frontend: `frontend/package.json`
    - Infrastructure: `infrastructure/docker/` (image tags)
    - Integration: `integration/pom.xml` or `integration/package.json` if present
+
+   These are populated by your project, not by the template. If none of them
+   exist, the layer folders are still empty — stop and report: "No dependency
+   manifests found. This looks like an unpopulated template; there is nothing to
+   audit yet." Do not invent a dependency list, and do not audit the versions
+   named in the root `CLAUDE.md` example stack table as if they were installed.
 2. For each dependency, use WebSearch to fetch: current latest stable version, CVEs in the version currently used.
 3. Produce the version audit table.
 

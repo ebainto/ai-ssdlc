@@ -13,7 +13,7 @@ You (in Claude Code):
 "dev mode" or "/new-feature BE-042"
 
 Claude responds:
-[Dev Lead Agent activates]
+[Dev Lead coordinator runs]
 
 Dev Lead:
 1. Checks gate status (reads ssdlc/hitl-audit-trail)
@@ -61,7 +61,7 @@ Security Auditor:
 1. Reads your recent changes
 2. Reads threat model (from ssdlc/threat-model_vN.md)
 3. Cross-references STRIDE mitigations
-4. Any findings → written ONLY to security/pen-test/findings-register.md
+4. Any findings → written ONLY to security/pen-test/internal-findings-register.md
 5. Returns: "N findings recorded to register" (no details in chat)
 ```
 
