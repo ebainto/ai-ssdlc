@@ -15,9 +15,9 @@ Training highlights. For full documentation, see [`agents-and-skills-guide.md`](
 | 5 | Execution Environment | ❌ Absent | No build, test or lint tooling ships with the template — the layer folders are empty by design. You add the toolchain for your stack. |
 | 6 | Durable State | ✅ Present | Layer `CLAUDE.md` files, `ssdlc/` phase outputs, `docs/architecture/adr/`, findings register |
 | 7 | Orchestration | ✅ Present | 11 slash commands + `/ssdlc-review` skill, `/dev-lead` as the main-session orchestrator with `Agent` tool |
-| 8 | Subagents | ✅ Present | 6 specialist agents in `.claude/agents/` |
+| 8 | Subagents | ✅ Present | 5 specialist agents in `.claude/agents/` (code-reviewer, qa-engineer, security-auditor, infrastructure-agent, tech-researcher) |
 | 9 | Skills | ✅ Present | Implemented inline in the 6 agent bodies; 29 written specs in `docs/agent-skills/` (reference only — not loaded) |
-| 10 | Verification & Observability | ⚠️ Partial | Jest test suite (9 tests + 17+ reference patterns), test guides, coverage reporting; Prometheus/Grafana/Alertmanager/Loki scaffolded but not configured |
+| 10 | Verification & Observability | ⚠️ Partial | Test guides + testing patterns documented; no Jest implementation (user adds per stack). Prometheus/Grafana/Alertmanager/Loki scaffolded in infrastructure/ but configs not populated. |
 
 **Score: 8.5/10 fully present.**
 
@@ -29,7 +29,7 @@ Training highlights. For full documentation, see [`agents-and-skills-guide.md`](
 | 2. Context Delivery | ✅ Present | Knowledge base in `docs/guides/` (5 guides) + auto-loaded layer CLAUDE.md files. All context delivered to Claude on session start. |
 | 3. Context Management | ✅ Present | Mechanisms for controlling context size: `.claudeignore` filters, progressive disclosure in CLAUDE.md, strict layer isolation prevents unnecessary files from loading. |
 | 4. Tool Interface | ✅ Present | `.claude/settings.json` allows read-only shell (`mkdir`, `ls`, `find`, `cat`, `grep`) and read-only git, and denies `git push`, `reset --hard` and `clean`. Build tools (`mvn`, `npm`, `docker-compose`) are deliberately **not** allowed — add them per project. |
-| 5. Execution Environment | ⚠️ Partial | **Dev execution complete** (npm scripts, Jest, TypeScript build). **Production execution scaffolded** (Docker Compose, Nginx, Vault folders exist but configs not populated). Non-critical gap — app code and container configs are project-specific, not template. |
+| 5. Execution Environment | ❌ Absent | **Dev execution:** You add npm scripts, build tooling, test framework per your stack. **Production execution:** Docker Compose, Nginx, Vault folders scaffolded but configs not populated. Non-critical gap — infrastructure configs are project-specific, not template. | |
 | 6. Durable State | ✅ Present | Persistent storage across sessions: layer CLAUDE.md files, `ssdlc/` phase outputs (versioned), `docs/architecture/adr/` (ADRs), `security/pen-test/internal-findings-register.md`. No data loss on session break. |
 | 7. Orchestration | ✅ Present | 11 slash commands + `/ssdlc-review` (`/new-feature`, `/code-review`, `/run-tests`, etc.) route work to specialist agents. Dev Lead is single orchestrator — no conflicting agent routing. |
 | 8. Subagents | ✅ Present | 6 specialist agents defined in `.claude/agents/`: Dev Lead (OA), Code Reviewer (CR), QA Engineer (QA), Security Auditor (SA), Tech Researcher (TR), Infrastructure Agent (IA). Each has defined role and tool access. |
@@ -38,15 +38,15 @@ Training highlights. For full documentation, see [`agents-and-skills-guide.md`](
 
 ---
 
-**Why Layer 5 is Partial (acceptable):**
-- Production infrastructure configs (docker-compose.yml, nginx configs, vault policies) are meant to be customized per project deployment. The scaffolding is intentional — a template that projects populate with their own infrastructure needs.
-- Dev execution (npm test, npm build) is fully functional and used daily during development.
-- This is a template project, not a deployed application. Production config population happens when projects fork from this template.
+**Why Layer 5 is Absent (by design):**
+- No build, test, or lint tooling ships with the template. The layer folders are empty.
+- You add npm scripts, Jest, Maven plugins, Checkstyle, Semgrep configs per your stack.
+- This is a template project, not a deployed application. Tool setup happens when projects fork from this template.
 
 **Why Layer 10 is Partial (not yet Present):**
-- **Verification ✅ Complete:** Jest test suite (9 passing tests) + comprehensive test documentation (4 guides) + coverage reporting + GitHub Actions CI/CD pipeline. Verification is systematic and automated.
-- **Observability ❌ Not Implemented:** Prometheus, Grafana, Alertmanager, Loki folders exist but configuration files not created. Missing: scrape configs, dashboard templates, alert rules, log aggregation setup, health checks, metrics collection endpoints.
-- **To reach Present:** Need to create `infrastructure/monitoring/prometheus.yml`, `infrastructure/monitoring/grafana/dashboards/`, `infrastructure/monitoring/alertmanager.yml`, and wire up application metrics endpoints.
+- **Verification ❌ Not Shipped:** No Jest suite, coverage reporting, or GitHub Actions CI. You add testing per your stack.
+- **Observability ❌ Not Implemented:** Prometheus, Grafana, Alertmanager, Loki folders exist in `infrastructure/monitoring/` but configuration files not created. Missing: scrape configs, dashboard templates, alert rules, health checks.
+- **To reach Present:** Create `infrastructure/monitoring/prometheus.yml`, `infrastructure/monitoring/alertmanager.yml`, and configure app metrics endpoints.
 
 ---
 
@@ -55,14 +55,15 @@ Training highlights. For full documentation, see [`agents-and-skills-guide.md`](
 ```
 ai-ssdlc/
 ├── .claude/
-│   ├── agents/        ← 6 specialist agents
-│   ├── skills/        ← 29 skill playbooks
-│   ├── commands/      ← 11 slash commands
-│   ├── skills/        ← /ssdlc-review (adversarial review)
+│   ├── agents/        ← 5 specialist agents
+│   ├── commands/      ← 11 slash commands + gate management
+│   ├── skills/        ← /ssdlc-review (single published skill)
 │   └── settings.json  ← shared team permissions
 ├── .claudeignore      ← filters Claude's context
 ├── CLAUDE.md          ← project instructions (auto-loaded)
-├── docs/guides/       ← 5 knowledge base docs + this guide
+├── docs/
+│   ├── guides/        ← 5 knowledge base docs (including this one)
+│   └── agent-skills/  ← 29 skill specs (reference only, not loaded)
 ├── frontend/CLAUDE.md ← layer guide (auto-loaded)
 ├── backend/CLAUDE.md  ← layer guide (auto-loaded)
 ├── database/CLAUDE.md ← layer guide (auto-loaded)
@@ -81,20 +82,24 @@ ai-ssdlc/
 
 Slash commands are the trigger. Skills run internally — never typed directly.
 
-| Agent | Trigger slash command (skills) | Specialist in |
+| Agent | Trigger slash command | Specialist in |
 |---|---|---|
-| **dev-lead** | `/new-feature` `/new-api` `/new-component` | Feature planning, multi-agent coordination, gate enforcement |
 | **code-reviewer** | `/code-review` | Layer CLAUDE.md compliance, boundary checks, security control verification |
-| **qa-engineer** | `/run-tests` | JUnit, Jasmine/Karma, AC-driven TDD, real-database integration tests |
+| **qa-engineer** | `/run-tests` | Unit tests, AC-driven TDD, real-database integration tests |
 | **security-auditor** | `/security-audit` | STRIDE verification, SAST suppression audit, pen test cross-reference |
 | **tech-researcher** | `/research` `/write-adr` | Upgrade spikes, CVE checks, ADR authoring |
-| **infrastructure-agent** | `/infra-check` | Docker Compose, HashiCorp Vault, Nginx, Prometheus/Grafana |
+| **infrastructure-agent** | `/infra-check` | Docker Compose, HashiCorp Vault, Nginx, monitoring |
+
+**Coordinator (command, not agent):**
+| Command | Role |
+|---|---|
+| **dev-lead** (`/new-feature`, `/new-api`, `/new-component`) | Main-session orchestrator: routes work to agents, enforces gate pre-conditions, checks TDD order |
 
 > Slash commands = skills. The `/command-name` you type IS the skill trigger. See "Working with Commands" below.
 
 ---
 
-## Skills reference — all 27
+## Skills reference — all 29
 
 | Skill | Used by | Does |
 |---|---|---|
