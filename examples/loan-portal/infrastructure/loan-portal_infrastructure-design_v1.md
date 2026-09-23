@@ -169,11 +169,32 @@ All deployments to staging and production go through Jenkins. No manual SSH depl
        ↓
 8. Manual approval gate (platform lead)
        ↓
-9. Deploy to prod-01 (rolling): pull, stop, start, health check
-   Deploy to prod-02 after prod-01 healthy
+9. Flyway migrations run via Jenkins (flywayuser)
+   MUST precede the application rollout — see the note below
        ↓
-10. Flyway migrations run via Jenkins (flywayuser) before backend restart
+10. Deploy to prod-01 (rolling): pull, stop, start, health check
+    Deploy to prod-02 after prod-01 healthy
 ```
+
+> **Migrations run before the rollout, and must be backward compatible.**
+>
+> An earlier revision of this document had these two steps the other way round:
+> the new application was rolled out to both production hosts and *then* the
+> schema was migrated. That breaks the deploy — new code queries columns that do
+> not exist yet, and the window is the whole rollout, not an instant.
+>
+> Running migrations first only works if each migration is additive with respect
+> to the currently-deployed code, because during a rolling deploy the old and new
+> versions run simultaneously against the same schema. Use expand/contract:
+>
+> | Release | Migration | Application |
+> |---|---|---|
+> | N | Add the new nullable column / new table; backfill | Ignores it |
+> | N+1 | — | Writes both old and new; reads new |
+> | N+2 | Drop the old column, add NOT NULL | Reads and writes new only |
+>
+> A destructive migration (drop, rename, narrow a type, add NOT NULL without a
+> default) must never ship in the same release as the code that depends on it.
 
 ---
 

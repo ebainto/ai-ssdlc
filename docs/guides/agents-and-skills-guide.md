@@ -41,9 +41,9 @@ This project is structured as an agent engineering framework. The table below sc
 | # | Layer | Status | Evidence in this project |
 |---|---|---|---|
 | 1 | **Instructions** | ✅ Present | `CLAUDE.md` (project rules, coding standards, layer guide pointers) + six layer `CLAUDE.md` files (frontend, backend, database, infrastructure, integration, security — auto-loaded per directory) + global `~/.claude/CLAUDE.md` (my-architecture agents) |
-| 2 | **Context Delivery** | ✅ Present | `docs/` knowledge base — `agents-and-skills-guide.md`, `template-guide.md`, `quick-reference-agent-and-skills.md`. Six layer `CLAUDE.md` files auto-loaded by directory. Architecture inputs in `architecture/`. SSDLC outputs in `ssdlc/`. Security design in `security/`. |
+| 2 | **Context Delivery** | ✅ Present | `docs/` knowledge base — `agents-and-skills-guide.md`, `template-guide.md`, `quick-reference-agent-and-skills.md`. Six layer `CLAUDE.md` files auto-loaded by directory. Architecture inputs go in `architecture/` and SSDLC outputs in `ssdlc/` — both created on demand by the phase that produces them, so neither ships populated. Security policies in `security/`. |
 | 3 | **Context Management** | ✅ Present | `.claudeignore` (blocks credentials, build artefacts, `node_modules`, lock files), progressive disclosure pattern in root `CLAUDE.md` ("read these docs before writing code"), layer isolation: each layer `CLAUDE.md` loads only when working in that directory |
-| 4 | **Tool Interface** | ✅ Present | `.claude/settings.json` permissions allowlist (git, mvn, npm, docker-compose — explicit allow/deny per command) |
+| 4 | **Tool Interface** | ✅ Present | `.claude/settings.json` allowlist: read-only shell (`mkdir`, `ls`, `find`, `cat`, `grep`) plus read-only git (`status`, `diff`, `log`, `show`, `branch`); denies `push`, `reset --hard`, `clean`. Build tools are **not** allowed — add `mvn`/`npm`/`docker-compose` yourself if your workflow needs them |
 | 5 | **Execution Environment** | ⚠️ Partial | Referenced in `CLAUDE.md` (docker-compose, `mvn spring-boot:run`, Angular serve) — but `docker-compose.yml` and `Dockerfile` are template scaffolds. Layer `src/` directories are empty placeholders. App code not yet scaffolded for the specific project. |
 | 6 | **Durable State** | ✅ Present | Layer `CLAUDE.md` files (source of truth per layer), `ssdlc/` phase outputs (gates 1–7), `docs/architecture/adr/` (ADRs), `security/pen-test/internal-findings-register.md` (append-only) |
 | 7 | **Orchestration** | ✅ Present | `.claude/commands/` (11 slash commands routing to agents + skills), Dev Lead as the only agent with the Agent tool (correct orchestrator pattern), `CLAUDE.md` routing table |
@@ -1608,7 +1608,7 @@ required gate is not approved.
 
 ---
 
-## 8. Maintaining and extending this system
+## 9. Maintaining and extending this system
 
 This section is for the person responsible for maintaining the agents and skills over time — typically the **Tech Lead** or **Security Architect**. One named owner per project. This person is the only one who adds, updates, or removes agents and skills. Changes to this guide are treated as architectural decisions and follow the ADR process.
 
@@ -1929,7 +1929,7 @@ Add the new agent to:
 
 **Step 5 — Update the implementation priority table**
 
-Add the new agent's skills to Section 8 at the appropriate priority position. Justify the placement.
+Add the new agent's skills to Section 10 at the appropriate priority position. Justify the placement.
 
 **Step 6 — Write an ADR for the decision**
 
@@ -2055,7 +2055,7 @@ At the bottom of this guide, add a changelog entry:
 
 ---
 
-## 9. Implementation status and priority
+## 10. Implementation status and priority
 
 ### What is implemented
 
@@ -2126,7 +2126,7 @@ worth building in, kept as a backlog.
 
 ---
 
-## 10. Claude Code implementation notes
+## 11. Claude Code implementation notes
 
 **Fresh agent vs fork:**
 - Code Reviewer, Security Auditor, QA Engineer, Tech Researcher, and Infrastructure Agent: always fresh — they must not inherit the development session context.
@@ -2189,7 +2189,11 @@ This template is **production grade as an agent engineering framework**. The tab
 
 ### Production grade verdict
 
-> **Yes — production grade as a template.** A team can fork this repository, run the SSDLC Agent phases, and have a security-first, gate-enforced, AI-assisted development environment operational by Phase 5 without building any agent infrastructure from scratch. Eval suites are documented in Section 8 and should be created in `evals/` (project root) via `claude plugin eval` — all five priority suite definitions are ready to recreate.
+> **Usable as a template, with work.** A team can fork this repository and get a
+> security-first, gate-enforced development context without building the agent
+> harness from scratch. What they must supply: the application code, a CI
+> pipeline, a SAST ruleset, eval suites, and their own design documents in
+> `docs/<layer>/` — the template deliberately ships none of these. Eval suites are documented in Section 9 and must be created in `evals/` — none ship with this template.
 
 ---
 
@@ -2218,16 +2222,16 @@ For someone new to this project or this template, read in this order:
 
 | Date | Change |
 |---|---|
-| 2026-09-20 | Initial version — six agents, 18 slash commands, sequence examples, maintenance guide |
+| 2026-09-20 | Initial version — six agents, 18 slash commands, sequence examples, maintenance guide. *(Superseded: the shipped harness has five agents and eleven commands; the other nine commands were never built — see Section 8.)* |
 | 2026-09-20 | Renamed Orchestration Agent → Dev Lead coordinator. Added Section 2 (calling model — two types of slash commands, who calls who, decision table, five scenario sequences). Added Infrastructure Agent (Agent 6). Added OA5/OA6/OA7 pipeline skills. Implemented Dev Lead coordinator in `.claude/agents/dev-lead.md` with `/new-feature`, `/new-api`, `/new-component` entry-point commands. |
 | 2026-09-20 | Implemented Code Reviewer Agent in `.claude/agents/code-reviewer.md` (Read-only tools, worktree isolation when spawned by Dev Lead). Added `/code-review` direct command. Added Implementation lines to Agent 1 and Agent 2 sections. Updated implementation status table. |
 | 2026-09-20 | Created `docs/agent-skills/` project-level folder with subfolders for all six agents (skill files to be populated per agent). Implemented QA Engineer Agent in `.claude/agents/qa-engineer.md` (Read + Write tools). Created QA1–QA5 skill files in `docs/agent-skills/qa-engineer/`. Added `/run-tests` direct command. Added Implementation line to Agent 4 section. |
 | 2026-09-20 | Created skill files for Dev Lead (OA1–OA7) and Code Reviewer (CR1–CR4) in `docs/agent-skills/`. Implemented Security Auditor Agent in `.claude/agents/security-auditor.md` (Read + Write tools, confidential findings-register-only output). Created SA1–SA4 skill files in `docs/agent-skills/security-auditor/`. Added `/security-audit` direct command. Added Implementation line to Agent 3 section. Added three-folder model explanation to Section 7. |
 | 2026-09-20 | Implemented Tech Researcher Agent (`.claude/agents/tech-researcher.md`, Tools: Read + Write + WebSearch). Created TR1–TR5 skill files. Added `/research` and `/write-adr` commands. Implemented Infrastructure Agent (`.claude/agents/infrastructure-agent.md`, Tools: Read + Write, worktree isolation). Created IA1–IA4 skill files. Added `/infra-check` command. Added Implementation lines to Agent 5 and Agent 6 sections. All six agents and their skill files now complete. Updated implementation status table and quick-reference. |
 | 2026-09-20 | Added Section 0 (RDE Template Architecture Harness Coverage — 8/10 score with evidence per layer), Project Setup directory tree, ai-ssdlc specialist agents table, Skills reference table (all 29 skill specs). Added "Slash commands are skills" clarification and "Working with Commands" with usage examples to Section 7. Updated Contents list. |
-| 2026-09-20 | Created `docs/backend/design/openapi-spec_v1.yaml` (OpenAPI 3.1 — all 9 backend endpoints). Added @import to `backend/CLAUDE.md` and `frontend/CLAUDE.md`. Added "Connecting documents to layers (@import)" subsection to Section 4. Added "Writing and maintaining evals" subsection to Section 8 (Maintaining) — evals vs skills distinction, build priority for all 6 agents, `.claude/evals/` folder structure, YAML format, and run commands. Updated Contents. |
+| 2026-09-20 | Created the OpenAPI spec, since moved to `examples/loan-portal/` (OpenAPI 3.1 — all 9 backend endpoints). Added @import to `backend/CLAUDE.md` and `frontend/CLAUDE.md`. Added "Connecting documents to layers (@import)" subsection to Section 4. Added "Writing and maintaining evals" subsection to Section 8 (Maintaining) — evals vs skills distinction, build priority for all 6 agents, `.claude/evals/` folder structure, YAML format, and run commands. Updated Contents. |
 | 2026-09-20 | Created design documents for remaining 4 layers and added @imports to all layer CLAUDE.md files. `database/`: `loan-portal_data-dictionary_v1.md` (6 tables, column types, data classification, RLS, login matrix). `infrastructure/`: `loan-portal_infrastructure-design_v1.md` (server inventory, VLANs, firewall rules, Vault paths, Prometheus targets, Jenkins pipeline). `integration/`: `external-services-summary_v1.md` (Auth0, Equifax, SendGrid, DocuSign, RabbitMQ — auth methods, PII sent, error codes). `security/`: `loan-portal_asvs-mapping_v1.md` (OWASP ASVS Level 2 — all 14 chapters, status, and implementation per control). Updated @import table in Section 4 and quick reference. |
-| 2026-09-20 | Added Section 12 (Production Readiness Assessment — complete vs gap vs expected-empty table, verdict). Added Section 13 (New team member — where to start — 5-step onboarding, security-first checklist). Added agent guides to `template-guide.md` Further Reading → Start here table. Added Agent and skills system section to `quick-reference.md`. Added New team member and production readiness sections to `quick-reference-agent-and-skills.md`. All 6 layers now have @imported design documents — template is production grade as an agent engineering framework. |
+| 2026-09-20 | Added the Production Readiness Assessment section (complete vs gap vs expected-empty table, verdict). Added Section 13 (New team member — where to start — 5-step onboarding, security-first checklist). Added agent guides to `template-guide.md` Further Reading → Start here table. Added Agent and skills system section to `quick-reference.md`. Added New team member and production readiness sections to `quick-reference-agent-and-skills.md`. All 6 layers now have @imported design documents — template is production grade as an agent engineering framework. |
 | 2026-09-21 | Removed `.claude/evals/` folder — evals must live in `evals/` at project root and be run via `claude plugin eval`. Updated all path references in Section 8, project setup tree, RDE score (8/10), and Section 12. |
-| 2026-09-21 | Expanded Section 8 evals documentation into full team reference: plain-English definition ("what is an eval"), per-suite breakdown (5 suites × per-case table showing what each case tests and what goes wrong without it), team responsibility table (Tech Lead, Security Lead, all team members), step-by-step "how to fix a failing eval", regression eval pattern with example, updated current eval suites table. Replaced compact evals section in `quick-reference-agent-and-skills.md` with full team reference: "at a glance" suite table, run commands, output reading guide, fix rule, regression pattern, who does what. |
-| 2026-09-20 | Built all four priority eval suites (44 cases total): `dev-lead/triage-routing.yaml` (8 cases — OA1 routing, gate enforcement, output format), `dev-lead/pipeline-coordination.yaml` (8 cases — TDD sequence, Security Auditor conditional trigger, gh pr create completion), `qa-engineer/tdd-gate.yaml` (9 cases — CLAUDE.md read-first, coverage map, mocking rules, no implementation), `code-reviewer/layer-review.yaml` (9 cases — hardcoded secrets, security controls, layer boundaries, read-only), `security-auditor/confidentiality.yaml` (10 cases — no detail in chat, register append, sequential IDs, no exploit steps). Added "Reading and acting on eval results" subsection to Section 8 — output format, how to fix failures, regression eval pattern, current eval suite table. Updated RDE score from 8/10 to 9/10. Updated production readiness section. |
+| 2026-09-21 | Expanded the evals documentation into a full team reference: plain-English definition ("what is an eval"), per-suite breakdown (5 suites × per-case table showing what each case tests and what goes wrong without it), team responsibility table (Tech Lead, Security Lead, all team members), step-by-step "how to fix a failing eval", regression eval pattern with example, updated current eval suites table. Replaced compact evals section in `quick-reference-agent-and-skills.md` with full team reference: "at a glance" suite table, run commands, output reading guide, fix rule, regression pattern, who does what. |
+| 2026-09-20 | **Never shipped — retained for history only.** Claimed to build four priority eval suites (44 cases total): `dev-lead/triage-routing.yaml` (8 cases — OA1 routing, gate enforcement, output format), `dev-lead/pipeline-coordination.yaml` (8 cases — TDD sequence, Security Auditor conditional trigger, gh pr create completion), `qa-engineer/tdd-gate.yaml` (9 cases — CLAUDE.md read-first, coverage map, mocking rules, no implementation), `code-reviewer/layer-review.yaml` (9 cases — hardcoded secrets, security controls, layer boundaries, read-only), `security-auditor/confidentiality.yaml` (10 cases — no detail in chat, register append, sequential IDs, no exploit steps). Added "Reading and acting on eval results" subsection to Section 8 — output format, how to fix failures, regression eval pattern, current eval suite table. Updated RDE score from 8/10 to 9/10. *(No `evals/` folder, suite file or score of this kind exists in the repository; the suites described here were specified but never created.)* |

@@ -148,13 +148,16 @@ re-validates everything):**
 
 ## Security Architecture
 
-> Aligned to: `security/policies/frontend-security-policy.md`
+> Aligned to: `security/policies/secure-coding-standard.md` and
+> `security/policies/encryption-policy.md` — the two policies that ship.
+> Add `security/policies/frontend-security-policy.md` and point here instead if
+> this layer grows rules the shared standards do not cover.
 > Populated at SSDLC Phase 5 (Development Standards). Threats identified in Phase 2 (Threat Model).
 
 | Threat (Phase 2 ref) | Control | Implementation in Angular |
 |---|---|---|
 | Session hijacking (STRIDE-I) | Auth tokens never in localStorage — memory-only with httpOnly cookie refresh | Access token stored in-memory (NgRx store, not localStorage). Refresh token in httpOnly cookie managed by backend. On page reload, call `/auth/refresh` to re-issue access token |
-| XSS via user-generated content (STRIDE-T) | Angular's built-in DOM sanitisation; avoid `bypassSecurityTrust*` | Angular escapes all interpolation `{{ }}` and property bindings by default. `DomSanitizer.bypassSecurityTrustHtml()` is banned — ESLint rule `@angular-eslint/no-bypassSecurityTrust*` enforced |
+| XSS via user-generated content (STRIDE-T) | Angular's built-in DOM sanitisation; avoid `bypassSecurityTrust*` | Angular escapes all interpolation `{{ }}` and property bindings by default. `DomSanitizer.bypassSecurityTrustHtml()` is banned. There is **no** built-in `@angular-eslint` rule for this — enforce it with a generic ban, e.g. `no-restricted-syntax` matching `bypassSecurityTrust*` calls, or a Semgrep rule, and require a security reviewer on any exception |
 | CSRF (STRIDE-T) | Angular `HttpClient` XSRF token handling | `HttpClientXsrfModule` configured to read `XSRF-TOKEN` cookie and send as `X-XSRF-TOKEN` header on all mutating requests |
 | Clickjacking (STRIDE-E) | X-Frame-Options + CSP frame-ancestors | Set at Nginx layer (`infrastructure/`); Angular app itself adds meta CSP tag in `index.html` |
 | Idle session abuse (STRIDE-E) | 15-minute inactivity timeout | `IdleTimerService` uses RxJS `fromEvent` (mousemove, keydown) + `timer`; after 15 min dispatches NgRx `logout` action |
@@ -221,5 +224,5 @@ src/app/shared/                            — reusable components, pipes, direc
 
 | Connects to | Via | Contract location |
 |---|---|---|
-| Backend API | REST (Angular `HttpClient`) | `docs/backend/design/openapi-spec_v1.yaml` |
+| Backend API | REST (Angular `HttpClient`) | `docs/backend/design/[system]_openapi-spec_v1.yaml` |
 | `[IdP]` (via backend) | OAuth2 / OIDC redirect — the backend handles token exchange | `integration/apis/[idp].md` |

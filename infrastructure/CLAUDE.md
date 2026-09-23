@@ -166,7 +166,9 @@ Internet
 
 ## Security Architecture
 
-> Aligned to: `security/policies/infrastructure-security-policy.md`
+> Aligned to: `security/policies/encryption-policy.md` — the policy that ships.
+> Add `security/policies/infrastructure-security-policy.md` and point here instead
+> if this layer grows rules the shared standards do not cover.
 > Populated at SSDLC Phase 5 (Development Standards). Threats identified in Phase 2 (Threat Model).
 
 | Threat (Phase 2 ref) | Control | Implementation on-prem |
@@ -174,7 +176,7 @@ Internet
 | Man-in-the-middle — external (STRIDE-I) | TLS 1.2+ enforced on all external connections | Nginx: `ssl_protocols TLSv1.2 TLSv1.3;` + `ssl_prefer_server_ciphers on;`. HTTP → HTTPS redirect for all requests |
 | Man-in-the-middle — internal (STRIDE-I) | Internal service traffic on isolated VLAN | Backend → SQL Server traffic on dedicated VLAN (`10.0.2.0/24`); no cross-VLAN access without firewall rule |
 | Secrets in config files (STRIDE-I) | HashiCorp Vault — no secrets in Docker Compose or env files | Vault Agent sidecar runs alongside each container; injects secrets as environment variables at startup. `.env` files contain only Vault address and AppRole credentials |
-| Unauthorised container access (STRIDE-E) | Docker socket restricted; non-root containers | Docker socket (`/var/run/docker.sock`) accessible only by `jenkins` user. All containers run as non-root user (UID 1000). `--no-new-privileges` flag set |
+| Unauthorised container access (STRIDE-E) | Docker socket never mounted into a container; non-root containers | **Socket access is root-equivalent on the host** — anyone who can reach `/var/run/docker.sock` can start a privileged container and mount the host filesystem, so "restricted to the `jenkins` user" means the CI user is effectively root there. Never bind-mount the socket into an application container, and keep the CI runner off production app hosts. All containers run non-root (UID 1000) with `--no-new-privileges` |
 | Unpatched base images (STRIDE-T) | Pinned digest images + weekly Trivy scan | All Dockerfiles use `FROM image@sha256:...` (never `latest`). Jenkins pipeline runs `trivy image` scan; critical CVEs block deployment |
 | Unrestricted network access (STRIDE-I) | `ufw` firewall on all servers | Default deny-all inbound. Only open: `:443` (Nginx, internet-facing), `:1433` (SQL Server, VLAN only), `:8200` (Vault, internal only), `:9090` (Prometheus, monitor VLAN only) |
 | Lateral movement after breach (STRIDE-E) | Separate service accounts per server | Each server has a dedicated OS service account with minimal sudo rights. No shared passwords. SSH key-based auth only — password auth disabled |
@@ -189,7 +191,8 @@ server {
     ssl_certificate     /etc/nginx/certs/app.crt;
     ssl_certificate_key /etc/nginx/certs/app.key;
     ssl_protocols       TLSv1.2 TLSv1.3;
-    ssl_ciphers         ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256;
+    # Must match security/policies/encryption-policy.md — permitted TLS 1.2 suites
+    ssl_ciphers         ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256;
     ssl_prefer_server_ciphers on;
     ssl_session_cache   shared:SSL:10m;
     ssl_session_timeout 1d;
@@ -197,14 +200,26 @@ server {
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
     add_header X-Frame-Options DENY always;
     add_header X-Content-Type-Options nosniff always;
-    add_header Content-Security-Policy "default-src 'self'; frame-ancestors 'none';" always;
+    # CSP must be a RESPONSE HEADER, not a <meta> tag: browsers ignore
+    # frame-ancestors in a meta tag, which silently voids clickjacking cover.
+    # Angular Material injects inline styles and inlines SVG data: URIs, so
+    # style-src 'unsafe-inline' and img-src data: are required or the UI breaks.
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';" always;
 
     # Angular static files
     root /var/www/frontend/dist;
     index index.html;
     try_files $uri $uri/ /index.html;
 
-    # Backend API proxy
+    # Backend API proxy.
+    #
+    # Plain HTTP here is a DOCUMENTED EXCEPTION to the mTLS rule in
+    # security/policies/encryption-policy.md. It is permitted only because this
+    # hop stays on one host across a private Docker bridge network and cannot
+    # traverse the LAN. Conditions: the backend publishes no host port, the
+    # bridge is not shared with other stacks, and nginx and backend are always
+    # co-scheduled. If the backend ever moves to another host, this must become
+    # https:// with mTLS and client certs from Vault — revisit before any split.
     location /api/ {
         proxy_pass         http://backend:8080;
         proxy_set_header   Host              $host;

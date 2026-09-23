@@ -63,3 +63,28 @@ are easy to reproduce, not because they remain:
 8. **CSP that breaks the UI and drops a control.** `default-src 'self'` alone
    breaks Angular Material, which needs inline styles and `data:` images, and
    `frame-ancestors` was set in a `<meta>` tag, where browsers ignore it.
+9. **Deploy order that broke every schema change.** The pipeline rolled new
+   code to both production hosts and *then* ran Flyway, so new code queried
+   columns that did not exist yet for the whole rollout window. Migrations now
+   run first, with an expand/contract rule for backward compatibility.
+10. **mTLS required but not used.** The encryption policy demanded mTLS for all
+    service-to-service calls while nginx proxied to the backend over plain
+    HTTP, and its permitted-suite list named only TLS 1.3 suites while the
+    minimum version was 1.2. Policy and config now agree, with the same-host
+    hop recorded as an explicit exception.
+
+## Gaps left open on purpose, and flagged in place
+
+These are unresolved in the design and marked where they occur, because closing
+them needs product decisions rather than corrections:
+
+- **GDPR erasure has no path.** No `DELETE` operation, unclassified file
+  contents on the NAS, and system-versioned history that cannot be deleted while
+  versioning is on. The conflict between an immutable audit trail and the right
+  to erasure has to be decided, not patched.
+- **REVIEWER is an untested privilege boundary.** It has a role value and a
+  `reviewer_notes` column but no endpoint and no RLS predicate branch.
+- **Components with no host.** A Redis dedup cache and two workers are depended
+  on by the integration design but absent from the server inventory, and
+  RabbitMQ runs as one container per app host — two independent brokers, not a
+  cluster.

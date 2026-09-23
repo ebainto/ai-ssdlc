@@ -6,6 +6,16 @@
 > **How to use this template:**
 > Fill in the approved algorithms and key lengths for your project. Every rule must reference the compliance control that requires it. Delete this notice when approved.
 
+
+> **Two rules that must stay in step with the configuration that implements
+> them.** A permitted-suite list naming only TLS 1.3 suites while the minimum
+> version is 1.2 forbids every suite a 1.2 client can actually negotiate — the
+> policy and the server config then disagree by construction. Likewise, "mTLS
+> for all service-to-service calls" is unachievable for a reverse proxy talking
+> to an app container on the same host, so it gets quietly ignored, which is
+> worse than a narrower rule that is actually enforced. If you change the
+> minimum version or the topology, revisit both rows.
+
 ---
 
 ## Purpose
@@ -18,13 +28,15 @@ This policy defines the minimum encryption standards for [system name] — cover
 
 | Requirement | Standard | Control ref |
 |---|---|---|
-| Minimum TLS version | TLS 1.2 — TLS 1.0 and 1.1 disabled | ASVS V9.1.1 / PCI Req 4.2 |
+| Minimum TLS version | TLS 1.2 — TLS 1.0 and 1.1 disabled | ASVS V9.1.1 |
 | Preferred TLS version | TLS 1.3 where supported | ASVS V9.1.1 |
 | Certificate authority | [Internal CA / Let's Encrypt / DigiCert — specify] | ASVS V9.2.1 |
 | Certificate minimum key length | RSA 2048-bit minimum; RSA 4096-bit preferred | ASVS V9.1.2 |
-| Cipher suites — permitted | TLS_AES_256_GCM_SHA384, TLS_CHACHA20_POLY1305_SHA256, TLS_AES_128_GCM_SHA256 | ASVS V9.1.3 |
+| Cipher suites — permitted (TLS 1.3) | `TLS_AES_256_GCM_SHA384`, `TLS_CHACHA20_POLY1305_SHA256`, `TLS_AES_128_GCM_SHA256` | ASVS V9.1.3 |
+| Cipher suites — permitted (TLS 1.2) | `ECDHE-ECDSA-AES256-GCM-SHA384`, `ECDHE-RSA-AES256-GCM-SHA384`, `ECDHE-ECDSA-AES128-GCM-SHA256`, `ECDHE-RSA-AES128-GCM-SHA256` | ASVS V9.1.3 |
 | Cipher suites — prohibited | RC4, 3DES, NULL, EXPORT ciphers | ASVS V9.1.3 |
-| Internal service-to-service | mTLS required for all service-to-service calls | ASVS V9.2.2 |
+| Internal service-to-service — crossing a host or trust boundary | mTLS required | ASVS V9.2.2 |
+| Internal service-to-service — same host, private container network | TLS or plain HTTP permitted, provided the hop cannot leave the host and the exception is recorded in that layer's `CLAUDE.md` | ASVS V9.2.2 |
 
 ---
 

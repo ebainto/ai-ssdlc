@@ -113,7 +113,10 @@ docker compose -f ../infrastructure/docker/docker-compose.yml up rabbitmq
 
 ## Security Architecture
 
-> Aligned to: `security/policies/integration-security-policy.md`
+> Aligned to: `security/policies/secure-coding-standard.md` and
+> `security/policies/encryption-policy.md` — the two policies that ship.
+> Add `security/policies/integration-security-policy.md` and point here instead if
+> this layer grows rules the shared standards do not cover.
 > Populated at SSDLC Phase 5 (Development Standards). Threats identified in Phase 2 (Threat Model).
 
 | Threat (Phase 2 ref) | Control | Implementation |

@@ -145,6 +145,22 @@ if (!constantTimeEquals(expectedSignature, receivedSignature)) {
 
 ## RabbitMQ (Internal Async Messaging)
 
+> **Components below have no host in the infrastructure design — reconcile
+> before treating this as complete.** The server inventory in
+> `../infrastructure/loan-portal_infrastructure-design_v1.md` lists no Redis
+> instance and no worker hosts, yet this document depends on:
+>
+> | Component referenced here | In the inventory? | Consequence |
+> |---|---|---|
+> | Redis deduplication cache | No | Idempotency has nowhere to store `message-id`, so redelivery causes duplicate side effects |
+> | Document verification worker | No | `document.verified` has no publisher |
+> | Notification worker | No | `application.submitted` has no consumer |
+> | RabbitMQ | Yes — one container per app host | Two independent brokers, not a cluster: a message published on prod-01 is invisible to a consumer on prod-02, and a queue is lost with its host |
+>
+> This is the most common gap in an integration design: the message flows get
+> specified before the things that run them exist. Either add the hosts and
+> cluster the broker, or cut the flows that depend on them.
+
 **Purpose:** Internal event-driven messaging between the backend and worker services.
 
 **Direction:** Both (publish and consume).
@@ -170,7 +186,7 @@ if (!constantTimeEquals(expectedSignature, receivedSignature)) {
 }
 ```
 
-**Idempotency:** All consumers check `message-id` header against a Redis deduplication cache (TTL 24 hours) before processing. Duplicate messages are ACKed and discarded.
+**Idempotency:** All consumers check the `message-id` header against a Redis deduplication cache (TTL 24 hours) before processing. Duplicate messages are ACKed and discarded.
 
 **Dead letter queue:** All queues have a corresponding `*.dlq` dead letter queue. Messages that fail after 3 retry attempts go to DLQ. Alertmanager fires `RabbitMQDLQGrowing` if DLQ depth > 10.
 

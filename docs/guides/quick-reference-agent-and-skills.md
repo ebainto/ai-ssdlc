@@ -11,7 +11,7 @@ Training highlights. For full documentation, see [`agents-and-skills-guide.md`](
 | 1 | Instructions | ✅ Present | Root `CLAUDE.md` + 6 layer `CLAUDE.md` files + `~/.claude/CLAUDE.md` |
 | 2 | Context Delivery | ✅ Present | `docs/guides/` knowledge base + layer `CLAUDE.md` files (auto-loaded) |
 | 3 | Context Management | ✅ Present | `.claudeignore`, progressive disclosure in `CLAUDE.md`, layer isolation |
-| 4 | Tool Interface | ✅ Present | `.claude/settings.json` allowlist (git, mvn, npm, docker-compose) |
+| 4 | Tool Interface | ✅ Present | `.claude/settings.json` allowlist: read-only shell + read-only git. Build tools not allowed by default |
 | 5 | Execution Environment | ❌ Absent | No build, test or lint tooling ships with the template — the layer folders are empty by design. You add the toolchain for your stack. |
 | 6 | Durable State | ✅ Present | Layer `CLAUDE.md` files, `ssdlc/` phase outputs, `docs/architecture/adr/`, findings register |
 | 7 | Orchestration | ✅ Present | 11 slash commands, `/dev-lead` as the main-session orchestrator with `Agent` tool |
@@ -28,7 +28,7 @@ Training highlights. For full documentation, see [`agents-and-skills-guide.md`](
 | 1. Instructions | ✅ Present | All three context layers defined: project root + 6 layer-specific + global override. Complete instruction coverage. |
 | 2. Context Delivery | ✅ Present | Knowledge base in `docs/guides/` (5 guides) + auto-loaded layer CLAUDE.md files. All context delivered to Claude on session start. |
 | 3. Context Management | ✅ Present | Mechanisms for controlling context size: `.claudeignore` filters, progressive disclosure in CLAUDE.md, strict layer isolation prevents unnecessary files from loading. |
-| 4. Tool Interface | ✅ Present | `.claude/settings.json` defines exactly which CLI tools are allowed (git, mvn, npm, docker-compose). Permissions explicitly configured and enforced. |
+| 4. Tool Interface | ✅ Present | `.claude/settings.json` allows read-only shell (`mkdir`, `ls`, `find`, `cat`, `grep`) and read-only git, and denies `git push`, `reset --hard` and `clean`. Build tools (`mvn`, `npm`, `docker-compose`) are deliberately **not** allowed — add them per project. |
 | 5. Execution Environment | ⚠️ Partial | **Dev execution complete** (npm scripts, Jest, TypeScript build). **Production execution scaffolded** (Docker Compose, Nginx, Vault folders exist but configs not populated). Non-critical gap — app code and container configs are project-specific, not template. |
 | 6. Durable State | ✅ Present | Persistent storage across sessions: layer CLAUDE.md files, `ssdlc/` phase outputs (versioned), `docs/architecture/adr/` (ADRs), `security/pen-test/internal-findings-register.md`. No data loss on session break. |
 | 7. Orchestration | ✅ Present | 11 slash commands (`/new-feature`, `/code-review`, `/run-tests`, etc.) route work to specialist agents. Dev Lead is single orchestrator — no conflicting agent routing. |

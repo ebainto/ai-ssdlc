@@ -154,7 +154,10 @@ WITH (SYSTEM_VERSIONING = ON (HISTORY_TABLE = dbo.[core_records_history]));
 
 ## Security Architecture
 
-> Aligned to: `security/policies/data-classification-policy.md`
+> Aligned to: `security/policies/encryption-policy.md`, plus the classification
+> table below, which is this layer's source of truth for what is sensitive.
+> Add `security/policies/data-classification-policy.md` and point here instead if
+> classification needs an organisation-wide policy of its own.
 > Populated at SSDLC Phase 5 (Development Standards). Threats identified in Phase 2 (Threat Model).
 
 ### Data Classification

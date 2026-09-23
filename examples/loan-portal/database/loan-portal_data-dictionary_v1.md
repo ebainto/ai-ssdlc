@@ -39,7 +39,21 @@ equality matching, so the column cannot be Randomized.
 > authenticate. Use Randomized for every PII column you never look up by —
 > `phone` and `date_of_birth` here.
 
-**Row-Level Security:** `ApplicantDataPolicy` — read access restricted to the applicant matching `SESSION_CONTEXT(N'userId')` or `db_admin` role.
+**Row-Level Security:** `ApplicantDataPolicy` — read access restricted to the
+applicant matching `SESSION_CONTEXT(N'userId')`, or a member of the
+`app_privileged_reader` database role.
+
+> **The privileged role must exist as a migration.** `IS_MEMBER()` against a
+> role that was never created returns `NULL`, not `0` — so a typo or a missing
+> `CREATE ROLE` silently locks privileged users out instead of failing loudly.
+> `db_admin` is not a SQL Server built-in; create `app_privileged_reader`
+> explicitly and grant it.
+>
+> **Every reading role needs a path.** ADMIN, REVIEWER and the reporting login
+> each need either a branch in this predicate or a login outside the policy.
+> REVIEWER in particular has a role value and a `reviewer_notes` column but no
+> endpoint and no predicate branch in this design — an untested privilege
+> boundary. Resolve it before the first release that ships a reviewer queue.
 
 ---
 

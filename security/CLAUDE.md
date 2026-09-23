@@ -118,10 +118,10 @@ This file is automatically loaded by Claude Code whenever you work on any file i
 | Output encoding / XSS | Frontend (Angular) | OWASP ASVS V5 | Angular interpolation `{{ }}` escapes by default; `bypassSecurityTrustHtml` banned via ESLint |
 | Audit logging | Backend (Spring Boot) | ISO A.8.15 | Spring AOP `@AuditLog` aspect logs all state-changing operations: `userId`, `action`, `entityId`, `correlationId`, `timestamp` |
 | Data classification | Database (SQL Server) | GDPR Art 32 / ISO A.8.2 | PII columns encrypted via SQL Server Always Encrypted; classification table maintained in `database/CLAUDE.md` |
-| Static analysis (SAST) | Backend (Java), Frontend (TypeScript) | OWASP ASVS V14 | Backend: SpotBugs + find-sec-bugs plugin (Maven verify phase). Frontend: ESLint with `@angular-eslint/security` rules. Both block PR merge on Critical/High |
+| Static analysis (SAST) | Backend (Java), Frontend (TypeScript) | OWASP ASVS V14 | Backend: SpotBugs + find-sec-bugs plugin (Maven verify phase). Frontend: ESLint with `@typescript-eslint` plus explicit `no-restricted-syntax` bans (there is no `@angular-eslint/security` ruleset — it does not exist); consider Semgrep for TypeScript taint rules. Both block PR merge on Critical/High |
 | Dependency scanning (SCA) | Backend (Maven), Frontend (npm) | OWASP ASVS V14 | OWASP Dependency-Check (Maven plugin) + `npm audit` in the CI pipeline. Critical CVEs block deployment |
 | Container scanning | Infrastructure (Docker) | OWASP ASVS V14 | Trivy scans all Docker images in the CI pipeline; Critical CVEs block deployment |
-| Penetration test | Full application | OWASP ASVS V14.3 | Annual external pen test + after every major release; scope in `security/pen-test/scope.md` |
+| Penetration test | Full application | ASVS verification requirement (L2 — see your ASVS mapping; V14.3 is *Unintended Security Disclosure*, not pen testing) | Annual external pen test + after every major release. Record the agreed scope in `security/pen-test/scope.md` — you create this file before the first engagement |
 
 ---
 
@@ -151,7 +151,7 @@ public List<[Entity]> findBy(String whitelistedColumn) { ... }
 
 **TypeScript (ESLint) — suppression format:**
 ```typescript
-// eslint-disable-next-line @angular-eslint/no-bypassSecurityTrustHtml
+// eslint-disable-next-line no-restricted-syntax
 // Justification: Content is sanitised by DomPurify at the service layer before reaching this binding.
 // Accepted by: Jane Smith, 2024-03-15. Review: 2024-06-15
 this.trustedHtml = this.sanitizer.bypassSecurityTrustHtml(sanitisedContent);
@@ -160,7 +160,7 @@ this.trustedHtml = this.sanitizer.bypassSecurityTrustHtml(sanitisedContent);
 **Format rules:**
 - Must include: the specific rule being suppressed, the justification, the approver name and date, and a review date (max 90 days)
 - Suppressions with no justification comment are a SAST finding in themselves — they will be flagged in the next scan
-- Review date must be tracked in `security/sast/suppression-register.md`
+- Review date must be tracked in `security/sast/suppression-rules.md`
 
 ---
 

@@ -360,6 +360,6 @@ This template ships with a six-agent Claude Code AI system. Every agent is a fre
 | Which agents exist, what they do, how they spawn | `docs/guides/agents-and-skills-guide.md` |
 | Available slash commands and skills by agent | `docs/guides/quick-reference-agent-and-skills.md` |
 | How layer @imports reach the agents | `docs/guides/agents-and-skills-guide.md` → Section 4 |
-| How to write evals to test agent behaviour | `docs/guides/agents-and-skills-guide.md` → Section 8 |
+| How to write evals to test agent behaviour | `docs/guides/agents-and-skills-guide.md` → Section 9 |
 
 **New to the project?** Read `docs/guides/template-guide.md` first, then `docs/guides/agents-and-skills-guide.md` before opening any `.claude/` files.

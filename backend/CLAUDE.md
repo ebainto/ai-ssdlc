@@ -170,7 +170,10 @@ POST   /api/v1/auth/logout               → revoke the session / refresh token
 
 ## Security Architecture
 
-> Aligned to: `security/policies/backend-security-policy.md`
+> Aligned to: `security/policies/secure-coding-standard.md` and
+> `security/policies/encryption-policy.md` — the two policies that ship.
+> Add `security/policies/backend-security-policy.md` and point here instead if
+> this layer grows rules the shared standards do not cover.
 > Populated at SSDLC Phase 5 (Development Standards). Threats identified in Phase 2 (Threat Model).
 
 | Threat (Phase 2 ref) | Control | Implementation in Spring Boot |

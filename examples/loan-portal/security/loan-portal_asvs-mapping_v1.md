@@ -22,6 +22,26 @@ application (e.g. no payment card data).
 
 ---
 
+> **Known gap: GDPR erasure has no implementation path.**
+>
+> Article 17 erasure is claimed as an obligation, but this design ships no
+> `DELETE` operation on any resource, and the document store is an SMB share
+> whose *contents* are never classified — only the path string in
+> `documents.file_path` is. Erasing an applicant therefore requires deleting:
+>
+> | Store | Holds | Delete path today |
+> |---|---|---|
+> | `applicants`, `[core tables]` | PII columns | none — no endpoint |
+> | Temporal history tables | Every prior version of every row | none, and system-versioned history cannot be deleted while versioning is on |
+> | `\\nas01\loan-docs\...` | Identity document files | none — no lifecycle, retention or ACL row exists |
+> | External providers | Whatever each was sent | per-provider, manual |
+>
+> The history table is the hard part: `SYSTEM_VERSIONING` must be switched off to
+> delete from it, which breaks the audit-trail control in the same design. Decide
+> the conflict between "immutable audit history" and "right to erasure"
+> explicitly — usually by storing pseudonymised keys in history and holding the
+> identifying data in one erasable row — before promising either.
+
 ## V1 — Architecture, Design and Threat Modelling
 
 | Req ID | Requirement (summary) | Status | Implementation |
