@@ -1,6 +1,6 @@
 ---
-name: critique
-description: Adversarial multi-perspective review of the ai-ssdlc repository — one artifact (a layer CLAUDE.md, an SSDLC phase output, a gate, the worked example, the .claude/ harness, the guides, uncommitted changes) or `report` for a full sweep rendered as a filterable HTML page. Self-contained; requires no external governance system.
+name: ssdlc-review
+description: Adversarial multi-perspective review of THIS ai-ssdlc repository only — one artifact (a layer CLAUDE.md, an SSDLC phase output, a gate, the worked example, the .claude/ harness, the guides, uncommitted changes) or `report` for a full sweep rendered as a filterable HTML page. Self-contained; requires no external governance system.
 ---
 
 Adversarial review of one artifact in **this** repository. Several named
@@ -13,10 +13,21 @@ the no-argument rule below.
 
 ## Scope — this repository only
 
-This command reviews artifacts that exist in this repo. It has no dependency on
-any external governance system, spec folder or constitution file, and must not
-create one. If the target names something outside this repository, stop and say
-so rather than inventing a structure to hold it.
+Review only files inside this repository's working directory. This skill has no
+dependency on any external governance system, spec folder or constitution file,
+and must not create one.
+
+**Never read or report on anything outside this repo.** Specifically out of
+scope, and never to appear in a report:
+
+- `~/.claude/` — the user's global CLAUDE.md, skills, commands, agents, settings
+- any sibling project directory
+- `node_modules/`, `.git/` internals, and anything matched by `.gitignore`
+
+Global instructions may be in context while you work; that does not make them
+part of this project. If a finding would depend on something outside this
+repository, drop it and say why. If the target names something outside the repo,
+stop rather than inventing a structure to hold it.
 
 Valid targets:
 
@@ -100,7 +111,7 @@ pass does, because each reads its area cold. Otherwise review them in sequence.
 
 | Area | Brief |
 |---|---|
-| `.claude/` harness | Do the commands, agents and gate mechanism actually run? Frontmatter, tool grants, referenced files, phantom commands. |
+| `.claude/` harness — **this repo's only** | Do the commands, agents and gate mechanism actually run? Frontmatter, tool grants, referenced files, phantom commands. |
 | Six layer `CLAUDE.md` | Live `@import`s resolve? Placeholders consistent? Security Architecture rows match a policy that exists? |
 | `security/` | Policies internally consistent and consistent with the layers? Placeholder content mixed with concrete claims? |
 | `docs/guides/` | Every claim checked against disk: counts, file paths, ticked checkboxes, command names. |
@@ -122,7 +133,7 @@ anything and they do not write files.
 
 ### 3. Render
 
-Copy `.claude/skills/critique/report-template.html` to
+Copy `.claude/skills/ssdlc-review/report-template.html` to
 `docs/guides/[system]_adversarial-review_vN.html` (increment `vN`; never
 overwrite a previous report), then replace the contents of the
 `<script type="application/json" id="review-data">` island with the data object.

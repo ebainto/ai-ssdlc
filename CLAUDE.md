@@ -162,7 +162,7 @@ Audit trail format contract: `ssdlc/GATE-FORMAT.md`. Template to copy:
 
 There is no `S`-prefixed skill in this project, and no agent that generates
 these artifacts for you — earlier versions of this table implied otherwise. The
-surface is exactly: the eleven commands in `.claude/commands/`, the `/critique`
+surface is exactly: the eleven commands in `.claude/commands/`, the `/ssdlc-review`
 skill in `.claude/skills/`, and the five agents in `.claude/agents/`.
 
 ## Security context — how it reaches every layer
