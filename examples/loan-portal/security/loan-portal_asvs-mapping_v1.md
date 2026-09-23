@@ -113,7 +113,7 @@ application (e.g. no payment card data).
 | V6.2.1 | Regulated data encrypted at rest | ○ Planned | PII columns: SQL Server Always Encrypted (AES-256). Column master key custody must be on-premises to match this design — a Windows certificate store on the DB host, or an HSM. **Not** Azure Key Vault: naming a cloud KMS in a deployment with no cloud footprint is a contradiction an auditor will find immediately. |
 | V6.2.3 | Encryption keys not hardcoded | ○ Planned | Column master key in on-premises custody (certificate store or HSM); HashiCorp Vault for application secrets. Record who holds the CMK and the rotation procedure — losing it makes every encrypted column unreadable. |
 | V6.2.7 | Random values generated with approved CSPRNG | ○ Planned | `java.security.SecureRandom`; token IDs use `UUID.randomUUID()` |
-| V6.3.1 | Random GUIDs use UUID v4 or better | ○ Planned | `UUID.randomUUID()` (v4) for all application-generated IDs; `NEWSEQUENTIALID()` in SQL for PK performance |
+| V6.3.1 | Random GUIDs use UUID v4 or better | ○ Planned | `UUID.randomUUID()` (v4) for all application-generated IDs; `NEWID()` in SQL for random unguessable PKs (see data dictionary for IDOR defense rationale) |
 | V2.4.1 | Password hashing: bcrypt, scrypt, Argon2 or PBKDF2 | ○ Planned | BCrypt via Spring Security `BCryptPasswordEncoder` (cost factor 12) |
 
 ---

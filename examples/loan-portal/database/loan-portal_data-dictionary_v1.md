@@ -4,12 +4,12 @@ All tables live in the `appdb` database on SQL Server 2022. All IDs are
 `UNIQUEIDENTIFIER DEFAULT NEWID()`. All timestamps are `DATETIME2(7)` with UTC
 values. Column names use `snake_case`.
 
-> **Why `NEWID()` and not `NEWID()`:** every id here appears in a URL
-> (`GET /api/v1/applications/{id}`). `NEWID()` produces predictable,
+> **Why `NEWID()` and not `NEWSEQUENTIALID()`:** every id here appears in a URL
+> (`GET /api/v1/applications/{id}`). `NEWSEQUENTIALID()` produces predictable,
 > monotonically increasing values, so an attacker who sees one id can guess its
-> neighbours. The IDOR defence in the ASVS mapping depends on ids being
-> unguessable, so it requires random v4 GUIDs. If index fragmentation matters,
-> add a separate internal sequential key and never expose it.
+> neighbours. The IDOR defence depends on ids being unguessable, so we use `NEWID()`
+> for random v4 GUIDs. If index fragmentation matters, add a separate internal 
+> sequential key and never expose it in URLs or APIs.
 
 ---
 
