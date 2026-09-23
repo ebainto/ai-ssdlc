@@ -184,6 +184,7 @@ POST   /api/v1/auth/logout               → revoke the session / refresh token
 | Sensitive data in logs (STRIDE-I) | Custom log filter strips PII fields | Logback `PatternLayout` with a custom converter masks every field classified PII in `database/CLAUDE.md`. MDC carries only `correlationId` and the subject id |
 | Mass assignment (STRIDE-T) | Explicit request DTOs; no entity exposure in controller | Controllers accept a purpose-built `Create[Record]Request` DTO, never a JPA entity. `@JsonIgnore` on sensitive entity fields. Never `@RequestBody [Record]Entity` |
 | Privilege escalation (STRIDE-E) | Role hierarchy enforced in Spring Security config | Define your hierarchy explicitly, e.g. `[ADMIN] > [REVIEWER] > [END_USER]`. Every role in the hierarchy needs real endpoints, an RLS path and a threat-model entry — a role that exists only in config is an untested privilege boundary. Role changes only via a privileged, audited endpoint |
+| Cross-site request forgery (STRIDE-T) | **Depends on refresh token transport.** If httpOnly cookie: Spring CsrfFilter (double-submit pattern). If JSON body: CSRF not applicable — the browser cannot build cross-origin state-changing requests with SameSite-enforced cookies. **Option A (external IdP):** If frontend stores token in httpOnly cookie, enable CsrfFilter. Option B (self-issued tokens): Frontend chooses the transport; adjust accordingly. | Option A + httpOnly cookie: `@EnableWebSecurity`, Spring CsrfFilter enabled by default, token passed via request parameter or header. Option B + JSON body: disable CsrfFilter (token in body cannot be read by cross-origin requests). **Frontend must align.** See `frontend/CLAUDE.md` |
 | Secrets in config (STRIDE-I) | Secrets from HashiCorp Vault; none in `application.yml` | Spring Cloud Vault injects secrets at startup. `application.yml` contains only non-sensitive config. CI/CD uses Vault AppRole auth |
 
 **Spring Security filter chain (order matters):**
@@ -246,6 +247,26 @@ Log:      correlationId, subject id, action, httpMethod, path, statusCode, durat
 Never log: any field classified PII or Secret in database/CLAUDE.md, plus
            passwords, tokens, authorization headers and file contents
 ```
+
+**Row-Level Security (RLS) — backend/database coordination:**
+
+RLS is a **shared responsibility**. This layer (backend) enforces business logic; the database layer 
+enforces the data boundary.
+
+- **Backend responsibility:** Every query is scoped to the authenticated subject. 
+  - All `GET /[records]` queries filter by owner: `WHERE owner_id = ?` (use the subject claim from the token, never the request body).
+  - All `PATCH /[records]/{id}` mutations check ownership before modification.
+  - Never pass user id as a request parameter or allow a user to override it in the URL.
+
+- **Database responsibility:** RLS policy enforces the boundary at the SQL Server row level.
+  - Every record table has a `SECURITY POLICY` with a predicate: `owner_id = SESSION_CONTEXT('user_id')`.
+  - Backend sets `SESSION_CONTEXT` before executing queries: `SET SESSION_CONTEXT ( N'user_id', N'<subject>' )` (see `database/CLAUDE.md`).
+  - The policy is the **authoritative guard**; backend filtering is defense-in-depth.
+
+- **Coordination:** If backend filters but database has no RLS policy, SQL injection bypasses backend checks. 
+  If database has RLS but backend fails to set `SESSION_CONTEXT`, queries return no rows (fail-safe). 
+  This asymmetry means **database RLS must be documented** in both layers and tested via 
+  integration tests that run with a mismatched subject id and verify the policy blocks access.
 
 ---
 
