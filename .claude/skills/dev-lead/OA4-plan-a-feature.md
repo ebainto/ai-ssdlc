@@ -29,7 +29,7 @@ Recommended sequence:
 3. Infrastructure Agent (IA1) → if infra change required
 4. Code Reviewer (CR1 + CR2) → review all changed layers
 5. Security Auditor (SA1) → if story touches Security Architecture
-6. `/create-pr`
+6. the PR hand-off (commit on a branch, push, then `gh pr create`)
 
 ## When to use OA4
 

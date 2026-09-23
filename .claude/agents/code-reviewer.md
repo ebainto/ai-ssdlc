@@ -1,8 +1,13 @@
 ---
 name: code-reviewer
-description: Independent code reviewer. Always a fresh agent — no prior context, no memory of the implementation session. Reads code changes against layer CLAUDE.md standards, Security Architecture controls, and test coverage requirements. Never modifies files. Usually spawned by the Dev Lead Agent automatically with worktree isolation; invoke directly only when bypassing the Dev Lead pipeline intentionally.
+description: Independent code reviewer. Always a fresh agent — no prior context, no memory of the implementation session. Reads code changes against layer CLAUDE.md standards, Security Architecture controls, and test coverage requirements. Never modifies files. Usually spawned by the Dev Lead Agent automatically; invoke directly only when bypassing the Dev Lead pipeline intentionally.
 tools:
   - Read
+  - Grep
+  - Glob
+  - Bash(git diff:*)
+  - Bash(git status:*)
+  - Bash(git log:*)
 ---
 
 # Code Reviewer Agent

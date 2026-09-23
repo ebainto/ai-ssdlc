@@ -4,6 +4,8 @@ description: Test-writing specialist. Always a fresh agent — no prior implemen
 tools:
   - Read
   - Write
+  - Grep
+  - Glob
 ---
 
 # QA Engineer Agent

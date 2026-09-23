@@ -29,7 +29,7 @@ If not found: "Run `/new-api [method] [path]` first. Return here after the API P
 | 2 | Developer implements. State: "frontend/CLAUDE.md guides template, styles, HttpClient, DomSanitizer, no-localStorage rule." | None |
 | 3 | Spawn Code Reviewer (CR1 + CR3) → CR3 focus: every AC covered in spec file | Code Reviewer |
 | 4 | Spawn Security Auditor (SA1) → only if component handles PII display or auth state | Security Auditor |
-| 5 | All clean → `"Run /create-pr"` | None |
+| 5 | All clean → `"hand off for PR: commit on a branch, push, and open the PR with `gh pr create`"` | None |
 
 ### Backend service pipeline
 
@@ -39,7 +39,7 @@ If not found: "Run `/new-api [method] [path]` first. Return here after the API P
 | 2 | Developer implements. State: "backend/CLAUDE.md guides Spring Boot patterns, @Transactional, audit logging, Security Architecture controls." | None |
 | 3 | Spawn Code Reviewer (CR1 + CR2) | Code Reviewer |
 | 4 | Spawn Security Auditor (SA1) → if service handles PII, financial data, or auth decisions | Security Auditor |
-| 5 | All clean → `"Run /create-pr"` | None |
+| 5 | All clean → `"hand off for PR: commit on a branch, push, and open the PR with `gh pr create`"` | None |
 
 ## Output
 

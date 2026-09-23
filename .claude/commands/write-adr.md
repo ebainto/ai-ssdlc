@@ -1,3 +1,9 @@
+---
+description: Write or update an Architecture Decision Record
+argument-hint: <decision topic>
+allowed-tools: Read, Bash(grep:*), Bash(ls:*), Bash(cat:*), Agent
+---
+
 Activate the Tech Researcher Agent and write or update an Architecture Decision Record.
 
 Decision topic: $ARGUMENTS

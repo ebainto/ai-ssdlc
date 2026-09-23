@@ -29,7 +29,7 @@ Read `infrastructure/CLAUDE.md` before planning anything.
 ## Behaviour
 
 1. For each feature change: identify the requirement and config file using the table above
-2. Flag any new network path or trust boundary: `[TRUST BOUNDARY — flag for /threat-model-trigger-check]`
+2. Flag any new network path or trust boundary: `[TRUST BOUNDARY — raise a threat-model update request with the SSDLC owner]`
 3. Fire IA4 automatically to produce the Infrastructure Change Request
 
 ## Output

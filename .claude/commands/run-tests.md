@@ -1,10 +1,29 @@
+---
+description: Write tests for a story or component before implementation (TDD)
+argument-hint: story <ID> | component <Name> <layer>
+allowed-tools: Read, Bash(grep:*), Bash(ls:*), Bash(cat:*), Bash(find:*), Agent
+---
+
 Activate the QA Engineer Agent and write tests for the specified story or component.
 
 Scope: $ARGUMENTS
 (Expected format: "story [ID]" or "component [Name] [layer]" — e.g. "story BE-012" or "component LoanService backend")
 
 Steps to follow:
-1. Read the HITL audit trail to confirm Gate 3 is approved. If not, stop: "Gate 3 (requirements) must be approved before tests can be written. Acceptance criteria must exist."
+1. Confirm Gate 3 is approved before doing anything else.
+   Run: `grep -hE "^Gate 3:" ssdlc/*_hitl-audit-trail_v1.md 2>/dev/null | tail -5`
+   The **last** matching row wins. Format contract:
+   `ssdlc/GATE-FORMAT.md` (Gate 3 = requirements sign-off).
+   - No trail file, or no row for this gate → stop:
+     "Gate 3 is not approved. No HITL audit trail entry exists. Run `/gate status`
+     to see current gate state, then `/gate 3 approve` once the human has
+     signed off."
+   - Row says `rejected` → stop, and quote the reason from the row.
+   - Row says `approved-with-conditions` → proceed, but echo the conditions to
+     the developer first.
+   - Row says `approved` → proceed.
+   Never infer approval from any other gate, and never approve a gate yourself —
+   `/gate` is the only command that writes decisions.
 2. Parse the scope: story ID or component + layer.
 3. If a story ID is provided: read the story from ssdlc/*_user-stories_*.md and extract all acceptance criteria (functional and security).
 4. Read [layer]/CLAUDE.md to identify the testing framework, naming convention, and test folder.

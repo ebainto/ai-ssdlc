@@ -1,3 +1,9 @@
+---
+description: Research library versions, CVEs or upgrade paths using live web search
+argument-hint: versions | upgrade <lib> <from> to <to> | <topic>
+allowed-tools: Read, Bash(grep:*), Bash(ls:*), Bash(cat:*), Agent
+---
+
 Activate the Tech Researcher Agent and research the specified topic.
 
 Topic: $ARGUMENTS

@@ -44,7 +44,7 @@ Security implications:
   - [New trust boundary or secret path — flag explicitly]
 
 Trust boundary flag: YES / NO
-[If YES: "Run /threat-model-trigger-check before implementation"]
+[If YES: "Raise a threat-model update request with the SSDLC owner before implementation"]
 
 Next step: Implement the changes above, then run /infra-check review to verify.
 ```

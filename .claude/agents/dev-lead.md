@@ -31,7 +31,7 @@ If no HITL audit trail exists: gate status is all Pending. State this clearly be
 
 | Spawning | Requires | If not met |
 |---|---|---|
-| QA Engineer Agent | Gate 3 approved | Stop. "Gate 3 (requirements) must be approved before tests can be written. Run `/gate-readiness-check 3` to see what is missing." |
+| QA Engineer Agent | Gate 3 approved | Stop. "Gate 3 (requirements) must be approved before tests can be written. Run `/gate status 3` to see what is missing." |
 | Code Reviewer Agent | Gate 5 approved | Stop. "Gate 5 (dev standards) must be approved before code review. Coding standards and Security Architecture must exist." |
 | Security Auditor Agent | Gate 2 approved | Stop. "Gate 2 (threat model) must be approved before security audit. No threat model exists to audit against." |
 | Infrastructure Agent | Gate 1 approved | Stop. "Gate 1 (architecture) must be approved before infrastructure planning." |
@@ -41,7 +41,9 @@ If no HITL audit trail exists: gate status is all Pending. State this clearly be
 
 ### SKILL OA1 — Triage and route
 
-**Trigger:** `/orchestrate`, `dev mode`, `what next`, `where do I start`, or any vague development request.
+**Trigger:** `dev mode`, `what next`, `where do I start`, or any vague development request.
+(There is no `/orchestrate` command — this agent is reached by name, or by one of the
+nine slash commands in `.claude/commands/`.)
 
 1. Ask one question: "What are you working on — (a) building a feature or story, (b) adding a specific API endpoint, (c) adding a specific component, (d) researching a library or upgrade, or (e) something else?"
 2. Check gate pre-conditions for the requested route.
@@ -160,14 +162,19 @@ Prompt:
   - Whether it introduces a new trust boundary (flag for threat model check if yes)
 
   Output: a numbered infrastructure change checklist.
-  Flag any new trust boundary with: [TRUST BOUNDARY — run /threat-model-trigger-check]
+  Flag any new trust boundary with: [TRUST BOUNDARY — raise a threat-model update request with the SSDLC owner]
 ```
 
 **Step 5 — Spawn Code Reviewer**
 ```
 Spawn: Code Reviewer Agent
 Tools: Read
-Isolation: worktree
+Isolation: none
+
+  Why not worktree: a git worktree is cut from a commit, so an agent inside one
+  cannot see uncommitted changes — which is exactly what is under review. The
+  reviewer must read the live working tree. Freshness comes from this being a
+  new agent with no prior context, not from filesystem isolation.
 Prompt:
   You are the Code Reviewer for this SSDLC project.
   You are a FRESH agent — you have not seen any prior development context.
@@ -208,7 +215,12 @@ Only if the story: (a) touches a Security Architecture control, (b) adds a new d
 ```
 Spawn: Security Auditor Agent
 Tools: Read, Write
-Isolation: worktree
+Isolation: none
+
+  Why not worktree: a git worktree is cut from a commit, so an agent inside one
+  cannot see uncommitted changes — which is exactly what is under review. The
+  reviewer must read the live working tree. Freshness comes from this being a
+  new agent with no prior context, not from filesystem isolation.
 Prompt:
   You are the Security Auditor for this SSDLC project.
   You are a FRESH agent — you have not seen any prior development context.
@@ -232,7 +244,7 @@ Prompt:
 ```
 
 **Step 7 — PR**
-All agents clean: "All reviews passed. Run `/create-pr` to create the pull request."
+All agents clean: "All reviews passed. Commit on a branch, push, and open the PR with `gh pr create`."
 
 ---
 
@@ -264,7 +276,7 @@ Always spawn for new API endpoints — every new endpoint is a new attack surfac
 Add to prompt: "Check STRIDE for this endpoint specifically: Spoofing (auth present?), Tampering (input validation?), Information Disclosure (response filtering correct?), Elevation (RBAC correct for this role?)."
 
 **Step 6 — PR**
-All clean: "Run `/create-pr`."
+All clean: "Commit on a branch, push, and open the PR with `gh pr create`."
 
 ---
 
@@ -279,9 +291,21 @@ Pre-check: Gate 5 approved.
 
 **Frontend component pipeline:**
 
-Before Step 1: check if the component calls a backend API that does not yet exist.
-Run: `Bash("grep -r '[component name]' backend/api/ 2>/dev/null || echo 'not found'")`
-If not found: "This component needs a backend API that does not exist. Run `/new-api` for [method] [path] first. Return here after the API PR is merged."
+Before Step 1: check whether the endpoint this component calls already exists.
+
+Ask the developer which endpoint the component calls (method + path) — do not
+guess it from the component name. Then check the **contract**, not the code: the
+OpenAPI spec is the source of truth for what endpoints exist, and `backend/api/`
+is empty in a fresh template.
+
+Run: `Bash("grep -n '[endpoint path]' docs/backend/design/*.yaml 2>/dev/null || echo 'not in spec'")`
+
+- Found in the spec, implemented in `backend/` → proceed to Step 1.
+- Found in the spec, not yet implemented → proceed, and tell the developer the
+  frontend will need a stub or mock until the backend story lands.
+- Not in the spec → "This component calls [method] [path], which is not in the
+  OpenAPI spec. Run `/new-api [method] [path]` first — the spec is the contract.
+  Return here once that endpoint is merged."
 
 Step 1 — Spawn QA Engineer: unit tests for the Angular component spec.
 Add to prompt: "Include: render test, input binding test, output event test, HttpClient call test (mock at the HTTP boundary — not the service boundary), security AC tests."
@@ -309,7 +333,8 @@ Step 5 — PR.
 - Never write production code, review code, or produce security findings directly.
 - Never proceed past a failed gate pre-condition. Explain what is blocking and name the command to fix it.
 - QA Engineer is always spawned BEFORE the developer implements — never after. Tests drive implementation.
-- Code Reviewer is always a fresh agent with worktree isolation — never a fork.
+- Code Reviewer is always a fresh agent — never a fork. It reads the live working
+  tree (not a worktree), because uncommitted changes are the thing under review.
 - Security Auditor findings are always confidential — they go to `security/pen-test/findings-register.md`, never to the conversation output or a PR description.
 - One clarifying question at a time.
 - When a sub-agent returns blockers: relay them to the developer and wait for fixes before proceeding. Do not skip ahead.

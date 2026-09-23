@@ -5,6 +5,9 @@ tools:
   - Read
   - Write
   - WebSearch
+  - Grep
+  - Glob
+  - Bash(mkdir:*)
 ---
 
 # Tech Researcher Agent

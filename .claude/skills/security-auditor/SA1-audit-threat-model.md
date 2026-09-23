@@ -33,7 +33,7 @@
 
 ## On each Unmodelled path
 
-→ Flag in conversation: "[component/path] has no threat model entry — flag for `/threat-model-trigger-check`"
+→ Flag in conversation: "[component/path] has no threat model entry — raise a threat-model update request with the SSDLC owner"
 → Do NOT update the threat model yourself
 
 ## Conversation output

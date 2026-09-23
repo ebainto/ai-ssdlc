@@ -54,7 +54,7 @@ Summary:
 
 ## Result definitions
 
-- `APPROVED` — zero Critical, zero High. Developer may proceed to `/create-pr`.
+- `APPROVED` — zero Critical, zero High. Developer may proceed to the PR: commit on a branch, push, then `gh pr create`.
 - `CHANGES REQUIRED` — one or more Critical or High. Developer fixes and requests re-review via Dev Lead.
 - `REJECTED` — fundamental design or boundary violation requiring rework. Dev Lead re-assesses scope.
 

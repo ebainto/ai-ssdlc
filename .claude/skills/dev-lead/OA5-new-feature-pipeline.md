@@ -25,9 +25,9 @@ Confirm each step before proceeding to the next.
 | 2 | Spawn QA Engineer → write tests (QA1) for all ACs | QA Engineer | Gate 3 |
 | 3 | Developer implements — state layers, CLAUDE.md files to follow | None (developer) | — |
 | 4 | Spawn Infrastructure Agent (conditional) → only if new secret, external service, env var, or monitoring requirement | Infrastructure Agent | Gate 1 |
-| 5 | Spawn Code Reviewer (CR1 + CR2 + CR3) → worktree isolation | Code Reviewer | Gate 5 |
+| 5 | Spawn Code Reviewer (CR1 + CR2 + CR3) — fresh agent, reads the live working tree | Code Reviewer | Gate 5 |
 | 6 | Spawn Security Auditor (SA1) → conditional: only if story touches Security Architecture, new data field, auth/session change, or new external service call | Security Auditor | Gate 2 |
-| 7 | All clean → `"Run /create-pr"` | None | — |
+| 7 | All clean → `"hand off for PR: commit on a branch, push, and open the PR with `gh pr create`"` | None | — |
 
 ## Conditional triggers for Step 6 (Security Auditor)
 

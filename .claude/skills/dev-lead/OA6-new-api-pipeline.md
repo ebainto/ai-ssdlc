@@ -29,7 +29,7 @@ OpenAPI spec must exist in `docs/backend/design/` — if missing, stop.
 | 5 | Spawn Infrastructure Agent (conditional) → if new Vault secret, Nginx route, or monitoring alert needed | Infrastructure Agent |
 | 6 | Spawn Code Reviewer (CR1 + CR2) → additional checks: auth annotation, input validation, error response, contract test matches spec | Code Reviewer |
 | 7 | Spawn Security Auditor (SA1) → **always for new endpoints** — every new endpoint is a new attack surface | Security Auditor |
-| 8 | All clean → `"Run /create-pr"` | None |
+| 8 | All clean → `"hand off for PR: commit on a branch, push, and open the PR with `gh pr create`"` | None |
 
 ## Security Auditor focus for new endpoints
 
