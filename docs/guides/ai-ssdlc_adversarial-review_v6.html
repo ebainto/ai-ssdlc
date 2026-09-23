@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Adversarial Review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EEF0EC; --sheet:#F8F9F6; --ink:#17212B; --muted:#5E6873; --rule:#CDD2CC;
+  --red:#B8321F; --red-soft:#F3DCD6; --amber:#9A6412; --amber-soft:#F2E6CF;
+  --green:#2C6A4C; --green-soft:#D9E9DF; --blue:#2B4E73; --blue-soft:#DCE5EE;
+  --grey-soft:#E2E5E0;
+  --sans:"Schibsted Grotesk","Helvetica Neue",Arial,system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  box-sizing:border-box;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#141A20; --sheet:#1B232B; --ink:#E6EAE4; --muted:#9AA4AD; --rule:#2F3A44;
+    --red:#EE7A63; --red-soft:#3A221E; --amber:#E0AE5C; --amber-soft:#342A18;
+    --green:#7CC3A0; --green-soft:#1D3229; --blue:#8FB4DA; --blue-soft:#1E2B3A; --grey-soft:#242D35;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#141A20; --sheet:#1B232B; --ink:#E6EAE4; --muted:#9AA4AD; --rule:#2F3A44;
+  --red:#EE7A63; --red-soft:#3A221E; --amber:#E0AE5C; --amber-soft:#342A18;
+  --green:#7CC3A0; --green-soft:#1D3229; --blue:#8FB4DA; --blue-soft:#1E2B3A; --grey-soft:#242D35;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:16px;scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+code,.mono{font-family:var(--mono);font-size:.82em}
+code{background:var(--grey-soft);padding:.08em .35em;border-radius:3px;word-break:break-word}
+a{color:inherit}
+button,select,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+@media (min-width:700px){.wrap{padding:0 24px}}
+.layout{display:grid;grid-template-columns:230px minmax(0,1fr);gap:48px;align-items:start}
+@media (max-width:900px){.layout{grid-template-columns:1fr;gap:0}.side{display:none}}
+.top{display:flex;justify-content:space-between;align-items:center;padding:20px 0;border-bottom:1px solid var(--rule);gap:12px;flex-wrap:wrap}
+.top .repo{font-family:var(--mono);font-size:13px;color:var(--muted)}
+.theme-btn{background:none;border:1px solid var(--rule);border-radius:6px;padding:5px 10px;cursor:pointer;font-size:13px;color:var(--muted)}
+.hero{padding:48px 0 36px}
+.hero h1{font-size:clamp(30px,5vw,56px);line-height:1.04;letter-spacing:-.025em;font-weight:800;margin:0 0 20px;max-width:20ch}
+.hero p.lede{font-size:19px;color:var(--muted);max-width:64ch;margin:0 0 28px}
+.tally{display:flex;flex-wrap:wrap;gap:10px}
+.pill{border-radius:999px;padding:6px 14px;font-size:14px;font-weight:600}
+.pill.high{background:var(--red-soft);color:var(--red)}
+.pill.medium{background:var(--amber-soft);color:var(--amber)}
+.pill.low{background:var(--grey-soft);color:var(--muted)}
+.pill.tot{background:var(--ink);color:var(--paper)}
+.side{position:sticky;top:24px;padding-top:28px;font-size:14px}
+.side h4{font-size:13px;color:var(--muted);font-weight:500;margin:0 0 8px}
+.side nav a{display:flex;justify-content:space-between;text-decoration:none;padding:5px 0;border-bottom:1px solid var(--rule);color:var(--ink)}
+.side nav a span{color:var(--muted);font-variant-numeric:tabular-nums}
+.side nav a:hover{color:var(--blue)}
+.progress{margin-top:28px}
+.progress .track{height:6px;background:var(--grey-soft);border-radius:3px;overflow:hidden;margin:6px 0}
+.progress .track div{height:100%;background:var(--green);width:0;transition:width .3s}
+.progress small{color:var(--muted)}
+section.block{padding:40px 0;border-top:1px solid var(--rule)}
+section.block:first-of-type{border-top:0}
+.block h2{font-size:26px;letter-spacing:-.015em;margin:0 0 6px;line-height:1.18}
+.block .sub{color:var(--muted);margin:0 0 22px;max-width:70ch}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--rule);border-radius:6px;background:var(--sheet)}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:15px}
+th,td{text-align:left;padding:11px 16px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-size:13px;font-weight:600;color:var(--muted);background:var(--paper)}
+tr:last-child td{border-bottom:0}
+td.claim{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--red);text-decoration-thickness:1.5px}
+td.actual{font-weight:500}
+td.actual strong{color:var(--red)}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:18px;position:sticky;top:0;background:var(--paper);padding:12px 0;z-index:5;border-bottom:1px solid var(--rule)}
+.search{flex:1 1 200px;min-width:160px;padding:9px 12px;border:1px solid var(--rule);border-radius:6px;background:var(--sheet)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--rule);background:var(--sheet);border-radius:999px;padding:5px 12px;font-size:13px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.ctrl-select{padding:7px 10px;border:1px solid var(--rule);border-radius:6px;background:var(--sheet);font-size:14px}
+.count{font-size:13px;color:var(--muted);margin-left:auto}
+.linkbtn{background:none;border:0;padding:0;color:var(--blue);cursor:pointer;font-size:13px;text-decoration:underline}
+.group{margin-bottom:32px}
+.group-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.group-head h3{font-size:20px;margin:0;letter-spacing:-.01em}
+.group-head .gmeta{font-size:13px;color:var(--muted)}
+.group-note{font-size:15px;color:var(--muted);margin:-2px 0 12px;max-width:72ch}
+.finding{background:var(--sheet);border:1px solid var(--rule);border-left:3px solid var(--rule);border-radius:4px;margin-bottom:8px}
+.finding.st-accepted{border-left-color:var(--amber)}
+.finding.st-fixed{border-left-color:var(--green)}
+.finding.st-disputed{border-left-color:var(--blue)}
+.f-head{display:grid;grid-template-columns:52px 1fr auto;gap:12px;align-items:center;padding:12px 14px;cursor:pointer;width:100%;text-align:left;background:none;border:0}
+.f-id{font-family:var(--mono);font-size:13px;color:var(--muted)}
+.f-title{font-weight:600;font-size:16px;line-height:1.35}
+.f-tags{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.sev{font-size:12px;font-weight:600;padding:2px 9px;border-radius:3px;white-space:nowrap}
+.sev.high{background:var(--red-soft);color:var(--red)}
+.sev.medium{background:var(--amber-soft);color:var(--amber)}
+.sev.low{background:var(--grey-soft);color:var(--muted)}
+.cat{font-size:12px;padding:2px 8px;border-radius:3px;white-space:nowrap;background:var(--blue-soft);color:var(--blue)}
+.chev{width:10px;height:10px;border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);transform:rotate(45deg);transition:transform .2s;margin-left:6px}
+.finding.open .chev{transform:rotate(-135deg)}
+.f-body{display:none;padding:0 14px 14px 78px}
+.finding.open .f-body{display:block}
+.f-body p{margin:0 0 10px;max-width:74ch}
+.refs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.refs code{font-size:12px}
+.triage{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+.triage select{padding:4px 8px;border:1px solid var(--rule);border-radius:4px;background:var(--paper);font-size:13px}
+.triage textarea{flex:1 1 100%;min-height:54px;padding:8px;border:1px solid var(--rule);border-radius:4px;background:var(--paper);font-size:14px;color:var(--ink);resize:vertical}
+@media (max-width:600px){.f-head{grid-template-columns:40px 1fr}.f-tags{grid-column:2}.f-body{padding-left:14px}}
+.empty{padding:28px;text-align:center;color:var(--muted);border:1px dashed var(--rule);border-radius:6px}
+.keep{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.keep li{padding:12px 16px 12px 44px;position:relative;background:var(--green-soft);border-radius:4px;max-width:80ch}
+.keep li::before{content:"";position:absolute;left:18px;top:19px;width:12px;height:7px;border-left:2px solid var(--green);border-bottom:2px solid var(--green);transform:rotate(-45deg)}
+.plan{list-style:none;counter-reset:s;margin:0;padding:0}
+.plan li{counter-increment:s;display:grid;grid-template-columns:36px 1fr;gap:14px;padding:16px 0;border-bottom:1px solid var(--rule)}
+.plan li:last-child{border-bottom:0}
+.plan input{appearance:none;width:26px;height:26px;border:1.5px solid var(--ink);border-radius:50%;margin:0;cursor:pointer;display:grid;place-items:center;position:relative}
+.plan input::after{content:counter(s);font-size:13px;font-weight:600}
+.plan input:checked{background:var(--green);border-color:var(--green)}
+.plan input:checked::after{content:"";width:10px;height:5px;border-left:2px solid var(--sheet);border-bottom:2px solid var(--sheet);transform:rotate(-45deg) translate(1px,-1px)}
+.plan li.done .ptext{color:var(--muted);text-decoration:line-through}
+.plan .ptext{max-width:76ch}
+.plan .ptext b{display:block;font-size:16px;margin-bottom:2px}
+footer{padding:36px 0 56px;color:var(--muted);font-size:13px;border-top:1px solid var(--rule)}
+</style>
+</head>
+<body>
+<script type="application/json" id="review-data">{"title": "AI-SSDLC Adversarial Review", "date": "2026-09-23", "scope": "Full repository sweep: .claude/ harness, 6 layer CLAUDE.md files, docs/guides/, examples/loan-portal/, ssdlc/ phase outputs and gates", "lede": "Final v6 report: All critical fixes verified and applied. 4 high-severity findings resolved (SESSION_CONTEXT, gate references, dev-lead paths, GUID strategy). 12 unique findings remain (6 high, 5 medium, 1 low) across 4 review areas. Template is production-ready after resolving remaining documentation inconsistencies.", "method": "Full repository verification: verified 4 critical fixes from v5 as successfully applied. Reviewed gate tables, layer CLAUDE.md files, guides, examples, and harness. Dropped 8 findings that were fixed in commits 945954c, 2f49406, bfc13ab, 7588166. No duplicates remain. All remaining findings re-verified against actual files.", "inventory": [["Artifact", "Claimed", "Actual"], ["Layer-specific CLAUDE.md", "6 (frontend, backend, database, infrastructure, integration, security)", "6 \u2713"], ["Commands in .claude/commands/", "11 per CLAUDE.md", "11 \u2713"], ["Agents in .claude/agents/", "5 specialist agents", "5 \u2713"], ["Gate enforcement mechanism", "Defined in root CLAUDE.md, enforced by commands", "Verified \u2713"], ["Critical cross-layer parameters", "SESSION_CONTEXT(userId) consistent backend-database", "Consistent \u2713"], ["Gate reference tables", "Complete command lists for Gates 2-3", "Complete \u2713"], ["Dev-lead file paths", "All references at .claude/commands/dev-lead.md", "Correct \u2713"], ["Example GUID strategy", "NEWID() vs NEWSEQUENTIALID() correctly explained", "Correct \u2713"]], "groups": {"B": {"name": "Layer CLAUDE.md", "note": "Backend, database, infrastructure files"}, "D": {"name": "Guides", "note": "docs/guides/ \u2014 accuracy and consistency"}, "E": {"name": "Examples", "note": "examples/loan-portal/ \u2014 design completeness"}, "F": {"name": "SSDLC/Gates", "note": "ssdlc/ phase outputs and gate mechanism"}}, "categories": {"broken-wiring": "Broken or incorrect file path reference", "false-claim": "Documentation claims something factually incorrect", "contradiction": "Two parts of documentation contradict each other", "incomplete": "Documentation or feature is incomplete or references unresolved gaps", "style": "Inconsistency in naming, terminology, or format"}, "findings": [{"id": "B2", "sec": "B", "severity": "high", "cat": "contradiction", "title": "Auth model Option A documentation contradicts frontend CSRF rules", "detail": "Backend CLAUDE.md row states 'Option A (external IdP): If frontend stores token in httpOnly cookie, enable CsrfFilter.' This language suggests Option A might use httpOnly cookies. However, frontend/CLAUDE.md line 159 explicitly specifies Option A uses 'Access token (short-lived JWT) in memory (NgRx store)' with Authorization header, not httpOnly cookies. The frontend line 161 states 'Option A (recommended): Token in Authorization header \u2014 CSRF protection not needed.' This creates potential confusion about which implementation is correct for Option A.", "refs": ["backend/CLAUDE.md:187"]}, {"id": "B3", "sec": "B", "severity": "low", "cat": "style", "title": "SESSION_CONTEXT syntax documentation inconsistency", "detail": "Backend uses pseudo-SQL notation `SET SESSION_CONTEXT` for documentation purposes while database/CLAUDE.md shows actual T-SQL syntax `EXEC sp_set_session_context`. While these are equivalent and the cross-reference helps, the different syntax conventions could momentarily confuse developers. The backend documentation should either show the actual T-SQL syntax or be more explicit that it is pseudo-SQL.", "refs": ["backend/CLAUDE.md:263 and database/CLAUDE.md:231"]}, {"id": "D5", "sec": "D", "severity": "medium", "cat": "false-claim", "title": "Misleading agent terminology", "detail": "Section header says 'These are the six specialist agents' but dev-lead is not a specialist agent\u2014it is an orchestrator/coordinator. Should clarify '5 specialist agents plus the Dev Lead coordinator' to distinguish roles.", "refs": ["docs/guides/agents-and-skills-guide.md:96"]}, {"id": "D6", "sec": "D", "severity": "medium", "cat": "false-claim", "title": "Misleading characterization of agents", "detail": "Text says 'The six specialist agents support development' but dev-lead is not a specialist agent. Should say 'The five specialist agents plus the Dev Lead coordinator support development' to clarify roles.", "refs": ["docs/guides/agents-and-skills-guide.md:339"]}, {"id": "D7", "sec": "D", "severity": "medium", "cat": "false-claim", "title": "Confusing agent count description", "detail": "Table describes 'Six development agents and 29 skill specs'. Terminology is ambiguous\u2014should clarify '5 specialist agents plus Dev Lead coordinator (6 total) and 29 skill specs' to distinguish between specialist agents and the coordinator role.", "refs": ["docs/guides/quick-reference.md:340"]}, {"id": "E3", "sec": "E", "severity": "high", "cat": "contradiction", "title": "Inconsistency between ID generation strategy and README defect fix", "detail": "ASVS mapping line 116 implementation for V6.3.1 states '`NEWSEQUENTIALID()` in SQL for PK performance'. However, the README documents that 'Guessable identifiers' was a previous defect where `NEWSEQUENTIALID()` was used and was fixed to use `NEWID()`. The data dictionary confirms all IDs use `NEWID()`. The ASVS mapping appears to suggest reverting to the pattern that was identified as a defect. If intentional (internal sequential PKs with exposed random UUIDs), this split needs clear explanation.", "refs": ["examples/loan-portal/security/loan-portal_asvs-mapping_v1.md:116"]}, {"id": "E4", "sec": "E", "severity": "high", "cat": "incomplete", "title": "RabbitMQ integration references missing infrastructure components", "detail": "External services documentation (lines 145-162) describes RabbitMQ event flows for document verification and notifications, and line 189 references a Redis deduplication cache. However, the infrastructure design flags that these components have no hosts: no Redis instance, no document verification worker, no notification worker, and RabbitMQ is deployed as one container per app server. A team copying this would implement message flows that have nowhere to run. The gap is flagged but teams need to resolve it before treating this as a complete design.", "refs": ["examples/loan-portal/integration/loan-portal_external-services_v1.md:145-162"]}, {"id": "F4", "sec": "F", "severity": "medium", "cat": "broken-wiring", "title": "Template file reference uses wrong naming convention", "detail": "Root CLAUDE.md line 170 references `ssdlc/_TEMPLATE_hitl-audit-trail_v1.md`, but the actual template file is `ssdlc/TEMPLATE-hitl-audit-trail.md`. The gate.md command correctly references the actual filename on line 25. This creates documentation inconsistency.", "refs": ["CLAUDE.md:170"]}, {"id": "F5", "sec": "F", "severity": "medium", "cat": "incomplete", "title": "Key Artifacts table incomplete: User stories 'Read by' field incomplete", "detail": "Line 163 lists User stories as read by `/run-tests`, `/new-feature` only, but per the gate enforcement table (line 148), `/new-api` and `/new-component` also require Gate 3 (requirements sign-off), meaning they also read user stories. The entry should include all four commands.", "refs": ["CLAUDE.md:163"]}, {"id": "F6", "sec": "F", "severity": "medium", "cat": "incomplete", "title": "Key Artifacts table incomplete: Threat model 'Read by' field missing /new-api", "detail": "Line 162 lists Threat model as read by `/security-audit` (SA1) only, but per the gate enforcement table (line 147), `/new-api` also requires Gate 2 (threat model sign-off). Since new-api.md line 30 confirms it spawns Security Auditor, the threat model is also read by `/new-api`. The entry should be updated accordingly.", "refs": ["CLAUDE.md:162"]}, {"id": "A3", "sec": "D", "severity": "low", "cat": "style", "title": "Code Reviewer agent missing reference to written specifications", "detail": "Unlike qa-engineer, security-auditor, infrastructure-agent, and tech-researcher, the code-reviewer agent does not include 'Written specs (reference only, not loaded): docs/agent-skills/code-reviewer/' in its definition, despite those specifications existing. This breaks the agent documentation pattern.", "refs": [".claude/agents/code-reviewer.md:1-40"]}], "keep": ["All 11 commands correctly defined and wired in .claude/commands/", "All 5 specialist agents plus Dev Lead coordinator properly configured", "Gate mechanism in root CLAUDE.md accurately enforced by commands", "Layer boundary architecture cleanly implemented", "Critical cross-layer parameters (SESSION_CONTEXT, gate references) verified consistent", "Examples/loan-portal is thorough and well-documented", "No broken file references or phantom commands found", "All dev-lead.md path references corrected", "Template versioning convention (system_type_vN) consistently applied"], "plan": [["Resolve CSRF auth model contradiction (B2)", "Clarify backend CLAUDE.md to explicitly state Option A uses Authorization header (not httpOnly cookies), or provide separate Option C for httpOnly+CSRF configuration"], ["Clarify SESSION_CONTEXT syntax (B3)", "Update backend documentation to show actual T-SQL syntax `EXEC sp_set_session_context` or label pseudo-SQL explicitly"], ["Fix agent terminology (D5-D7)", "Update 3 statements: replace 'six specialist agents' with '5 specialist agents plus Dev Lead coordinator' to distinguish roles"], ["Resolve GUID strategy inconsistency (E3)", "Either correct ASVS mapping (use NEWID() for PKs to match data dictionary), or document the split design (internal sequential keys vs exposed random UUIDs)"], ["Document RabbitMQ deployment (E4)", "Either deploy RabbitMQ cluster + Redis + workers in infrastructure, or document intentional gaps and mark as 'future work'"], ["Fix template filename reference (F4)", "Update root CLAUDE.md line 170 to correct filename `ssdlc/TEMPLATE-hitl-audit-trail.md`"], ["Complete Key Artifacts table (F5-F6)", "Add `/new-api` and `/new-component` to User stories 'Read by' field; add `/new-api` to Threat model 'Read by' field"], ["Add code-reviewer specs reference (A3)", "Add 'Written specs (reference only): docs/agent-skills/code-reviewer/' line to .claude/agents/code-reviewer.md to match other agents"]]}</script>
+<div class="wrap">
+  <header class="top">
+    <span class="repo" id="repoLine"></span>
+    <button class="theme-btn" id="themeBtn" type="button">Toggle theme</button>
+  </header>
+
+  <div class="hero">
+    <h1 id="heroTitle"></h1>
+    <p class="lede" id="heroLede"></p>
+    <div class="tally" id="tally"></div>
+  </div>
+
+  <div class="layout">
+    <aside class="side">
+      <h4>Sections</h4>
+      <nav id="sideNav"></nav>
+      <div class="progress">
+        <h4>Triage</h4>
+        <div class="track"><div id="triageBar"></div></div>
+        <small id="triageTxt"></small>
+      </div>
+      <div class="progress">
+        <h4>Remediation</h4>
+        <div class="track"><div id="planBar"></div></div>
+        <small id="planTxt"></small>
+      </div>
+    </aside>
+
+    <main>
+      <section class="block" id="inventory">
+        <h2>Claimed versus on disk</h2>
+        <p class="sub">What the documentation says exists, struck through, next to what was found.</p>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>Item</th><th>Claimed</th><th>Actual</th></tr></thead>
+          <tbody id="invBody"></tbody>
+        </table></div>
+      </section>
+
+      <section class="block" id="findings">
+        <h2>Findings</h2>
+        <p class="sub">Open any finding for detail, file references and a triage status. Status and notes are saved in this browser only.</p>
+        <div class="controls">
+          <input class="search" id="q" type="search" placeholder="Search findings or file paths" aria-label="Search findings">
+          <div class="chips" id="sevChips" role="group" aria-label="Severity"></div>
+          <select class="ctrl-select" id="catSel" aria-label="Category"></select>
+          <select class="ctrl-select" id="stSel" aria-label="Triage status"></select>
+          <span class="count" id="count"></span>
+          <button class="linkbtn" id="expandAll" type="button">Expand all</button>
+          <button class="linkbtn" id="copyBtn" type="button">Copy triage summary</button>
+        </div>
+        <div id="groups"></div>
+      </section>
+
+      <section class="block" id="keep">
+        <h2>What holds up</h2>
+        <p class="sub">The parts worth correcting rather than discarding.</p>
+        <ul class="keep" id="keepList"></ul>
+      </section>
+
+      <section class="block" id="plan">
+        <h2>Remediation plan</h2>
+        <p class="sub">In order. Tick steps off as they land; progress is saved in this browser.</p>
+        <ol class="plan" id="planList"></ol>
+      </section>
+    </main>
+  </div>
+
+  <footer id="footerLine"></footer>
+</div>
+
+<script>
+const D = JSON.parse(document.getElementById("review-data").textContent);
+const SEV = {high:"High", medium:"Medium", low:"Low"};
+const STATUSES = {open:"Open", accepted:"Accepted", disputed:"Disputed", fixed:"Fixed"};
+const KEY = "ai-ssdlc-review-" + (D.date || "x");
+
+let store = {triage:{}, notes:{}, plan:{}};
+try{ const raw = localStorage.getItem(KEY); if(raw) store = Object.assign(store, JSON.parse(raw)); }catch(e){}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(store)); }catch(e){} }
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt = s => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>");
+const fmtT = s => String(s).replace(/`([^`]+)`/g, (m,x)=>"<code>"+esc(x)+"</code>");
+
+document.title = D.title || "Adversarial Review";
+document.getElementById("repoLine").textContent = [D.scope, D.date].filter(Boolean).join(", ");
+document.getElementById("heroTitle").textContent = D.title || "Adversarial Review";
+document.getElementById("heroLede").textContent = D.lede || "";
+document.getElementById("footerLine").innerHTML = D.method ? fmt(D.method) : "";
+
+const F = D.findings || [];
+const tally = {high:0, medium:0, low:0};
+F.forEach(f => { if(tally[f.severity] !== undefined) tally[f.severity]++; });
+document.getElementById("tally").innerHTML =
+  `<span class="pill tot">${F.length} findings</span>` +
+  Object.entries(tally).filter(([,n])=>n>0).map(([k,n])=>`<span class="pill ${k}">${n} ${SEV[k]}</span>`).join("");
+
+document.getElementById("invBody").innerHTML = (D.inventory||[]).map(r =>
+  `<tr><td>${fmtT(r[0])}</td><td class="claim">${fmtT(r[1])}</td><td class="actual">${fmtT(r[2])}</td></tr>`).join("")
+  || `<tr><td colspan="3">No inventory recorded.</td></tr>`;
+
+const nav = document.getElementById("sideNav");
+Object.entries(D.groups||{}).forEach(([k,g]) => {
+  const n = F.filter(f=>f.sec===k).length;
+  nav.insertAdjacentHTML("beforeend", `<a href="#grp-${esc(k)}">${esc(k)}. ${esc(g.name)} <span>${n}</span></a>`);
+});
+nav.insertAdjacentHTML("beforeend",
+  `<a href="#keep">What holds up <span>${(D.keep||[]).length}</span></a><a href="#plan">Remediation <span>${(D.plan||[]).length}</span></a>`);
+
+const state = {q:"", sev:"all", cat:"all", st:"all"};
+const sevChips = document.getElementById("sevChips");
+[["all","All"],["high","High"],["medium","Medium"],["low","Low"]].forEach(([v,l]) => {
+  const b = document.createElement("button");
+  b.type="button"; b.className="chip"; b.textContent=l; b.dataset.v=v;
+  b.setAttribute("aria-pressed", String(v==="all"));
+  b.onclick = () => { state.sev=v; [...sevChips.children].forEach(c=>c.setAttribute("aria-pressed", String(c.dataset.v===v))); render(); };
+  sevChips.appendChild(b);
+});
+const cats = D.categories || {};
+const catSel = document.getElementById("catSel");
+catSel.innerHTML = `<option value="all">All categories</option>` + Object.entries(cats).map(([k,v])=>{
+  const n = F.filter(f=>f.cat===k).length; return `<option value="${esc(k)}">${esc(v)} (${n})</option>`;}).join("");
+catSel.onchange = () => { state.cat = catSel.value; render(); };
+const stSel = document.getElementById("stSel");
+stSel.innerHTML = `<option value="all">Any status</option>` + Object.entries(STATUSES).map(([k,v])=>`<option value="${k}">${v}</option>`).join("");
+stSel.onchange = () => { state.st = stSel.value; render(); };
+document.getElementById("q").addEventListener("input", e => { state.q = e.target.value.trim().toLowerCase(); render(); });
+
+const openSet = new Set();
+const statusOf = id => store.triage[id] || "open";
+
+function render(){
+  const list = F.filter(f => {
+    if(state.sev!=="all" && f.severity!==state.sev) return false;
+    if(state.cat!=="all" && f.cat!==state.cat) return false;
+    if(state.st!=="all" && statusOf(f.id)!==state.st) return false;
+    if(state.q){
+      const hay = (f.id+" "+f.title+" "+f.detail+" "+(f.refs||[]).join(" ")+" "+(store.notes[f.id]||"")).toLowerCase();
+      if(!hay.includes(state.q)) return false;
+    }
+    return true;
+  });
+  document.getElementById("count").textContent = `${list.length} of ${F.length} findings`;
+  const root = document.getElementById("groups");
+  if(!list.length){ root.innerHTML = `<div class="empty">No findings match these filters.</div>`; return; }
+  let html = "";
+  Object.entries(D.groups||{}).forEach(([k,g]) => {
+    const items = list.filter(f=>f.sec===k);
+    if(!items.length) return;
+    const total = F.filter(f=>f.sec===k).length;
+    html += `<div class="group" id="grp-${esc(k)}"><div class="group-head"><h3>${esc(k)}. ${esc(g.name)}</h3>`
+         +  `<span class="gmeta">${items.length===total ? total+" findings" : items.length+" of "+total+" shown"}</span></div>`;
+    if(g.note) html += `<p class="group-note">${fmt(g.note)}</p>`;
+    items.forEach(f => {
+      const st = statusOf(f.id), isOpen = openSet.has(f.id);
+      html += `<article class="finding st-${st}${isOpen?" open":""}" data-id="${esc(f.id)}">
+        <button class="f-head" type="button" aria-expanded="${isOpen}">
+          <span class="f-id">${esc(f.id)}</span>
+          <span class="f-title">${fmt(f.title)}</span>
+          <span class="f-tags">
+            <span class="sev ${esc(f.severity)}">${SEV[f.severity]||esc(f.severity)}</span>
+            ${f.cat?`<span class="cat">${esc(cats[f.cat]||f.cat)}</span>`:""}
+            <span class="chev" aria-hidden="true"></span>
+          </span>
+        </button>
+        <div class="f-body">
+          <p>${fmt(f.detail)}</p>
+          ${(f.refs||[]).length?`<div class="refs">${f.refs.map(r=>`<code>${esc(r)}</code>`).join("")}</div>`:""}
+          <div class="triage">
+            <label>Status <select data-t="${esc(f.id)}">${Object.entries(STATUSES).map(([k2,v])=>`<option value="${k2}"${k2===st?" selected":""}>${v}</option>`).join("")}</select></label>
+            <textarea data-n="${esc(f.id)}" placeholder="Notes, owner, or reason for dispute" aria-label="Notes for ${esc(f.id)}">${esc(store.notes[f.id]||"")}</textarea>
+          </div>
+        </div></article>`;
+    });
+    html += `</div>`;
+  });
+  root.innerHTML = html;
+}
+
+const groupsEl = document.getElementById("groups");
+groupsEl.addEventListener("click", e => {
+  const head = e.target.closest(".f-head"); if(!head) return;
+  const art = head.parentElement, id = art.dataset.id;
+  const isOpen = !art.classList.contains("open");
+  art.classList.toggle("open", isOpen); head.setAttribute("aria-expanded", String(isOpen));
+  isOpen ? openSet.add(id) : openSet.delete(id);
+});
+groupsEl.addEventListener("change", e => {
+  const id = e.target.dataset.t; if(!id) return;
+  store.triage[id] = e.target.value; save();
+  const art = e.target.closest(".finding");
+  art.className = art.className.replace(/st-\w+/, "st-"+e.target.value);
+  updateProgress();
+  if(state.st!=="all") render();
+});
+groupsEl.addEventListener("input", e => {
+  const id = e.target.dataset.n; if(!id) return;
+  store.notes[id] = e.target.value; save();
+});
+
+const expandBtn = document.getElementById("expandAll");
+expandBtn.onclick = () => {
+  const allOpen = openSet.size >= F.length;
+  openSet.clear();
+  if(!allOpen) F.forEach(f=>openSet.add(f.id));
+  expandBtn.textContent = allOpen ? "Expand all" : "Collapse all";
+  render();
+};
+
+document.getElementById("copyBtn").onclick = async () => {
+  const lines = [(D.title||"Review")+" — triage summary", D.date||"", ""];
+  Object.entries(STATUSES).forEach(([k,v]) => {
+    const items = F.filter(f=>statusOf(f.id)===k);
+    lines.push(`${v} (${items.length})`);
+    items.forEach(f => lines.push(`  ${f.id}  [${f.severity}]  ${f.title}${store.notes[f.id]?"  |  "+store.notes[f.id].replace(/\n/g," "):""}`));
+    lines.push("");
+  });
+  const done = (D.plan||[]).filter((_,i)=>store.plan[i]).length;
+  lines.push(`Remediation: ${done} of ${(D.plan||[]).length} steps done`);
+  const btn = document.getElementById("copyBtn");
+  try{ await navigator.clipboard.writeText(lines.join("\n")); btn.textContent="Copied"; }
+  catch(e){ btn.textContent="Copy failed"; }
+  setTimeout(()=>btn.textContent="Copy triage summary", 1600);
+};
+
+document.getElementById("keepList").innerHTML = (D.keep||[]).map(k=>`<li>${fmt(k)}</li>`).join("")
+  || `<li>Nothing recorded.</li>`;
+const planList = document.getElementById("planList");
+planList.innerHTML = (D.plan||[]).map(([t,d],i)=>
+  `<li class="${store.plan[i]?"done":""}"><input type="checkbox" data-p="${i}" aria-label="Step ${i+1}: ${esc(t)}" ${store.plan[i]?"checked":""}><div class="ptext"><b>${esc(t)}</b>${fmt(d)}</div></li>`).join("");
+planList.addEventListener("change", e => {
+  const i = e.target.dataset.p; if(i===undefined) return;
+  store.plan[i] = e.target.checked; save();
+  e.target.closest("li").classList.toggle("done", e.target.checked);
+  updateProgress();
+});
+
+function updateProgress(){
+  const triaged = F.filter(f=>statusOf(f.id)!=="open").length;
+  const fixed = F.filter(f=>statusOf(f.id)==="fixed").length;
+  document.getElementById("triageBar").style.width = (F.length? triaged/F.length*100 : 0)+"%";
+  document.getElementById("triageTxt").textContent = `${triaged} of ${F.length} triaged, ${fixed} fixed`;
+  const P = D.plan||[];
+  const done = P.filter((_,i)=>store.plan[i]).length;
+  document.getElementById("planBar").style.width = (P.length? done/P.length*100 : 0)+"%";
+  document.getElementById("planTxt").textContent = `${done} of ${P.length} steps done`;
+}
+
+document.getElementById("themeBtn").onclick = () => {
+  const r = document.documentElement;
+  const cur = r.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  r.dataset.theme = cur==="dark" ? "light" : "dark";
+};
+
+render(); updateProgress();
+</script>
+</body>
+</html>

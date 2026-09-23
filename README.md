@@ -35,7 +35,7 @@ project-root/
 │   ├── CLAUDE.md                    ← Project-level rules, loaded everywhere
 │   ├── settings.json                ← Permission allow/deny list
 │   ├── commands/                    ← 11 slash commands (see the command table below)
-│   ├── skills/ssdlc-review/         ← /ssdlc-review — adversarial review of any artifact here
+│   ├── skills/adversarial-review/   ← /adversarial-review — adversarial review of any artifact here
 │   └── agents/                      ← 5 specialist agents, spawned by the pipelines
 │
 ├── frontend/                        ← Layer 1: UI — Angular (browser/mobile client)

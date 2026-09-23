@@ -1,5 +1,5 @@
 ---
-name: ssdlc-review
+name: adversarial-review
 description: Adversarial multi-perspective review of THIS ai-ssdlc repository only — one artifact (a layer CLAUDE.md, an SSDLC phase output, a gate, the worked example, the .claude/ harness, the guides, uncommitted changes) or `report` for a full sweep rendered as a filterable HTML page. Self-contained; requires no external governance system.
 ---
 
