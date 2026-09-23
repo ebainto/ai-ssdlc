@@ -1,32 +1,35 @@
-# STRIDE Threat Model — Operational Working Copy
-# [System name] | Version: v1 | Date: [YYYY-MM-DD]
-# Owner: Security Engineer / Security Architect
-# Status: Draft | Approved (Gate 2) | Under review
+# STRIDE Threat Model — ai-ssdlc Template Example
 
-> **How to use this template:**
-> This is the operational working copy of the threat model — maintained here between SSDLC phases as the application evolves. The phase-gated version (produced at SSDLC Phase 2) lives in `ssdlc/[system]_threat-model_vN.md`.
->
-> Update this file when:
-> - A new external integration is added
-> - The authentication model changes
-> - A new data store is introduced
-> - A new data classification is added
-> - A significant architectural change is made
->
-> Trigger a formal SSDLC Phase 2 re-run when changes affect trust boundaries or introduce new High/Critical threats.
->
-> Delete this notice once the model is in active use.
+**This is an example/reference threat model for the ai-ssdlc template.** It demonstrates the expected shape and depth of a threat model for a loan portal system. It is **not operational** — the template itself (ai-ssdlc) does not implement these controls; each adopting team will replace it with their own real threats and operational controls.
 
-> **⚠ The threat register below is EXAMPLE CONTENT.**
-> Rows T-01 to T-07 illustrate the expected shape and depth for a loan portal.
-> Their controls are **not implemented anywhere in this repository** — there is
-> no nginx `limit_req` block, no append-only audit table, and no SAST ruleset.
-> Their status is therefore `Planned`, not `Mitigated`.
->
-> Before your first security audit: replace these rows with your real threats,
-> and set each Status honestly. A row marked `Mitigated` asserts that a
-> reviewer can point at the control in code — `/security-audit` trusts that
-> claim and will raise a confidential finding when the control is absent.
+**Version:** template-v1 | **Date:** 2026-09-23 | **Status:** Example — reference only | **Owner:** Security architect (your team) | **Phase:** 2 (Threat Modelling)
+
+---
+
+## For Adopting Teams
+
+When you fork this template and start your project:
+
+1. **Copy this file** to `ssdlc/[your-system-name]_threat-model_v1.md` (or keep this as the operational copy in `security/threat-model/`)
+2. **Replace the System Overview section** with your actual system details
+3. **Replace each threat row** with threats specific to your architecture, data, and business logic
+4. **Set Status honestly:** `Mitigated` only when the control is implemented in your codebase and can be verified by a reviewer
+5. **Run `/security-audit`** after populating your real threats — it will verify that each `Mitigated` control actually exists in the code
+
+Before your **first security audit**, every threat must have a Status of either `Mitigated` (control implemented and reviewable), `Planned` (control designed, not yet built), or `Open` (no control yet — resolve before Gate 2 approval).
+
+---
+
+## How to Use This (Template Reference Model)
+
+This example threat model demonstrates:
+- **Trust boundaries** — how to model the zones in your system
+- **STRIDE categories** — one threat per category (Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation)
+- **Control ownership** — which layer owns each control (backend, database, infrastructure)
+- **Likelihood and Impact** — how to assess risk
+- **Status values** — Mitigated, Planned, Open, Risk accepted
+
+Use this as a **template for your own threat model**. Replace the system overview, trust boundary map, and threat rows with your actual system's threats and controls.
 
 ---
 
