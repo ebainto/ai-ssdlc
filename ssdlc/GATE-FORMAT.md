@@ -6,6 +6,7 @@ without updating `.claude/commands/gate.md` and the seven gated commands.
 
 ## File location and naming
 
+**Your audit trail file:**
 ```
 ssdlc/[system-name]_hitl-audit-trail_v[N].md
 ```
@@ -13,6 +14,15 @@ ssdlc/[system-name]_hitl-audit-trail_v[N].md
 One file per system. Versions increment (`v1`, `v2`, etc.) when the trail needs to be archived; never overwrite.
 It is **append-only**: a new decision is a new row, never an edit to an existing one. Superseding an earlier 
 decision means appending a later row for the same gate — the latest row for a gate wins.
+
+**Template to copy from:**
+```
+ssdlc/TEMPLATE-hitl-audit-trail.md
+```
+
+This file in the repo is the copy-from template, not your live trail. Copy it, rename to match your system name, 
+and replace placeholders with your values. Never commit changes to `TEMPLATE-hitl-audit-trail.md` — it stays as 
+the reference shape for new teams. Your trail is `ssdlc/ai-ssdlc_hitl-audit-trail_v1.md` (or `[your-system]_...`).
 
 ## The parsable line
 
