@@ -259,9 +259,10 @@ enforces the data boundary.
   - Never pass user id as a request parameter or allow a user to override it in the URL.
 
 - **Database responsibility:** RLS policy enforces the boundary at the SQL Server row level.
-  - Every record table has a `SECURITY POLICY` with a predicate: `owner_id = SESSION_CONTEXT('user_id')`.
-  - Backend sets `SESSION_CONTEXT` before executing queries: `SET SESSION_CONTEXT ( N'user_id', N'<subject>' )` (see `database/CLAUDE.md`).
+  - Every record table has a `SECURITY POLICY` with a predicate: `owner_id = SESSION_CONTEXT(N'userId')`.
+  - Backend sets `SESSION_CONTEXT` before executing queries: `EXEC sp_set_session_context N'userId', @userId;` (see `database/CLAUDE.md` for exact SQL).
   - The policy is the **authoritative guard**; backend filtering is defense-in-depth.
+  - **Critical:** Parameter name must match exactly (`userId` camelCase, not `user_id` snake_case) — mismatch causes RLS to fail silently.
 
 - **Coordination:** If backend filters but database has no RLS policy, SQL injection bypasses backend checks. 
   If database has RLS but backend fails to set `SESSION_CONTEXT`, queries return no rows (fail-safe). 

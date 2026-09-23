@@ -32,8 +32,8 @@ Write decisions below this line. Nothing here yet means **no gate is approved**,
 | Gate | Name | Phase it closes | Commands it unblocks |
 |---|---|---|---|
 | 1 | Architecture sign-off | 1 — Architecture Intake & Validation | `/infra-check` |
-| 2 | Threat model sign-off | 2 — Security Threat Modelling | `/security-audit` |
-| 3 | Requirements sign-off | 3 — Requirements & User Stories | `/run-tests`, `/new-feature` |
+| 2 | Threat model sign-off | 2 — Security Threat Modelling | `/security-audit`, `/new-api` |
+| 3 | Requirements sign-off | 3 — Requirements & User Stories | `/run-tests`, `/new-feature`, `/new-api`, `/new-component` |
 | 4 | Design sign-off | 4 — Secure Design Specifications | — |
 | 5 | Standards sign-off | 5 — Development Standards & Scaffolding | `/new-feature`, `/new-api`, `/new-component`, `/code-review` |
 | 6 | Test plan sign-off | 6 — Security Testing Plan | — |
