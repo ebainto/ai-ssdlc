@@ -29,7 +29,7 @@ This file is automatically loaded by Claude Code whenever you work on any file i
 Runtime:        Java 21 LTS
 Framework:      Spring Boot 3.2
 Build tool:     Maven 3.9
-API style:      REST (OpenAPI 3.1 spec generated via Springdoc — docs/api/)
+API style:      REST (OpenAPI 3.1 spec generated via Springdoc — docs/backend/design/[system]_openapi-spec_v1.yaml)
 Security:       Spring Security 6 + JWT (RS256) via nimbus-jose-jwt
 Persistence:    Spring Data JPA + Hibernate 6 (SQL Server dialect)
 DB migrations:  Flyway 10 (migration scripts in database/migrations/)

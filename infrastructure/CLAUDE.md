@@ -19,7 +19,7 @@ This file is automatically loaded by Claude Code whenever you work on any file i
 **Relationship to other files:**
 - Root `CLAUDE.md` — project-wide rules; this file adds to them, never overrides
 - **Layer Boundaries section (below)** — what this layer provisions, what it must not contain, deployment rules
-- `security/policies/infrastructure-security-policy.md` — authoritative security standards for the on-prem environment
+- `security/policies/encryption-policy.md` — encryption standards. If infrastructure-specific requirements grow beyond this, create `security/policies/infrastructure-security-policy.md` for certificates, key management, and deployment security.
 
 ---
 
@@ -92,7 +92,7 @@ vault kv get secret/app/backend
 
 # ── Production deploys — go through Jenkins only ───────────────────────────
 # Never SSH into staging or prod servers and run docker commands manually.
-# All deployments triggered via Jenkins pipeline: infrastructure/Jenkinsfile
+# All deployments triggered via Jenkins pipeline: Jenkinsfile (at project root)
 ```
 
 > **Never manually run `docker compose up` or `docker pull` on staging or production servers.**
@@ -131,19 +131,23 @@ vault kv get secret/app/backend
 |---|---|---|---|
 | `dev` | Developer laptop (Docker Desktop) | macOS / Windows | Local development and unit testing |
 | `staging` | `app-staging-01` (8 CPU, 32 GB RAM) | Ubuntu 22.04 LTS | Pre-production validation; mirrors production config |
-| `prod` | `app-prod-01`, `app-prod-02` (16 CPU, 64 GB RAM each) | Ubuntu 22.04 LTS | Live production; active-active behind Nginx load balancer |
+| `prod` | `app-prod-01`, `app-prod-02` (16 CPU, 64 GB RAM each) | Ubuntu 22.04 LTS | Live production; **backend: active-active behind Nginx load balancer. Frontend: active-passive (app-prod-01 only — see deployment note below).** |
 | `prod-db` | `db-prod-01` (16 CPU, 128 GB RAM) | Windows Server 2022 | SQL Server 2022 — dedicated host, not containerised |
 | `prod-vault` | `vault-prod-01` (4 CPU, 8 GB RAM) | Ubuntu 22.04 LTS | HashiCorp Vault — dedicated host |
+| `prod-queue` | `queue-prod-01` (8 CPU, 16 GB RAM) | Ubuntu 22.04 LTS | RabbitMQ message broker (inbound event queue) |
+| `prod-cache` | `cache-prod-01` (4 CPU, 8 GB RAM) | Ubuntu 22.04 LTS | Redis cache (session store, replay-attack deduplication) |
 | `prod-monitor` | `monitor-prod-01` (8 CPU, 16 GB RAM) | Ubuntu 22.04 LTS | Prometheus, Grafana, Loki, Alertmanager |
 
 **Services running per server (production):**
 
 | Server | Containers / services |
 |---|---|
-| `app-prod-01`, `app-prod-02` | `backend` (Spring Boot JAR in Docker), `nginx` (reverse proxy + TLS) |
-| `app-prod-01` only | `frontend` (Nginx serving Angular build artifacts) |
+| `app-prod-01`, `app-prod-02` (active-active) | `backend` (Spring Boot JAR in Docker), `nginx` (reverse proxy + TLS) |
+| `app-prod-01` only (active-passive) | `frontend` (Nginx serving Angular build artifacts). **To enable active-active:** deploy frontend build artifacts to app-prod-02 as well. |
 | `db-prod-01` | SQL Server 2022 (Windows service, not Docker) |
 | `vault-prod-01` | Vault server (systemd service) + Vault Agent (sidecar) |
+| `queue-prod-01` | RabbitMQ (Docker container, TLS 1.2, cluster node) |
+| `cache-prod-01` | Redis (Docker container, in-memory datastore with RDB persistence) |
 | `monitor-prod-01` | Prometheus, Grafana, Loki, Alertmanager (all via Docker Compose) |
 
 **Network topology:**
@@ -151,16 +155,16 @@ vault kv get secret/app/backend
 Internet
     │  HTTPS :443
     ▼
-[Nginx — app-prod-01/02]     ← TLS termination; serves Angular static files
+[Nginx LB — app-prod-01/02]     ← TLS termination; serves Angular static files
     │  HTTP :8080 (internal only)
     ▼
-[Backend — Spring Boot container]
-    │  TCP :1433 (internal VLAN only)
-    ▼
-[SQL Server — db-prod-01]
+[Backend — app-prod-01/02]
+    │  TCP :1433 (internal VLAN)      │  TCP :5672 (internal VLAN, TLS 1.2)  │  TCP :6379 (internal VLAN)
+    ▼                                  ▼                                       ▼
+[SQL Server — db-prod-01]      [RabbitMQ — queue-prod-01]            [Redis — cache-prod-01]
 
 [Vault — vault-prod-01]      ← Secrets injected at container startup via Vault Agent
-[Monitor — monitor-prod-01]  ← Prometheus scrapes :8080/actuator/prometheus from backend
+[Monitor — monitor-prod-01]  ← Prometheus scrapes :8080/actuator/prometheus, :9090 from all services
 ```
 
 ---
@@ -175,11 +179,11 @@ Internet
 | Threat (Phase 2 ref) | Control | Implementation on-prem |
 |---|---|---|
 | Man-in-the-middle — external (STRIDE-I) | TLS 1.2+ enforced on all external connections | Nginx: `ssl_protocols TLSv1.2 TLSv1.3;` + `ssl_prefer_server_ciphers on;`. HTTP → HTTPS redirect for all requests |
-| Man-in-the-middle — internal (STRIDE-I) | Internal service traffic on isolated VLAN | Backend → SQL Server traffic on dedicated VLAN (`10.0.2.0/24`); no cross-VLAN access without firewall rule |
+| Man-in-the-middle — internal (STRIDE-I) | Internal service traffic on isolated VLAN; mTLS for cross-host traffic | Backend → SQL Server traffic on dedicated VLAN (`10.0.2.0/24`). **IMPORTANT:** This is a host boundary. Per `security/policies/encryption-policy.md`, either: (1) enable mTLS by setting JDBC `encrypt=strict` + valid TLS cert on SQL Server, or (2) document an exception here with risk acceptance and VLAN isolation validation (e.g., network audit confirming segregation). Current: VLAN isolation only, exception recorded in `security/pen-test/scope.md`. |
 | Secrets in config files (STRIDE-I) | HashiCorp Vault — no secrets in Docker Compose, `.env` or environment variables | Vault Agent renders secrets from a template to a `tmpfs` volume mounted into the app container (`0400`, owned by the app UID); the app reads the file at startup. A sidecar **cannot** set a sibling container's environment — env is fixed at creation — so env injection is not an option. `.env` holds only the Vault address and AppRole role/secret id |
 | Unauthorised container access (STRIDE-E) | Docker socket never mounted into a container; non-root containers | **Socket access is root-equivalent on the host** — anyone who can reach `/var/run/docker.sock` can start a privileged container and mount the host filesystem, so "restricted to the `jenkins` user" means the CI user is effectively root there. Never bind-mount the socket into an application container, and keep the CI runner off production app hosts. All containers run non-root (UID 1000) with `--no-new-privileges` |
 | Unpatched base images (STRIDE-T) | Pinned digest images + weekly Trivy scan | All Dockerfiles use `FROM image@sha256:...` (never `latest`). Jenkins pipeline runs `trivy image` scan; critical CVEs block deployment |
-| Unrestricted network access (STRIDE-I) | `ufw` firewall on all servers | Default deny-all inbound. Only open: `:443` (Nginx, internet-facing), `:1433` (SQL Server, VLAN only), `:8200` (Vault, internal only), `:9090` (Prometheus, monitor VLAN only) |
+| Unrestricted network access (STRIDE-I) | `ufw` firewall on all servers | Default deny-all inbound. Open: `:443` (Nginx external), `:1433` (SQL Server VLAN), `:8080` (backend metrics from monitor), `:8200` (Vault internal), `:3000` (Grafana internal), `:3100` (Loki internal), `:9090` (Prometheus internal), `:9093` (Alertmanager internal). Monitoring traffic flows from `monitor-prod-01` to all services. |
 | Lateral movement after breach (STRIDE-E) | Separate service accounts per server | Each server has a dedicated OS service account with minimal sudo rights. No shared passwords. SSH key-based auth only — password auth disabled |
 | Certificate expiry causing downtime (STRIDE-D) | Automated cert renewal + Alertmanager alert | `cert-renewal.sh` cron job (weekly check). Alertmanager fires `CertExpiryWarning` alert at 30 days and `CertExpiryCritical` at 7 days |
 

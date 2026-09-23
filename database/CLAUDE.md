@@ -19,7 +19,7 @@ This file is automatically loaded by Claude Code whenever you work on any file i
 **Relationship to other files:**
 - Root `CLAUDE.md` — project-wide rules; this file adds to them, never overrides
 - **Layer Boundaries section (below)** — access rules (backend only via JDBC), what must not live here
-- `security/policies/data-classification-policy.md` — authoritative list of sensitive fields
+- `security/policies/encryption-policy.md` — encryption standards for sensitive data. Add domain-specific data classification rules here if you need more than the default classifications.
 
 ---
 
@@ -40,7 +40,11 @@ Auditing:       SQL Server Temporal Tables (system-versioned) for audit history
 
 ## Commands
 
+**Important:** Run all Flyway commands from `backend/` (where `pom.xml` is), not from `database/`.
+Flyway is configured in the backend's Maven pom and uses classpath URLs.
+
 ```bash
+# From backend/ directory:
 # Run all pending migrations (dev only — prod goes through CI/CD pipeline)
 mvn flyway:migrate -Dflyway.url="jdbc:sqlserver://localhost:1433;databaseName=appdb"
 
@@ -65,6 +69,14 @@ mvn flyway:migrate -Dflyway.locations=classpath:db/migration,classpath:db/seed/d
 
 # Start local SQL Server container
 docker compose -f ../infrastructure/docker/docker-compose.yml up sqlserver
+
+# Connection strings:
+# Dev (with self-signed cert — must trust it):
+jdbc:sqlserver://localhost:1433;databaseName=appdb;encrypt=true;trustServerCertificate=true;columnEncryptionSetting=Enabled
+
+# Prod (with valid cert — do NOT trust self-signed):
+jdbc:sqlserver://db-prod-01:1433;databaseName=appdb;encrypt=strict;columnEncryptionSetting=Enabled
+# Prod certificate and key are injected via Vault into the Java keystore at container startup
 
 # Generate schema diff (requires SchemaCompare in Azure Data Studio)
 # Use Azure Data Studio Schema Compare: source = local dev DB, target = migration scripts
@@ -248,10 +260,11 @@ ON dbo.[core_records] WITH (STATE = ON);
 - **Naming:** `V<version>__<description>.sql` — Flyway format (e.g. `V20240315001__add_status_index.sql`)
 - **Never edit** a migration that has been applied to any environment — create a new one
 - **Every destructive migration** requires a prior data migration script to preserve data
-- **Breaking changes use a 3-step pattern:**
-  1. `V001__add_new_column.sql` — add new column (nullable, safe)
-  2. Application dual-writes to both columns
-  3. `V002__backfill_and_drop_old_column.sql` — backfill then drop old column
+- **Breaking changes use a 4-step pattern:**
+  1. Migration: `V001__add_new_column.sql` — add new column (nullable, safe)
+  2. Code: Application dual-writes to both columns (new + old) for one release
+  3. Migration: `V002__backfill_new_column.sql` — backfill new column from old
+  4. Migration: `V003__drop_old_column.sql` — drop old column (in a separate migration, safe to rollback)
 - **Always Encrypted columns** added in a migration must have a corresponding entry in the Data Classification table above before the PR is merged
 - **Temporal tables** — never manually insert or update rows in `*_history` tables; SQL Server manages these automatically
 

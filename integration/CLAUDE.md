@@ -4,6 +4,13 @@
 
 This file is automatically loaded by Claude Code whenever you work on any file inside the `integration/` folder. It gives Claude the context it needs to write correct API client wrappers, event schemas, and contract tests — and to enforce the security controls that protect the application's external boundary.
 
+**Important:** Runtime integration code lives in `backend/src/main/java/[package]/integration/`, not in `integration/`. This folder holds:
+- Contract definitions (API specs, event schemas, webhook requirements)
+- Integration tests (contract tests, consumer tests)
+- Configuration and documentation
+
+When writing integration code, you work in `backend/` so that layer's CLAUDE.md context is loaded automatically. Review the rules from this file when implementing, and see backend/CLAUDE.md → Integration layer section for implementation patterns.
+
 **As a developer, you use this file to:**
 - List all external services so Claude knows what the application integrates with before writing any connector code
 - Define event schema conventions so Claude generates compatible publishers and consumers
@@ -19,7 +26,7 @@ This file is automatically loaded by Claude Code whenever you work on any file i
 **Relationship to other files:**
 - Root `CLAUDE.md` — project-wide rules; this file adds to them, never overrides
 - **Layer Boundaries section (below)** — translate and forward only; no business logic; integration points with auth methods
-- `security/policies/integration-security-policy.md` — authoritative standards for external connections
+- `security/policies/encryption-policy.md` — encryption standards for external connections. If integration-specific requirements grow beyond this (e.g., webhook signing schemas), create `security/policies/integration-security-policy.md`.
 
 ---
 
@@ -126,7 +133,7 @@ docker compose -f ../infrastructure/docker/docker-compose.yml up rabbitmq
 | Man-in-the-middle on sensitive APIs (STRIDE-I) | mTLS where the provider supports it | Client certificate and key loaded from Vault at startup and injected into the Spring WebClient `SslContext` |
 | PII forwarded to third parties (STRIDE-I) | PII minimisation — send only what each provider legally requires | Record the exact field list per provider in the table below. An email provider needs an address, not a date of birth. Anything beyond the consent you hold is an unlawful disclosure |
 | Replay attacks on inbound events (STRIDE-T) | Message idempotency via RabbitMQ deduplication header | All consumers check `message-id` header against a Redis deduplication cache (TTL 24 hours) before processing |
-| Cascading failure from external dependency (STRIDE-D) | Resilience4j circuit breaker + retry + timeout | All WebClient calls wrapped in Resilience4j: timeout 5s, retry 3× (exponential backoff 100ms base), circuit breaker opens after 5 failures in 10s |
+| Cascading failure from external dependency (STRIDE-D) | Resilience4j circuit breaker + retry + timeout | All WebClient calls wrapped in Resilience4j: timeout 5s, retry 3× (exponential backoff 100ms base), circuit breaker opens when failure rate exceeds 50% in a 10-call sliding window (see table below) |
 | Event schema breaking change (STRIDE-T) | Consumer-driven contract tests via Spring Cloud Contract | Contract stubs published by consumers; provider pipeline must pass all consumer contracts before merging a schema change |
 
 **Outbound API resilience defaults (Resilience4j config):**
