@@ -623,7 +623,7 @@ You own three pipeline triggers:
 
 **Activate:** `"orchestrate"`, `"dev mode"`, `"what next"`, `"/new-feature"`, `"/new-api"`, `"/new-component"`, or any vague development request.
 
-**Implementation:** `.claude/agents/dev-lead.md` | Entry-point commands: `.claude/commands/new-feature.md`, `.claude/commands/new-api.md`, `.claude/commands/new-component.md`
+**Implementation:** Dev Lead coordinator defined in `.claude/commands/dev-lead.md` | Entry-point commands: `.claude/commands/new-feature.md`, `.claude/commands/new-api.md`, `.claude/commands/new-component.md`
 
 **Guardrails**
 - Never write code, review code, or produce security findings — always route.
@@ -1894,7 +1894,7 @@ Eval suite YAML files live in `evals/` at the project root (not inside `.claude/
 | Agent prefix | Two-letter code: OA, CR, SA, QA, TR, IA | OA = Dev Lead, CR = Code Reviewer |
 | Skill ID | Agent prefix + sequential number | OA1, CR1, SA1 |
 | Slash command | Lowercase kebab-case with `/` prefix | `/gate status` |
-| Agent file | `.claude/agents/[agent-name].md` | `.claude/agents/dev-lead.md`, `.claude/agents/cr-agent.md` |
+| Agent file | `.claude/agents/[agent-name].md` | `.claude/agents/code-reviewer.md`, `.claude/agents/security-auditor.md` |
 | Command file | `.claude/commands/[command-name].md` | `.claude/commands/gate.md` |
 
 ---
@@ -2071,7 +2071,7 @@ At the bottom of this guide, add a changelog entry:
 
 | Item | File | Status |
 |---|---|---|
-| Dev Lead coordinator | `.claude/agents/dev-lead.md` | **Implemented** |
+| Dev Lead coordinator | `.claude/commands/dev-lead.md` | **Implemented** |
 | `/new-feature` command | `.claude/commands/new-feature.md` | **Implemented** |
 | `/new-api` command | `.claude/commands/new-api.md` | **Implemented** |
 | `/new-component` command | `.claude/commands/new-component.md` | **Implemented** |
@@ -2233,7 +2233,7 @@ For someone new to this project or this template, read in this order:
 | Date | Change |
 |---|---|
 | 2026-09-20 | Initial version — six agents, 18 slash commands, sequence examples, maintenance guide. *(Superseded: the shipped harness has five agents and eleven commands; the other nine commands were never built — see Section 8.)* |
-| 2026-09-20 | Renamed Orchestration Agent → Dev Lead coordinator. Added Section 2 (calling model — two types of slash commands, who calls who, decision table, five scenario sequences). Added Infrastructure Agent (Agent 6). Added OA5/OA6/OA7 pipeline skills. Implemented Dev Lead coordinator in `.claude/agents/dev-lead.md` with `/new-feature`, `/new-api`, `/new-component` entry-point commands. |
+| 2026-09-20 | Renamed Orchestration Agent → Dev Lead coordinator. Added Section 2 (calling model — two types of slash commands, who calls who, decision table, five scenario sequences). Added Infrastructure Agent (Agent 6). Added OA5/OA6/OA7 pipeline skills. Implemented Dev Lead coordinator in `.claude/commands/dev-lead.md` with `/new-feature`, `/new-api`, `/new-component` entry-point commands. |
 | 2026-09-20 | Implemented Code Reviewer Agent in `.claude/agents/code-reviewer.md` (Read-only tools, worktree isolation when spawned by Dev Lead). Added `/code-review` direct command. Added Implementation lines to Agent 1 and Agent 2 sections. Updated implementation status table. |
 | 2026-09-20 | Created `docs/agent-skills/` project-level folder with subfolders for all six agents (skill files to be populated per agent). Implemented QA Engineer Agent in `.claude/agents/qa-engineer.md` (Read + Write tools). Created QA1–QA5 skill files in `docs/agent-skills/qa-engineer/`. Added `/run-tests` direct command. Added Implementation line to Agent 4 section. |
 | 2026-09-20 | Created skill files for Dev Lead (OA1–OA7) and Code Reviewer (CR1–CR4) in `docs/agent-skills/`. Implemented Security Auditor Agent in `.claude/agents/security-auditor.md` (Read + Write tools, confidential findings-register-only output). Created SA1–SA4 skill files in `docs/agent-skills/security-auditor/`. Added `/security-audit` direct command. Added Implementation line to Agent 3 section. Added three-folder model explanation to Section 7. |
