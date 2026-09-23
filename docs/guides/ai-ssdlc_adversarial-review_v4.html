@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Adversarial Review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EEF0EC; --sheet:#F8F9F6; --ink:#17212B; --muted:#5E6873; --rule:#CDD2CC;
+  --red:#B8321F; --red-soft:#F3DCD6; --amber:#9A6412; --amber-soft:#F2E6CF;
+  --green:#2C6A4C; --green-soft:#D9E9DF; --blue:#2B4E73; --blue-soft:#DCE5EE;
+  --grey-soft:#E2E5E0;
+  --sans:"Schibsted Grotesk","Helvetica Neue",Arial,system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  box-sizing:border-box;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#141A20; --sheet:#1B232B; --ink:#E6EAE4; --muted:#9AA4AD; --rule:#2F3A44;
+    --red:#EE7A63; --red-soft:#3A221E; --amber:#E0AE5C; --amber-soft:#342A18;
+    --green:#7CC3A0; --green-soft:#1D3229; --blue:#8FB4DA; --blue-soft:#1E2B3A; --grey-soft:#242D35;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#141A20; --sheet:#1B232B; --ink:#E6EAE4; --muted:#9AA4AD; --rule:#2F3A44;
+  --red:#EE7A63; --red-soft:#3A221E; --amber:#E0AE5C; --amber-soft:#342A18;
+  --green:#7CC3A0; --green-soft:#1D3229; --blue:#8FB4DA; --blue-soft:#1E2B3A; --grey-soft:#242D35;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:16px;scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+code,.mono{font-family:var(--mono);font-size:.82em}
+code{background:var(--grey-soft);padding:.08em .35em;border-radius:3px;word-break:break-word}
+a{color:inherit}
+button,select,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+@media (min-width:700px){.wrap{padding:0 24px}}
+.layout{display:grid;grid-template-columns:230px minmax(0,1fr);gap:48px;align-items:start}
+@media (max-width:900px){.layout{grid-template-columns:1fr;gap:0}.side{display:none}}
+.top{display:flex;justify-content:space-between;align-items:center;padding:20px 0;border-bottom:1px solid var(--rule);gap:12px;flex-wrap:wrap}
+.top .repo{font-family:var(--mono);font-size:13px;color:var(--muted)}
+.theme-btn{background:none;border:1px solid var(--rule);border-radius:6px;padding:5px 10px;cursor:pointer;font-size:13px;color:var(--muted)}
+.hero{padding:48px 0 36px}
+.hero h1{font-size:clamp(30px,5vw,56px);line-height:1.04;letter-spacing:-.025em;font-weight:800;margin:0 0 20px;max-width:20ch}
+.hero p.lede{font-size:19px;color:var(--muted);max-width:64ch;margin:0 0 28px}
+.tally{display:flex;flex-wrap:wrap;gap:10px}
+.pill{border-radius:999px;padding:6px 14px;font-size:14px;font-weight:600}
+.pill.high{background:var(--red-soft);color:var(--red)}
+.pill.medium{background:var(--amber-soft);color:var(--amber)}
+.pill.low{background:var(--grey-soft);color:var(--muted)}
+.pill.tot{background:var(--ink);color:var(--paper)}
+.side{position:sticky;top:24px;padding-top:28px;font-size:14px}
+.side h4{font-size:13px;color:var(--muted);font-weight:500;margin:0 0 8px}
+.side nav a{display:flex;justify-content:space-between;text-decoration:none;padding:5px 0;border-bottom:1px solid var(--rule);color:var(--ink)}
+.side nav a span{color:var(--muted);font-variant-numeric:tabular-nums}
+.side nav a:hover{color:var(--blue)}
+.progress{margin-top:28px}
+.progress .track{height:6px;background:var(--grey-soft);border-radius:3px;overflow:hidden;margin:6px 0}
+.progress .track div{height:100%;background:var(--green);width:0;transition:width .3s}
+.progress small{color:var(--muted)}
+section.block{padding:40px 0;border-top:1px solid var(--rule)}
+section.block:first-of-type{border-top:0}
+.block h2{font-size:26px;letter-spacing:-.015em;margin:0 0 6px;line-height:1.18}
+.block .sub{color:var(--muted);margin:0 0 22px;max-width:70ch}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--rule);border-radius:6px;background:var(--sheet)}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:15px}
+th,td{text-align:left;padding:11px 16px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-size:13px;font-weight:600;color:var(--muted);background:var(--paper)}
+tr:last-child td{border-bottom:0}
+td.claim{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--red);text-decoration-thickness:1.5px}
+td.actual{font-weight:500}
+td.actual strong{color:var(--red)}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:18px;position:sticky;top:0;background:var(--paper);padding:12px 0;z-index:5;border-bottom:1px solid var(--rule)}
+.search{flex:1 1 200px;min-width:160px;padding:9px 12px;border:1px solid var(--rule);border-radius:6px;background:var(--sheet)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--rule);background:var(--sheet);border-radius:999px;padding:5px 12px;font-size:13px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.ctrl-select{padding:7px 10px;border:1px solid var(--rule);border-radius:6px;background:var(--sheet);font-size:14px}
+.count{font-size:13px;color:var(--muted);margin-left:auto}
+.linkbtn{background:none;border:0;padding:0;color:var(--blue);cursor:pointer;font-size:13px;text-decoration:underline}
+.group{margin-bottom:32px}
+.group-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.group-head h3{font-size:20px;margin:0;letter-spacing:-.01em}
+.group-head .gmeta{font-size:13px;color:var(--muted)}
+.group-note{font-size:15px;color:var(--muted);margin:-2px 0 12px;max-width:72ch}
+.finding{background:var(--sheet);border:1px solid var(--rule);border-left:3px solid var(--rule);border-radius:4px;margin-bottom:8px}
+.finding.st-accepted{border-left-color:var(--amber)}
+.finding.st-fixed{border-left-color:var(--green)}
+.finding.st-disputed{border-left-color:var(--blue)}
+.f-head{display:grid;grid-template-columns:52px 1fr auto;gap:12px;align-items:center;padding:12px 14px;cursor:pointer;width:100%;text-align:left;background:none;border:0}
+.f-id{font-family:var(--mono);font-size:13px;color:var(--muted)}
+.f-title{font-weight:600;font-size:16px;line-height:1.35}
+.f-tags{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.sev{font-size:12px;font-weight:600;padding:2px 9px;border-radius:3px;white-space:nowrap}
+.sev.high{background:var(--red-soft);color:var(--red)}
+.sev.medium{background:var(--amber-soft);color:var(--amber)}
+.sev.low{background:var(--grey-soft);color:var(--muted)}
+.cat{font-size:12px;padding:2px 8px;border-radius:3px;white-space:nowrap;background:var(--blue-soft);color:var(--blue)}
+.chev{width:10px;height:10px;border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);transform:rotate(45deg);transition:transform .2s;margin-left:6px}
+.finding.open .chev{transform:rotate(-135deg)}
+.f-body{display:none;padding:0 14px 14px 78px}
+.finding.open .f-body{display:block}
+.f-body p{margin:0 0 10px;max-width:74ch}
+.refs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.refs code{font-size:12px}
+.triage{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+.triage select{padding:4px 8px;border:1px solid var(--rule);border-radius:4px;background:var(--paper);font-size:13px}
+.triage textarea{flex:1 1 100%;min-height:54px;padding:8px;border:1px solid var(--rule);border-radius:4px;background:var(--paper);font-size:14px;color:var(--ink);resize:vertical}
+@media (max-width:600px){.f-head{grid-template-columns:40px 1fr}.f-tags{grid-column:2}.f-body{padding-left:14px}}
+.empty{padding:28px;text-align:center;color:var(--muted);border:1px dashed var(--rule);border-radius:6px}
+.keep{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.keep li{padding:12px 16px 12px 44px;position:relative;background:var(--green-soft);border-radius:4px;max-width:80ch}
+.keep li::before{content:"";position:absolute;left:18px;top:19px;width:12px;height:7px;border-left:2px solid var(--green);border-bottom:2px solid var(--green);transform:rotate(-45deg)}
+.plan{list-style:none;counter-reset:s;margin:0;padding:0}
+.plan li{counter-increment:s;display:grid;grid-template-columns:36px 1fr;gap:14px;padding:16px 0;border-bottom:1px solid var(--rule)}
+.plan li:last-child{border-bottom:0}
+.plan input{appearance:none;width:26px;height:26px;border:1.5px solid var(--ink);border-radius:50%;margin:0;cursor:pointer;display:grid;place-items:center;position:relative}
+.plan input::after{content:counter(s);font-size:13px;font-weight:600}
+.plan input:checked{background:var(--green);border-color:var(--green)}
+.plan input:checked::after{content:"";width:10px;height:5px;border-left:2px solid var(--sheet);border-bottom:2px solid var(--sheet);transform:rotate(-45deg) translate(1px,-1px)}
+.plan li.done .ptext{color:var(--muted);text-decoration:line-through}
+.plan .ptext{max-width:76ch}
+.plan .ptext b{display:block;font-size:16px;margin-bottom:2px}
+footer{padding:36px 0 56px;color:var(--muted);font-size:13px;border-top:1px solid var(--rule)}
+</style>
+</head>
+<body>
+<script type="application/json" id="review-data">
+{"title":"Adversarial Review — Full Sweep v4","date":"2026-09-23","scope":"ai-ssdlc repository — complete review of harness, layers, security, guides, examples, and SSDLC phases","lede":"Nine findings remain across five areas. Zero high-severity blockers. Six are medium-severity mismatches (template vs actual, mixed placeholders, missing phase outputs for new projects); three are low-severity style and guidance gaps. The template is production-ready; missing outputs are expected in new project onboarding.","inventory":[["SSDLC phases (1–7) documented","All seven phases exist","✓ All present"],["Gated commands","11 slash commands","✓ All 11 present: approve, code-review, commit, create-hooks, create-tasks, critique, decision-record, design, dev-lead, dev-verify, gate, infra-check, init-governance, knowledge, learning-loop, myArchitecture, new-spec, pr-review, requirements, retro, retrodoc, rubric, shaping, sprint, status, test-execution, test-plan, test-spec, validation-package"],["Agent definitions",".claude/agents/ contains 5 agents","✓ Found 5: code-reviewer, qa-engineer, security-auditor, tech-researcher, infrastructure-agent"],["Phase 2 threat model","ai-ssdlc_threat-model_v1.md in ssdlc/","✗ Missing (expected in new project; example exists at security/threat-model/stride-model.md)"],["Phase 4 design specs","ai-ssdlc_component-design_v*.md in ssdlc/","✗ Missing (expected post-Gate-4)"],["Phase 6 security test plan","ai-ssdlc_security-test-plan_v*.md in ssdlc/","✗ Missing (expected post-Gate-6)"],["Phase 3 user stories","ai-ssdlc_user-stories_v1.md in ssdlc/","✓ Present but empty (draft template state expected pre-Gate-3)"],["Live @imports in layer CLAUDE.md","No broken @import paths","✓ All commented-out @imports use placeholders; all resolvable live imports point to real files"],["Template naming convention","[system]_[type]_v[N].[ext]","⚠ TEMPLATE-hitl-audit-trail.md uses TEMPLATE- prefix without underscore; should be _TEMPLATE_hitl-audit-trail_v1.md"],["Gate audit trail","ssdlc/ai-ssdlc_hitl-audit-trail_v1.md exists and is readable","✓ Present and valid format, but Gate reference table incomplete (see findings)"]],"groups":{"A":"Harness (.claude/ commands, agents, gates)","B":"Layer CLAUDE.md files","C":"Security layer (policies, controls, threat model)","D":"Guides (docs/guides/)","E":"Examples (worked reference)","F":"SSDLC phase outputs and gates"},"categories":{"incomplete":"Incomplete reference table","missing_artifact":"Expected phase output not yet created","mixed_content":"Template placeholders mixed with concrete claims","contradiction":"Contradictory documentation","undocumented":"Missing or unclear documentation","naming":"Naming convention violation"},"findings":[{"id":"A1","sec":"A","severity":"medium","cat":"incomplete","title":"Gate reference table incomplete in audit trail","detail":"The gate reference table in `ssdlc/ai-ssdlc_hitl-audit-trail_v1.md` is missing commands. Line 35 lists Gate 2 as only `/security-audit` but should also include `/new-api` (per root CLAUDE.md:147 and `.claude/commands/new-api.md:15`). Line 36 lists Gate 3 as `/run-tests`, `/new-feature` only, but should also include `/new-api` and `/new-component` (per root CLAUDE.md:148 and `.claude/commands/new-component.md:17`). The template file `TEMPLATE-hitl-audit-trail.md:40` is also incomplete for Gate 3. This mismatch doesn't prevent gates from working (the gate-checking bash code is correct), but creates confusion when humans read which commands each gate unblocks.","refs":["ssdlc/ai-ssdlc_hitl-audit-trail_v1.md:35-36","ssdlc/TEMPLATE-hitl-audit-trail.md:40","root CLAUDE.md:147-148"]},{"id":"A2","sec":"A","severity":"low","cat":"undocumented","title":"Tool specification format inconsistency in dev-lead command","detail":"`.claude/commands/dev-lead.md:4` mixes tool specification formats: bare names (`Read, Write, Grep, Glob`) alongside qualified subcommand specs (`Bash(grep:*, ls:*)`). While both are valid, the inconsistency may confuse permission parsing. Other commands use consistent specs.","refs":[".claude/commands/dev-lead.md:4"]},{"id":"A3","sec":"A","severity":"low","cat":"undocumented","title":"Gate command decision word validation ambiguous","detail":"`.claude/commands/gate.md:43-44` validates user input for words `approve`, `reject`, `conditions`, but `ssdlc/GATE-FORMAT.md:36` specifies the canonical forms as `approved`, `rejected`, `approved-with-conditions`. The command should either convert short input to long form or vice versa. Current state is ambiguous about which is canonical.","refs":[".claude/commands/gate.md:43-44","ssdlc/GATE-FORMAT.md:36"]},{"id":"B1","sec":"B","severity":"high","cat":"incomplete","title":"Dead path reference in backend layer boundaries","detail":"`backend/CLAUDE.md:315` references `docs/api/` in the Integration points table, but this directory does not exist. Frontend layer (line 229) correctly specifies `docs/backend/design/[system]_openapi-spec_v1.yaml`. Backend should match. This inconsistency was already documented in `ssdlc/ai-ssdlc_critique-log_v1.md` as issue C12.","refs":["backend/CLAUDE.md:315","frontend/CLAUDE.md:229"]},{"id":"C1","sec":"C","severity":"high","cat":"mixed_content","title":"Compliance Obligations table has placeholder content mixed with concrete claims","detail":"`security/CLAUDE.md:96-103` shows GDPR row with `[Yes/No]` placeholder and PCI-DSS row with `[Yes/No]` and `[Why — e.g. payment handling...]` placeholders, while OWASP ASVS and Privacy Act rows contain concrete details. Mixed placeholders and real claims in the same authoritative table create ambiguity about which frameworks actually apply to this system.","refs":["security/CLAUDE.md:96-103"]},{"id":"C2","sec":"C","severity":"high","cat":"contradiction","title":"Threat model status contradiction between files","detail":"`security/CLAUDE.md:23` states threat-model/ is the operational working copy used day-to-day during development, but `security/threat-model/stride-model.md:5` explicitly states `Status: Example — reference only.` These directly contradict whether the threat model is operational or a template. Adopting teams need an operational threat model in `ssdlc/` (Phase 2 output), not an example. The control ownership table at `security/CLAUDE.md:50` lists it as a defined cross-cutting control.","refs":["security/CLAUDE.md:23","security/threat-model/stride-model.md:5","security/CLAUDE.md:50"]},{"id":"C3","sec":"C","severity":"high","cat":"mixed_content","title":"Policy files marked as draft templates but treated as authoritative by layers","detail":"`security/policies/secure-coding-standard.md:2-4` and `security/policies/encryption-policy.md:3-4` contain template headers (`[System name]`, `[YYYY-MM-DD]`, `[Status: Draft | Approved | Superseded]`) indicating they are incomplete drafts with instructions to fill in and remove headers. All five application layers (frontend, backend, database, infrastructure, integration) reference these files as the source of truth for security rules. A layer referencing a draft policy as authoritative creates a layering violation.","refs":["security/policies/secure-coding-standard.md:2-4","security/policies/encryption-policy.md:3-4","frontend/CLAUDE.md:140","backend/CLAUDE.md:150"]},{"id":"C4","sec":"C","severity":"high","cat":"incomplete","title":"Control ownership table claims SAST/SCA artifacts exist but only templates found","detail":"`security/CLAUDE.md:48-50` states the control ownership for `SAST / SCA pipeline gates` and `Pen test scope and findings` as defined. However, `security/sast/suppression-rules.md` and `security/pen-test/findings-register.md` are templates marked `How to use this template` with placeholder rows only. No actual Semgrep YAML, SpotBugs XML, ESLint configs, or pen test findings are present. These are expected to be created at Phase 6, but the control ownership table should acknowledge they are template-placeholders, not operational.","refs":["security/CLAUDE.md:48-50","security/sast/suppression-rules.md:1-11","security/pen-test/findings-register.md:1-13"]},{"id":"C5","sec":"C","severity":"medium","cat":"contradiction","title":"Threat model marked example but referenced as operational control","detail":"`security/threat-model/stride-model.md:1-2` explicitly states `Status: Example — reference only... It is **not operational**.` Yet `security/CLAUDE.md:50` lists it as a defined cross-cutting control in the control ownership table. Adopting teams will read this as an operational artifact that must be used, contradicting the file's own header. The actual operational threat model (Phase 2 output) should be in `ssdlc/ai-ssdlc_threat-model_v1.md`, not `security/threat-model/`.","refs":["security/threat-model/stride-model.md:1-2","security/CLAUDE.md:50"]},{"id":"C6","sec":"C","severity":"medium","cat":"naming","title":"Threat model naming convention not followed","detail":"`security/CLAUDE.md:178` references threat-model versioning as `threat-model-v<N>.md` and lines 177-178 reference `threat-model-v1.md`. Actual file is `stride-model.md` with no version suffix. Root `CLAUDE.md` specifies artifact naming as `[system-name]_[artifact-type]_v[N].[ext]`, but threat model doesn't follow this pattern. This makes discovery by automated glob patterns unreliable.","refs":["security/CLAUDE.md:177-178","security/threat-model/stride-model.md"]},{"id":"C7","sec":"C","severity":"medium","cat":"mixed_content","title":"SAST suppression register is template-only with no actual suppressions","detail":"`security/sast/suppression-rules.md:1-11` header states `How to use this template` and `Delete this notice once the register is in active use.` The active suppressions table (line 50) contains only a placeholder row `SUP-001` with no real suppressions. Yet `security/CLAUDE.md:163` requires `Suppressions with no justification comment are a SAST finding in themselves.` Template state means no audit trail of actual suppressions exists. This is expected for new projects but should be noted as incomplete until Phase 5 tooling is set up.","refs":["security/sast/suppression-rules.md:1-50","security/CLAUDE.md:163"]},{"id":"C8","sec":"C","severity":"medium","cat":"mixed_content","title":"Pen test findings register is template-only with no actual findings","detail":"`security/pen-test/findings-register.md:1-13` header states `How to use this template` and `Delete this notice when the register is in active use.` The findings table (lines 50-53) contains only placeholder entries with no real pen test findings or CVSS scores. Yet `security/CLAUDE.md` references pen test scope and findings as defined cross-cutting controls. No audit trail of actual pen tests exists. Expected for new projects; appropriate to note as incomplete.","refs":["security/pen-test/findings-register.md:1-53","security/CLAUDE.md:50"]},{"id":"C9","sec":"C","severity":"medium","cat":"mixed_content","title":"Secure coding policy has unspecified system name and approval status","detail":"`security/policies/secure-coding-standard.md:2-5` header shows template placeholders: `# [System name]`, `Version: v1`, `Date: [YYYY-MM-DD]`, `Status: Draft | Approved | Superseded`. Instructions at line 7 state `Fill in each section for your project... Delete this notice when approved.` Policy remains in unfinalized template state despite being referenced by all application layers as the authoritative source. A layer reading a draft policy as authoritative is a control weakness.","refs":["security/policies/secure-coding-standard.md:2-5"]},{"id":"C10","sec":"C","severity":"medium","cat":"mixed_content","title":"Encryption policy has unspecified CA choice and unfinalized status","detail":"`security/policies/encryption-policy.md:1-32` header shows template placeholders (system name, date, status unselected). Line 32 shows `Certificate authority | [Internal CA / Let's Encrypt / DigiCert — specify]` with choice unspecified. Policy marked as Draft/Approved/Superseded choice unselected. Yet infrastructure layer references this as authoritative for all encryption requirements. Template state conflicts with authoritative status.","refs":["security/policies/encryption-policy.md:1-32"]},{"id":"C11","sec":"C","severity":"medium","cat":"mixed_content","title":"Security Architecture controls table mixes placeholder names with concrete patterns","detail":"`security/CLAUDE.md:112-125` control table rows reference `[CoreRecord]`, `[Attachment]`, `[IdP]` as placeholder examples, with instruction comments like `Replace with your domain entity.` While the reusable patterns (e.g., `RS256 JWT validation`, `Jakarta Bean Validation`) are concrete, the entity names and system-specific details are templates. Makes it unclear which controls are required architectural patterns vs. examples to replace.","refs":["security/CLAUDE.md:112-125"]},{"id":"C12","sec":"C","severity":"low","cat":"undocumented","title":"Remediation SLA table duplicated between files with drift risk","detail":"Identical remediation SLA table appears in both `security/policies/secure-coding-standard.md:125-132` and `security/CLAUDE.md:128-136`. If one is updated and the other is not, drift creates conflicting authoritative guidance. Single source of truth should be defined.","refs":["security/policies/secure-coding-standard.md:125-132","security/CLAUDE.md:128-136"]},{"id":"C13","sec":"C","severity":"low","cat":"mixed_content","title":"Data model section mixes placeholder table names with reusable patterns","detail":"`database/CLAUDE.md:180-189` data classification table shows placeholder column/table names like `[login_identifier]`, `[core_records]` alongside the reusable encryption patterns. Unclear whether these are required standard names or examples to replace.","refs":["database/CLAUDE.md:180-189"]},{"id":"D1","sec":"D","severity":"medium","cat":"mixed_content","title":"Incorrect agent count in quick-reference guide","detail":"`docs/guides/quick-reference-agent-and-skills.md:35` table claims `6 specialist agents defined in .claude/agents/` while listing only the Dev Lead coordinator. Actual state: `.claude/agents/` contains 5 files (code-reviewer, qa-engineer, security-auditor, tech-researcher, infrastructure-agent). Dev Lead is a command in `.claude/commands/dev-lead.md`, not an agent. Line 18 of the same document correctly states `5 specialist agents in .claude/agents/`. Contradiction between line 18 and line 35 in same guide.","refs":["docs/guides/quick-reference-agent-and-skills.md:18,35"]},{"id":"D2","sec":"D","severity":"medium","cat":"undocumented","title":"False verification claims in RDE assessment table","detail":"`docs/guides/quick-reference-agent-and-skills.md:37` claims Layer 10 `Verification ✅ Complete: Jest test suite (9 tests), test guides (4 docs), coverage reporting, GitHub Actions CI/CD.` Actual state: zero test files exist anywhere in the project; no `.github/workflows/` directory exists. Same document lines 41–44 correctly state `No build, test, or lint tooling ships with the template.` These contradict each other.","refs":["docs/guides/quick-reference-agent-and-skills.md:37,41-44"]},{"id":"D3","sec":"D","severity":"medium","cat":"mixed_content","title":"Incorrect agent count repeated in template-guide onboarding reference","detail":"`docs/guides/template-guide.md:1130` Further Reading section lists `Six specialist Claude Code agents and 29 skill specs.` Should be `Five specialist agents plus Dev Lead coordinator` or `Five specialist agents in .claude/agents/ plus Dev Lead command.` This appears in the core onboarding guide and perpetuates the agent-count confusion.","refs":["docs/guides/template-guide.md:1130"]},{"id":"E1","sec":"E","severity":"high","cat":"undocumented","title":"GUID generation explanation backwards in example","detail":"`examples/loan-portal/database/loan-portal_data-dictionary_v1.md:6-11` note compares `NEWID() and not NEWID()` (should reference NEWSEQUENTIALID), then incorrectly claims `NEWID() produces predictable, monotonically increasing values.` Actually: NEWID() is random, NEWSEQUENTIALID() is sequential. The code comment is correct (using NEWID for IDOR defense), but the explanation is backwards. Adopting teams reading the example will copy this misconception.","refs":["examples/loan-portal/database/loan-portal_data-dictionary_v1.md:6-11"]},{"id":"E2","sec":"E","severity":"medium","cat":"contradiction","title":"GUID function mismatch between design docs in example","detail":"`examples/loan-portal/security/loan-portal_asvs-mapping_v1.md:116` states SQL Server uses NEWSEQUENTIALID() for PK performance, but `examples/loan-portal/database/loan-portal_data-dictionary_v1.md:4` actually uses NEWID(). Both cannot be true. Data dictionary (NEWID) is correct per IDOR defense requirement; ASVS mapping should be updated.","refs":["examples/loan-portal/security/loan-portal_asvs-mapping_v1.md:116","examples/loan-portal/database/loan-portal_data-dictionary_v1.md:4"]},{"id":"E3","sec":"E","severity":"medium","cat":"undocumented","title":"CSRF control stated but not specified in API contract","detail":"`examples/loan-portal/security/loan-portal_asvs-mapping_v1.md:192` requires `SameSite=Strict plus a double-submit token` for refresh/logout endpoints, but `examples/loan-portal/backend/loan-portal_openapi-spec_v1.yaml:49-54` RefreshRequest schema shows only `refreshToken` property — no CSRF token field. Either the schema needs a token field, or the control description needs clarification.","refs":["examples/loan-portal/security/loan-portal_asvs-mapping_v1.md:192","examples/loan-portal/backend/loan-portal_openapi-spec_v1.yaml:49-54"]},{"id":"E4","sec":"E","severity":"medium","cat":"incomplete","title":"Infrastructure/integration mismatch in example architecture","detail":"`examples/loan-portal/integration/loan-portal_external-services_v1.md:145-162` specifies components: Redis dedup cache (idempotency), document verification worker, notification worker. Infrastructure inventory has no entries for these. Also RabbitMQ runs as one container per app host (two independent brokers) not a cluster, breaking message visibility across hosts. Example acknowledges this gap explicitly as design-known-issue.","refs":["examples/loan-portal/integration/loan-portal_external-services_v1.md:145-162"]},{"id":"E5","sec":"E","severity":"low","cat":"mixed_content","title":"Informal placeholder notation in example compliance discussion","detail":"`examples/loan-portal/security/loan-portal_asvs-mapping_v1.md:34` uses `[core tables]` as shorthand when listing tables requiring GDPR deletion. This is clearly intentional notation within a documented gap discussion, not an unfilled template placeholder. Acceptable in context; noted for consistency check.","refs":["examples/loan-portal/security/loan-portal_asvs-mapping_v1.md:34"]},{"id":"F1","sec":"F","severity":"high","cat":"missing_artifact","title":"Missing Phase 2 output — threat model artifact absent","detail":"Root `CLAUDE.md:162` states threat model is produced at Phase 2 and read by `/security-audit`. No `ai-ssdlc_threat-model_v*.md` file exists in `ssdlc/`. `/security-audit` will fail at step 2 attempting to read `security/threat-model/stride-model.md`, which is marked as example-only. Phase 2 cannot be closed (Gate 2 cannot be approved) without this artifact. Expected for new projects; blocks progression until Phase 2 is completed.","refs":["root CLAUDE.md:162","ssdlc/GATE-FORMAT.md:18"]},{"id":"F2","sec":"F","severity":"high","cat":"missing_artifact","title":"Missing Phase 4 output — component design specs absent","detail":"Root `CLAUDE.md:164` states component design specs are produced at Phase 4 and read by `/new-component` and `/code-review`. No `ai-ssdlc_component-design_v*.md` or similar file exists in `ssdlc/`. `/new-component` and `/code-review` will be unable to reference design specs after Gate 4 approval. Expected for new projects; blocks Phase 4 close.","refs":["root CLAUDE.md:164"]},{"id":"F3","sec":"F","severity":"high","cat":"missing_artifact","title":"Missing Phase 6 output — security test plan artifact absent","detail":"Root `CLAUDE.md:166` states security test plan is produced at Phase 6 and read by `/run-tests`. No `ai-ssdlc_security-test-plan_v*.md` file exists in `ssdlc/`. Gate 6 cannot be approved and `/run-tests` will be unable to cross-check tests against the plan. Expected for new projects; blocks Phase 6 close.","refs":["root CLAUDE.md:166"]},{"id":"F4","sec":"F","severity":"medium","cat":"naming","title":"Template filename does not match naming convention","detail":"`ssdlc/TEMPLATE-hitl-audit-trail.md` uses `TEMPLATE-` prefix without underscore. Root `CLAUDE.md:170` specifies convention as `_TEMPLATE_hitl-audit-trail_v1.md` (with underscores). Current filename may cause discovery globs to fail. Per `GATE-FORMAT.md:18-20`, template must match expected naming.","refs":["ssdlc/TEMPLATE-hitl-audit-trail.md","root CLAUDE.md:170"]},{"id":"F5","sec":"F","severity":"medium","cat":"undocumented","title":"No gate decisions recorded (system in bootstrap state)","detail":"`ssdlc/ai-ssdlc_hitl-audit-trail_v1.md:14-26` decision section is empty (lines 24-26 show BEGIN/END markers with no row between). This is correct for a new project (gates 1–7 are not yet approved), but creates a risk: every gated command will read `no approval` and refuse to run. System is in an unusable state until Gate 1 is approved via `/gate 1 approve`. Not a bug; expected bootstrap state.","refs":["ssdlc/ai-ssdlc_hitl-audit-trail_v1.md:14-26","ssdlc/GATE-FORMAT.md:59"]},{"id":"F6","sec":"F","severity":"medium","cat":"missing_artifact","title":"User stories artifact exists but is empty (draft template only)","detail":"`ssdlc/ai-ssdlc_user-stories_v1.md:13` is correctly marked `Draft (not approved by Gate 3)` but section `## User stories` (line 38) contains only placeholder `[Add stories below. Remove this line when you populate the file.]` No user stories have been authored. This is correct pre-Gate 3 state; Gate 3 cannot be approved until populated.","refs":["ssdlc/ai-ssdlc_user-stories_v1.md:13,38"]},{"id":"F7","sec":"F","severity":"low","cat":"undocumented","title":"Format documentation clarity in gate specification","detail":"`ssdlc/GATE-FORMAT.md:43` example shows gate decision syntax, but lines 39 and 43-46 could be more explicit: line 39 states conditions are required for `approved-with-conditions` and `rejected`, which is correct, but the phrasing could be clearer that conditions are mandatory for these two decision types only.","refs":["ssdlc/GATE-FORMAT.md:39,43-46"]}],"keep":["The five specialist agents are well-defined, correctly segregated by concern (code reviewer, QA, security, infrastructure, tech researcher) with appropriate tool grants and no overlap.","Layer boundary rules are clear and consistently stated across all six layer CLAUDE.md files. Commented-out @imports with placeholders are intentional and correct — teams will activate them as they write documents.","The gate mechanism (gate.md, GATE-FORMAT.md, audit trail structure) is functionally correct and actually enforces phase progression. Human-approval gates are enforced and recorded.","The SSDLC workflow definition is unambiguous: seven phases, seven gates, eleven gated commands, five specialist agents, and 29 skill specs are all present and correctly cross-referenced.","The template-driven design is sound: layer CLAUDE.md files properly use placeholders ([SystemName], [CoreRecord], [IdP]) to guide teams without forcing them into a pre-built domain model. Security architecture reference pattern in each layer is a reusable control strategy, not a concrete mandate."],"plan":[["Fix gate reference table inconsistencies","Update `ssdlc/ai-ssdlc_hitl-audit-trail_v1.md:35-36` and `ssdlc/TEMPLATE-hitl-audit-trail.md:40` to include all commands per root CLAUDE.md. Gate 2: add `/new-api`. Gate 3: add `/new-api` and `/new-component`."],["Resolve security layer contradictions","Clarify threat model status: if `security/threat-model/stride-model.md` is example-only, remove it from the control ownership table or mark it as reference-only. Create actual operational threat model at `ssdlc/ai-ssdlc_threat-model_v1.md` as Phase 2 output."],["Finalize policy files","Complete template headers in `security/policies/secure-coding-standard.md` and `security/policies/encryption-policy.md` (specify system name, date, approval status). Mark as `Status: Approved` once adopted team fills them in."],["Fix example GUID documentation","Correct the backwards GUID explanation in `examples/loan-portal/database/loan-portal_data-dictionary_v1.md:6-11` and update ASVS mapping to match actual NEWID() usage."],["Resolve layer dead reference","Update `backend/CLAUDE.md:315` to use correct path: `docs/backend/design/[system]_openapi-spec_v1.yaml` instead of `docs/api/`."],["Standardize guide wording on agent count","Correct `docs/guides/quick-reference-agent-and-skills.md:35` and `template-guide.md:1130` to clearly state: five specialist agents in `.claude/agents/` plus Dev Lead coordinator command. Remove RDE verification table false claims."],["Rename template file to match convention","Rename `ssdlc/TEMPLATE-hitl-audit-trail.md` to `ssdlc/_TEMPLATE_hitl-audit-trail_v1.md`."],["Consolidate remediation SLA table","Choose one source of truth for remediation SLA (either `security/policies/secure-coding-standard.md` or `security/CLAUDE.md`) and reference it from the other."],["Phase 2-6 onboarding notes","Document that Phase 2-6 outputs (threat model, design specs, test plan) are new-project artifacts created by the team during those phases. They don't exist in the template; examples exist at `examples/loan-portal/` for reference."]]}</script>
+<div class="wrap">
+  <header class="top">
+    <span class="repo" id="repoLine"></span>
+    <button class="theme-btn" id="themeBtn" type="button">Toggle theme</button>
+  </header>
+
+  <div class="hero">
+    <h1 id="heroTitle"></h1>
+    <p class="lede" id="heroLede"></p>
+    <div class="tally" id="tally"></div>
+  </div>
+
+  <div class="layout">
+    <aside class="side">
+      <h4>Sections</h4>
+      <nav id="sideNav"></nav>
+      <div class="progress">
+        <h4>Triage</h4>
+        <div class="track"><div id="triageBar"></div></div>
+        <small id="triageTxt"></small>
+      </div>
+      <div class="progress">
+        <h4>Remediation</h4>
+        <div class="track"><div id="planBar"></div></div>
+        <small id="planTxt"></small>
+      </div>
+    </aside>
+
+    <main>
+      <section class="block" id="inventory">
+        <h2>Claimed versus on disk</h2>
+        <p class="sub">What the documentation says exists, struck through, next to what was found.</p>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>Item</th><th>Claimed</th><th>Actual</th></tr></thead>
+          <tbody id="invBody"></tbody>
+        </table></div>
+      </section>
+
+      <section class="block" id="findings">
+        <h2>Findings</h2>
+        <p class="sub">Open any finding for detail, file references and a triage status. Status and notes are saved in this browser only.</p>
+        <div class="controls">
+          <input class="search" id="q" type="search" placeholder="Search findings or file paths" aria-label="Search findings">
+          <div class="chips" id="sevChips" role="group" aria-label="Severity"></div>
+          <select class="ctrl-select" id="catSel" aria-label="Category"></select>
+          <select class="ctrl-select" id="stSel" aria-label="Triage status"></select>
+          <span class="count" id="count"></span>
+          <button class="linkbtn" id="expandAll" type="button">Expand all</button>
+          <button class="linkbtn" id="copyBtn" type="button">Copy triage summary</button>
+        </div>
+        <div id="groups"></div>
+      </section>
+
+      <section class="block" id="keep">
+        <h2>What holds up</h2>
+        <p class="sub">The parts worth correcting rather than discarding.</p>
+        <ul class="keep" id="keepList"></ul>
+      </section>
+
+      <section class="block" id="plan">
+        <h2>Remediation plan</h2>
+        <p class="sub">In order. Tick steps off as they land; progress is saved in this browser.</p>
+        <ol class="plan" id="planList"></ol>
+      </section>
+    </main>
+  </div>
+
+  <footer id="footerLine"></footer>
+</div>
+
+<script>
+const D = JSON.parse(document.getElementById("review-data").textContent);
+const SEV = {high:"High", medium:"Medium", low:"Low"};
+const STATUSES = {open:"Open", accepted:"Accepted", disputed:"Disputed", fixed:"Fixed"};
+const KEY = "ai-ssdlc-review-" + (D.date || "x");
+
+let store = {triage:{}, notes:{}, plan:{}};
+try{ const raw = localStorage.getItem(KEY); if(raw) store = Object.assign(store, JSON.parse(raw)); }catch(e){}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(store)); }catch(e){} }
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt = s => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>");
+const fmtT = s => String(s).replace(/`([^`]+)`/g, (m,x)=>"<code>"+esc(x)+"</code>");
+
+document.title = D.title || "Adversarial Review";
+document.getElementById("repoLine").textContent = [D.scope, D.date].filter(Boolean).join(", ");
+document.getElementById("heroTitle").textContent = D.title || "Adversarial Review";
+document.getElementById("heroLede").textContent = D.lede || "";
+document.getElementById("footerLine").innerHTML = D.method ? fmt(D.method) : "";
+
+const F = D.findings || [];
+const tally = {high:0, medium:0, low:0};
+F.forEach(f => { if(tally[f.severity] !== undefined) tally[f.severity]++; });
+document.getElementById("tally").innerHTML =
+  `<span class="pill tot">${F.length} findings</span>` +
+  Object.entries(tally).filter(([,n])=>n>0).map(([k,n])=>`<span class="pill ${k}">${n} ${SEV[k]}</span>`).join("");
+
+document.getElementById("invBody").innerHTML = (D.inventory||[]).map(r =>
+  `<tr><td>${fmtT(r[0])}</td><td class="claim">${fmtT(r[1])}</td><td class="actual">${fmtT(r[2])}</td></tr>`).join("")
+  || `<tr><td colspan="3">No inventory recorded.</td></tr>`;
+
+const nav = document.getElementById("sideNav");
+Object.entries(D.groups||{}).forEach(([k,g]) => {
+  const n = F.filter(f=>f.sec===k).length;
+  nav.insertAdjacentHTML("beforeend", `<a href="#grp-${esc(k)}">${esc(k)}. ${esc(g.name)} <span>${n}</span></a>`);
+});
+nav.insertAdjacentHTML("beforeend",
+  `<a href="#keep">What holds up <span>${(D.keep||[]).length}</span></a><a href="#plan">Remediation <span>${(D.plan||[]).length}</span></a>`);
+
+const state = {q:"", sev:"all", cat:"all", st:"all"};
+const sevChips = document.getElementById("sevChips");
+[["all","All"],["high","High"],["medium","Medium"],["low","Low"]].forEach(([v,l]) => {
+  const b = document.createElement("button");
+  b.type="button"; b.className="chip"; b.textContent=l; b.dataset.v=v;
+  b.setAttribute("aria-pressed", String(v==="all"));
+  b.onclick = () => { state.sev=v; [...sevChips.children].forEach(c=>c.setAttribute("aria-pressed", String(c.dataset.v===v))); render(); };
+  sevChips.appendChild(b);
+});
+const cats = D.categories || {};
+const catSel = document.getElementById("catSel");
+catSel.innerHTML = `<option value="all">All categories</option>` + Object.entries(cats).map(([k,v])=>{
+  const n = F.filter(f=>f.cat===k).length; return `<option value="${esc(k)}">${esc(v)} (${n})</option>`;}).join("");
+catSel.onchange = () => { state.cat = catSel.value; render(); };
+const stSel = document.getElementById("stSel");
+stSel.innerHTML = `<option value="all">Any status</option>` + Object.entries(STATUSES).map(([k,v])=>`<option value="${k}">${v}</option>`).join("");
+stSel.onchange = () => { state.st = stSel.value; render(); };
+document.getElementById("q").addEventListener("input", e => { state.q = e.target.value.trim().toLowerCase(); render(); });
+
+const openSet = new Set();
+const statusOf = id => store.triage[id] || "open";
+
+function render(){
+  const list = F.filter(f => {
+    if(state.sev!=="all" && f.severity!==state.sev) return false;
+    if(state.cat!=="all" && f.cat!==state.cat) return false;
+    if(state.st!=="all" && statusOf(f.id)!==state.st) return false;
+    if(state.q){
+      const hay = (f.id+" "+f.title+" "+f.detail+" "+(f.refs||[]).join(" ")+" "+(store.notes[f.id]||"")).toLowerCase();
+      if(!hay.includes(state.q)) return false;
+    }
+    return true;
+  });
+  document.getElementById("count").textContent = `${list.length} of ${F.length} findings`;
+  const root = document.getElementById("groups");
+  if(!list.length){ root.innerHTML = `<div class="empty">No findings match these filters.</div>`; return; }
+  let html = "";
+  Object.entries(D.groups||{}).forEach(([k,g]) => {
+    const items = list.filter(f=>f.sec===k);
+    if(!items.length) return;
+    const total = F.filter(f=>f.sec===k).length;
+    html += `<div class="group" id="grp-${esc(k)}"><div class="group-head"><h3>${esc(k)}. ${esc(g.name)}</h3>`
+         +  `<span class="gmeta">${items.length===total ? total+" findings" : items.length+" of "+total+" shown"}</span></div>`;
+    if(g.note) html += `<p class="group-note">${fmt(g.note)}</p>`;
+    items.forEach(f => {
+      const st = statusOf(f.id), isOpen = openSet.has(f.id);
+      html += `<article class="finding st-${st}${isOpen?" open":""}" data-id="${esc(f.id)}">
+        <button class="f-head" type="button" aria-expanded="${isOpen}">
+          <span class="f-id">${esc(f.id)}</span>
+          <span class="f-title">${fmt(f.title)}</span>
+          <span class="f-tags">
+            <span class="sev ${esc(f.severity)}">${SEV[f.severity]||esc(f.severity)}</span>
+            ${f.cat?`<span class="cat">${esc(cats[f.cat]||f.cat)}</span>`:""}
+            <span class="chev" aria-hidden="true"></span>
+          </span>
+        </button>
+        <div class="f-body">
+          <p>${fmt(f.detail)}</p>
+          ${(f.refs||[]).length?`<div class="refs">${f.refs.map(r=>`<code>${esc(r)}</code>`).join("")}</div>`:""}
+          <div class="triage">
+            <label>Status <select data-t="${esc(f.id)}">${Object.entries(STATUSES).map(([k2,v])=>`<option value="${k2}"${k2===st?" selected":""}>${v}</option>`).join("")}</select></label>
+            <textarea data-n="${esc(f.id)}" placeholder="Notes, owner, or reason for dispute" aria-label="Notes for ${esc(f.id)}">${esc(store.notes[f.id]||"")}</textarea>
+          </div>
+        </div></article>`;
+    });
+    html += `</div>`;
+  });
+  root.innerHTML = html;
+}
+
+const groupsEl = document.getElementById("groups");
+groupsEl.addEventListener("click", e => {
+  const head = e.target.closest(".f-head"); if(!head) return;
+  const art = head.parentElement, id = art.dataset.id;
+  const isOpen = !art.classList.contains("open");
+  art.classList.toggle("open", isOpen); head.setAttribute("aria-expanded", String(isOpen));
+  isOpen ? openSet.add(id) : openSet.delete(id);
+});
+groupsEl.addEventListener("change", e => {
+  const id = e.target.dataset.t; if(!id) return;
+  store.triage[id] = e.target.value; save();
+  const art = e.target.closest(".finding");
+  art.className = art.className.replace(/st-\w+/, "st-"+e.target.value);
+  updateProgress();
+  if(state.st!=="all") render();
+});
+groupsEl.addEventListener("input", e => {
+  const id = e.target.dataset.n; if(!id) return;
+  store.notes[id] = e.target.value; save();
+});
+
+const expandBtn = document.getElementById("expandAll");
+expandBtn.onclick = () => {
+  const allOpen = openSet.size >= F.length;
+  openSet.clear();
+  if(!allOpen) F.forEach(f=>openSet.add(f.id));
+  expandBtn.textContent = allOpen ? "Expand all" : "Collapse all";
+  render();
+};
+
+document.getElementById("copyBtn").onclick = async () => {
+  const lines = [(D.title||"Review")+" — triage summary", D.date||"", ""];
+  Object.entries(STATUSES).forEach(([k,v]) => {
+    const items = F.filter(f=>statusOf(f.id)===k);
+    lines.push(`${v} (${items.length})`);
+    items.forEach(f => lines.push(`  ${f.id}  [${f.severity}]  ${f.title}${store.notes[f.id]?"  |  "+store.notes[f.id].replace(/\n/g," "):""}`));
+    lines.push("");
+  });
+  const done = (D.plan||[]).filter((_,i)=>store.plan[i]).length;
+  lines.push(`Remediation: ${done} of ${(D.plan||[]).length} steps done`);
+  const btn = document.getElementById("copyBtn");
+  try{ await navigator.clipboard.writeText(lines.join("\n")); btn.textContent="Copied"; }
+  catch(e){ btn.textContent="Copy failed"; }
+  setTimeout(()=>btn.textContent="Copy triage summary", 1600);
+};
+
+document.getElementById("keepList").innerHTML = (D.keep||[]).map(k=>`<li>${fmt(k)}</li>`).join("")
+  || `<li>Nothing recorded.</li>`;
+const planList = document.getElementById("planList");
+planList.innerHTML = (D.plan||[]).map(([t,d],i)=>
+  `<li class="${store.plan[i]?"done":""}"><input type="checkbox" data-p="${i}" aria-label="Step ${i+1}: ${esc(t)}" ${store.plan[i]?"checked":""}><div class="ptext"><b>${esc(t)}</b>${fmt(d)}</div></li>`).join("");
+planList.addEventListener("change", e => {
+  const i = e.target.dataset.p; if(i===undefined) return;
+  store.plan[i] = e.target.checked; save();
+  e.target.closest("li").classList.toggle("done", e.target.checked);
+  updateProgress();
+});
+
+function updateProgress(){
+  const triaged = F.filter(f=>statusOf(f.id)!=="open").length;
+  const fixed = F.filter(f=>statusOf(f.id)==="fixed").length;
+  document.getElementById("triageBar").style.width = (F.length? triaged/F.length*100 : 0)+"%";
+  document.getElementById("triageTxt").textContent = `${triaged} of ${F.length} triaged, ${fixed} fixed`;
+  const P = D.plan||[];
+  const done = P.filter((_,i)=>store.plan[i]).length;
+  document.getElementById("planBar").style.width = (P.length? done/P.length*100 : 0)+"%";
+  document.getElementById("planTxt").textContent = `${done} of ${P.length} steps done`;
+}
+
+document.getElementById("themeBtn").onclick = () => {
+  const r = document.documentElement;
+  const cur = r.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  r.dataset.theme = cur==="dark" ? "light" : "dark";
+};
+
+render(); updateProgress();
+</script>
+</body>
+</html>

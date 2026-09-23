@@ -1,8 +1,14 @@
 # STRIDE Threat Model — ai-ssdlc Template Example
 
-**This is an example/reference threat model for the ai-ssdlc template.** It demonstrates the expected shape and depth of a threat model for a loan portal system. It is **not operational** — the template itself (ai-ssdlc) does not implement these controls; each adopting team will replace it with their own real threats and operational controls.
+⚠️ **THIS FILE IS A TEMPLATE EXAMPLE.** It is **not operational**. It demonstrates the expected structure and depth of a threat model using a fictitious loan portal system. The ai-ssdlc template itself does not ship with an operational threat model — each adopting team will create their own using this as a reference.
 
-**Version:** template-v1 | **Date:** 2026-09-23 | **Status:** Example — reference only | **Owner:** Security architect (your team) | **Phase:** 2 (Threat Modelling)
+**Version:** template-v1 (Example/Reference) | **Date:** 2026-09-23 | **Status:** Template shape — NOT for production use | **Owner:** Security architect (your team) | **Phase:** 2 (Threat Modelling)
+
+**How to use:**
+- Read this file to understand threat model structure
+- **Do NOT treat the example threats as applying to your system**
+- **Do NOT treat example Planned/Open/Mitigated statuses as your system's actual state**
+- Copy the structure; replace all content (system overview, threats, controls, statuses) with your real threats and their real status in your codebase
 
 ---
 
@@ -75,6 +81,8 @@ EXTERNAL SERVICES ZONE (semi-trusted — third-party APIs)
 ---
 
 ## Threat register (STRIDE)
+
+⚠️ **Example threats below — replace with your actual system's threats. Do not treat "Planned (example)" status as your system's actual state.**
 
 | ID | Threat category | STRIDE | Affected component | Trust boundary crossed | Attack vector | Likelihood | Impact | Mitigation control | Control owner | Status |
 |---|---|---|---|---|---|---|---|---|---|---|

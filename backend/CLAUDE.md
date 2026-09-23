@@ -312,7 +312,7 @@ src/main/resources/application-dev.yml         — dev overrides (local DB, Vaul
 
 | Connects to | Via | Contract location |
 |---|---|---|
-| Frontend | REST (Spring MVC controllers) | `docs/api/` |
+| Frontend | REST (Spring MVC controllers) | `docs/backend/design/[system]_openapi-spec_v1.yaml` |
 | Database | Hibernate / Spring Data JPA | `database/schemas/` |
 | Integration layer | WebClient (outbound REST); RabbitMQ listener (inbound events) | `integration/apis/` and `integration/events/` |
 | `[IdP]` | JWT validation against the IdP's JWKS endpoint | `integration/apis/[idp].md` |
