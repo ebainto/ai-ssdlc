@@ -1,8 +1,15 @@
 # AI-SSDLC Project — Claude Code Instructions
 
-**This is a standalone SSDLC template project. It does NOT use the global MyArchitecture workbench.**
+**This project's workflow does not use the global MyArchitecture workbench agents.**
 
-This file overrides the global `~/.claude/CLAUDE.md` for this project only.
+Note on precedence: Claude Code **concatenates** CLAUDE.md files rather than
+overriding them. If `~/.claude/CLAUDE.md` exists, it is loaded *in addition to*
+this file and the root `CLAUDE.md` — all three are in context at once. This file
+cannot suppress the global one. It states which workflow this project follows;
+it does not and cannot unload anything.
+
+If you need the global workbench agents genuinely out of context, remove or
+relocate `~/.claude/CLAUDE.md` — there is no in-project mechanism for it.
 
 ---
 
@@ -11,7 +18,7 @@ This file overrides the global `~/.claude/CLAUDE.md` for this project only.
 - **Project name:** ai-ssdlc
 - **Purpose:** Reusable Secure Software Development Lifecycle template
 - **Tech stack:** See root `CLAUDE.md` and layer-specific `CLAUDE.md` files
-- **Structure:** 6 capability layers + plugin eval + security artifacts
+- **Structure:** 6 capability layers + security artifacts
 
 ---
 
@@ -36,13 +43,9 @@ When working in a layer directory, that layer's `CLAUDE.md` is loaded automatica
 
 When working in the project root or non-layer directories:
 
-### Plugin Eval
-- Plugin source: `plugin/`
-- Test suites: `plugin-eval/suites/`
-- Configuration: `plugin-eval/eval.config.json`
-- Docs: `plugin-eval/QUICKSTART.md`, `plugin-eval/README.md`
-
 ### SSDLC Outputs
+These folders are created on demand by the SSDLC phase that produces the artifact.
+None of them exist in the bare template — do not assume their contents.
 - Phase artifacts: `ssdlc/`
 - Architecture: `architecture/`
 - Diagrams: `diagrams/`
@@ -50,15 +53,14 @@ When working in the project root or non-layer directories:
 
 ### Documentation
 - **Start here:** `docs/guides/template-guide.md`
-- **Plugin eval guide:** `docs/guides/plugin-eval-guide.md`
 
 ---
 
 ## How Claude Code Works Here
 
-1. **In a layer directory** (e.g., `backend/`) → Load that layer's CLAUDE.md
-2. **In root or other dirs** → Load this file (project-level rules)
-3. **Global rules** → NOT loaded (this project is standalone)
+1. **In a layer directory** (e.g., `backend/`) → that layer's CLAUDE.md is added to context
+2. **Always** → root `CLAUDE.md` and this file are both in context
+3. **Global** → `~/.claude/CLAUDE.md`, if present, is also in context (concatenated, not overridden)
 
 ---
 
@@ -78,13 +80,13 @@ When working in the project root or non-layer directories:
 Phase 1: Architecture Intake
     ↓
 Phase 2: Threat Modeling
-    ↓ (use plugin to generate models)
+    ↓
 Phase 3: Requirements
     ↓
 Phase 4: Design
-    ↓ (use plugin to assess security)
+    ↓
 Phase 5: Development Standards
-    ↓ (plugin eval runs in CI)
+    ↓
 Phase 6: Security Testing
     ↓
 Phase 7: Release
@@ -100,10 +102,9 @@ All phases documented in root `CLAUDE.md`.
 
 **For SSDLC phases:** See `ssdlc/` folder and phase documentation
 
-**For plugin eval:** See `plugin-eval/QUICKSTART.md`
-
 **For general project guidance:** See root `CLAUDE.md` and `docs/guides/`
 
 ---
 
-**This project is self-contained. No global MyArchitecture system is loaded.**
+**This project defines its own workflow. It does not invoke the MyArchitecture
+workbench agents, but it cannot prevent `~/.claude/CLAUDE.md` from loading.**

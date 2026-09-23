@@ -180,11 +180,12 @@ Use @import for:                   Use prompt-only @ for:
 |  - "Always Encrypted on PII columns"      |  → fills in at Phase 5
 +-------------------------------------------+
                     |
-                    | CI enforces automatically
+                    | CI enforces (once you wire it up)
                     v
 +-------------------------------------------+
 |  security/sast/semgrep.yml                |
-|  ENFORCEMENT — CI pipeline runs this      |
+|  ENFORCEMENT — you create this file       |
+|  and the CI job that runs it              |
 +-------------------------------------------+
 ```
 

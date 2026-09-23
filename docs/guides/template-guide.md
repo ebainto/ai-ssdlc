@@ -485,7 +485,7 @@ New project teams often ask whether the three security-related locations in this
 
 **Why you cannot collapse them:**
 
-- The SAST config at `security/sast/semgrep.yml` is a real file the CI pipeline executes — it cannot live in a docs folder.
+- The SAST config belongs at `security/sast/semgrep.yml` — an executable config your CI runs, so it cannot live in a docs folder. **Not shipped with this template: you create it and wire it into CI.**
 - The ISO 27001 gap analysis PDF delivered by the auditor cannot live in `security/` — it is a reference document, not a working file.
 - The Spring `@PreAuthorize` pattern belongs in `backend/CLAUDE.md` not `security/` — it is backend-specific and irrelevant to the frontend or database layers.
 
@@ -514,7 +514,7 @@ A common question once teams understand the three locations: is `security/polici
 1. Auditor delivers OWASP ASVS L2 mapping → saved to `docs/security/design/loan-portal_asvs-mapping_v1.md`
 2. Security engineer reads it, sees ASVS V6.2.2 prohibits SHA-1 → writes the rule into `security/policies/encryption-policy.md`: *"SHA-1 is prohibited for all cryptographic purposes"*
 3. Backend team reads `security/policies/encryption-policy.md` and adds to `backend/CLAUDE.md` Security Architecture: *"SHA-1 prohibited — use SHA-256 minimum (encryption-policy.md V6.2.2)"*
-4. CI pipeline enforces it via Semgrep rule in `security/sast/semgrep.yml`
+4. CI pipeline enforces it via a Semgrep rule in `security/sast/semgrep.yml` *(you must author this file and the CI job — neither ships with the template)*
 
 `docs/security/` → `security/policies/` → each layer's `CLAUDE.md` → `security/sast/` is the chain. Each step is a different artifact serving a different purpose.
 

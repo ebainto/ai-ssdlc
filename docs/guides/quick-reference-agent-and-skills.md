@@ -12,7 +12,7 @@ Training highlights. For full documentation, see [`agents-and-skills-guide.md`](
 | 2 | Context Delivery | ✅ Present | `docs/guides/` knowledge base + layer `CLAUDE.md` files (auto-loaded) |
 | 3 | Context Management | ✅ Present | `.claudeignore`, progressive disclosure in `CLAUDE.md`, layer isolation |
 | 4 | Tool Interface | ✅ Present | `.claude/settings.json` allowlist (git, mvn, npm, docker-compose) |
-| 5 | Execution Environment | ⚠️ Partial | `plugin/` with npm scripts (test, build, lint, format) + `jest.config.js` + `tsconfig.json`; docker-compose scaffolded |
+| 5 | Execution Environment | ❌ Absent | No build, test or lint tooling ships with the template — the layer folders are empty by design. You add the toolchain for your stack. |
 | 6 | Durable State | ✅ Present | Layer `CLAUDE.md` files, `ssdlc/` phase outputs, `docs/architecture/adr/`, findings register |
 | 7 | Orchestration | ✅ Present | 9 slash commands, Dev Lead as sole orchestrator with `Agent` tool |
 | 8 | Subagents | ✅ Present | 6 specialist agents in `.claude/agents/` |
