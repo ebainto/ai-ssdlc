@@ -139,7 +139,7 @@ Slash commands are the trigger. Skills run internally — never typed directly.
 
 | Agent | File | Trigger | Tools | When to use |
 |---|---|---|---|---|
-| **Dev Lead** | `.claude/agents/dev-lead.md` | `/new-feature`, `/new-api`, `/new-component`, `"dev mode"` | Read, Bash, Agent, Write | Start every development session here. Plans work, checks gates, and coordinates all other agents. |
+| **Dev Lead** | `.claude/commands/dev-lead.md` | `/new-feature`, `/new-api`, `/new-component` | Read, Bash, Agent, Write | Start every development session here (via one of the three commands). Plans work, checks gates, and coordinates all other agents. |
 | **Code Reviewer** | `.claude/agents/code-reviewer.md` | `/code-review`, `"review layer [name]"` | Read only | Review code against layer CLAUDE.md standards. Fresh instance — no prior context. |
 | **QA Engineer** | `.claude/agents/qa-engineer.md` | `/run-tests`, `"write tests for story [ID]"` | Read, Write | Write tests BEFORE implementation. AC-driven. Never mocks the database. |
 | **Security Auditor** | `.claude/agents/security-auditor.md` | `/security-audit`, `"audit against threat model"` | Read, Write (findings register only) | Verify STRIDE mitigations. All findings confidential → findings register only. |
@@ -571,9 +571,9 @@ Read in this order. Each step takes less than 30 minutes.
 
 | Component | Status |
 |---|---|
-| All 6 layer CLAUDE.md files (populated) | ✅ Complete |
-| All 6 layers have @imported design documents | ✅ Complete |
-| 6 specialist agents + 29 skill specs | ✅ Complete |
+| All 6 layer CLAUDE.md files (template shape with 70 placeholders) | ⚠️ Template ready |
+| All 6 layers have @imported design documents (shipped commented out) | ⚠️ Template ready |
+| 5 specialist agents + Dev Lead coordinator + 29 skill specs | ✅ Complete |
 | 11 slash commands + `/ssdlc-review` skill | ✅ Complete |
 | Security policy files (5) | ✅ Complete |
 | SSDLC 7-gate structure enforced | ✅ Complete |

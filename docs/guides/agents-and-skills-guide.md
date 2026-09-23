@@ -47,11 +47,11 @@ This project is structured as an agent engineering framework. The table below sc
 | 5 | **Execution Environment** | ⚠️ Partial | Referenced in `CLAUDE.md` (docker-compose, `mvn spring-boot:run`, Angular serve) — but `docker-compose.yml` and `Dockerfile` are template scaffolds. Layer `src/` directories are empty placeholders. App code not yet scaffolded for the specific project. |
 | 6 | **Durable State** | ✅ Present | Layer `CLAUDE.md` files (source of truth per layer), `ssdlc/` phase outputs (gates 1–7), `docs/architecture/adr/` (ADRs), `security/pen-test/internal-findings-register.md` (append-only) |
 | 7 | **Orchestration** | ✅ Present | `.claude/commands/` (11 slash commands) + `.claude/skills/ssdlc-review/` (routing to agents + skills), Dev Lead as the only agent with the Agent tool (correct orchestrator pattern), `CLAUDE.md` routing table |
-| 8 | **Subagents** | ✅ Present | `.claude/agents/` — 6 specialist agents: dev-lead, code-reviewer, qa-engineer, security-auditor, tech-researcher, infrastructure-agent |
+| 8 | **Subagents** | ✅ Present | `.claude/agents/` — 5 specialist agents: code-reviewer, qa-engineer, security-auditor, tech-researcher, infrastructure-agent. Dev Lead is a command (coordinator), not an agent. |
 | 9 | **Skills** | ✅ Present | Implemented inline in the 6 agent bodies. Written specs for all 29 in `docs/agent-skills/` (reference only — not loaded) |
-| 10 | **Verification & Observability** | ⚠️ Partial | Eval suites to be created in `evals/` (project root) via `claude plugin eval` — 5 suites defined (Dev Lead ×2, QA Engineer, Code Reviewer, Security Auditor), not yet recreated in correct location. Security test plan in `ssdlc/` (Phase 6), `/security-audit` command, IA3 monitoring coverage validation. No CI/CD pipeline YAML or runtime monitoring config yet — infrastructure layer scaffolded, awaiting project population. |
+| 10 | **Verification & Observability** | ⚠️ Partial | No eval suites shipped (you create them in `.claude/evals/` via `claude plugin eval`). Security test plan in `ssdlc/` (Phase 6), `/security-audit` command. No CI/CD pipeline YAML or runtime monitoring config — infrastructure layer scaffolded, awaiting project population. |
 
-**Score: 8 of 10 fully present. Layers 5 and 10 are Partial — Layer 5 expected for a template (app code not yet scaffolded); Layer 10 evals to be set up in `evals/` (project root) via `claude plugin eval`. Remaining gap: all eval suites plus CI/CD pipeline YAML.**
+**Score: 8 of 10 fully present. Layers 5 and 10 are Partial — Layer 5 expected for a template (app code scaffolded per your stack); Layer 10 (evals and monitoring) scaffolded, not populated.**
 
 ---
 
@@ -62,16 +62,15 @@ What this template provides out of the box:
 ```
 ai-ssdlc/                              ← SSDLC template project
 ├── .claude/
-│   ├── agents/        ← 6 specialist agents
-│   ├── skills/        ← 29 skill playbooks
+│   ├── agents/        ← 5 specialist agents
 │   ├── commands/      ← 11 slash commands
-│   ├── skills/        ← /ssdlc-review (adversarial review)
+│   ├── skills/        ← /ssdlc-review (single published skill)
 │   └── settings.json  ← shared team permissions
-├── evals/             ← eval suites (project root — run via claude plugin eval)
 ├── .claudeignore      ← filters noise from Claude's context
 ├── CLAUDE.md          ← project instructions (auto-loaded)
 ├── docs/
-│   └── guides/        ← 5 knowledge base docs + this guide
+│   ├── guides/        ← 5 knowledge base docs (including this one)
+│   └── agent-skills/  ← 29 skill specs (reference only)
 ├── frontend/          ← UI layer
 │   └── CLAUDE.md      ← layer guide (auto-loaded)
 ├── backend/           ← API + business logic layer
