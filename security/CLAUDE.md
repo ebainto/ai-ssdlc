@@ -77,7 +77,7 @@ This file is automatically loaded by Claude Code whenever you work on any file i
   that apply to this project into the Compliance Obligations table below.
 
   For project-specific compliance mappings (e.g. OWASP ASVS control mapping), @import here:
-  @../docs/security/design/loan-portal_asvs-mapping_v1.md
+  @../docs/security/design/[your-system]_asvs-mapping_v1.md
 
   Reference regulatory PDFs explicitly only when asking a specific compliance question:
     @docs/security/requirements/gdpr-recitals.pdf
@@ -89,14 +89,16 @@ This file is automatically loaded by Claude Code whenever you work on any file i
   - See docs/guides/template-guide.md → "Storing supporting documents" for full guidance
 -->
 
-@../docs/security/design/loan-portal_asvs-mapping_v1.md
+<!-- Uncomment once you have a control-framework mapping of your own:
+@../docs/security/design/[your-system]_asvs-mapping_v1.md
+-->
 
 | Framework | Applies | Reason | Key obligation |
 |---|---|---|---|
-| GDPR (EU 2016/679) | Yes | Application processes EU resident personal data (loan applicants) | Lawful basis for processing; data subject rights (access, erasure); breach notification within 72 hours to supervisory authority |
+| GDPR (EU 2016/679) | `[Yes/No]` | `[Why — e.g. processes EU resident personal data]` | Lawful basis for processing; data subject rights (access, **erasure**); breach notification within 72 hours. If you promise erasure, you must ship a delete path for every store that holds the data — including files outside the database |
 | ISO 27001:2022 | Yes | Organisation holds ISO 27001 certification | ISMS controls apply to this application; annual surveillance audit |
 | OWASP ASVS Level 2 | Yes | Target assurance level for a financial application | All Level 2 requirements must be verified before production release |
-| PCI-DSS v4.0 | No | Payment processing fully delegated to a PCI-compliant third party (DocuSign + bank) | Out of scope — application does not store, process, or transmit cardholder data |
+| PCI-DSS v4.0 | `[Yes/No]` | `[Why — e.g. payment handling fully delegated to a PCI-compliant provider]` | If out of scope, say so once here and do not cite PCI requirements elsewhere as though they applied |
 | Privacy Act 1988 (AU) | Yes | Application serves Australian residents | APP 11 — security of personal information; APP 1 — open and transparent management |
 
 ---
@@ -108,7 +110,7 @@ This file is automatically loaded by Claude Code whenever you work on any file i
 
 | Control | Applies to | Standard | Implementation across stacks |
 |---|---|---|---|
-| Authentication | Frontend (Angular), Backend (Spring Boot) | OWASP ASVS V2 | JWT RS256 (15 min access token) + refresh token rotation; httpOnly cookie at browser boundary; Auth0 as IdP |
+| Authentication | Frontend, Backend | OWASP ASVS V2 | `[Your identity model — must match backend/CLAUDE.md exactly.]` Default: an external IdP issues RS256 tokens, the backend validates against its JWKS, and the browser holds the refresh token in an httpOnly cookie. Pick one transport and one CSRF posture across all layers |
 | Authorisation | Backend (Spring Boot) | OWASP ASVS V4 | `@PreAuthorize` RBAC at method level; `@ResourceOwner` annotation for record ownership checks |
 | Transport encryption | All layers | TLS 1.2+ | Nginx enforces TLS 1.2/1.3 externally; backend ↔ SQL Server uses Encrypted=true in JDBC URL; RabbitMQ uses TLS 1.2 |
 | Secrets management | All layers | OWASP ASVS V2.10 | HashiCorp Vault via Vault Agent sidecar; no secrets in `application.yml`, `.env`, Dockerfiles, or Compose files |
@@ -144,7 +146,7 @@ This file is automatically loaded by Claude Code whenever you work on any file i
     value = "SQL_INJECTION_JDBC",
     justification = "Column name comes from a hardcoded whitelist validated at line 45 — not user input. Accepted by: Jane Smith, 2024-03-15. Review: 2024-06-15"
 )
-public List<Applicant> findBy(String whitelistedColumn) { ... }
+public List<[Entity]> findBy(String whitelistedColumn) { ... }
 ```
 
 **TypeScript (ESLint) — suppression format:**

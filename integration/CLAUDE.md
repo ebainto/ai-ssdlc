@@ -75,11 +75,11 @@ docker compose -f ../infrastructure/docker/docker-compose.yml up rabbitmq
     docs/integration/design/         ← integration design docs, sequence diagrams
 
   For vendor API guides: extract only what Claude needs into a Markdown summary, then @import:
-  @../docs/integration/requirements/equifax_api-summary_v2.md
+  @../docs/integration/requirements/[vendor]_api-summary_v2.md
 
   Do NOT @import full vendor PDF guides (100+ pages) — they consume context on every conversation.
   Instead, reference them in the prompt only when needed:
-    @docs/integration/requirements/equifax_api-guide_v4.pdf
+    @docs/integration/requirements/[vendor]_api-guide_v4.pdf
 
   Rules:
   - Always create a Markdown summary extract; @import the summary, not the full PDF
@@ -87,25 +87,27 @@ docker compose -f ../infrastructure/docker/docker-compose.yml up rabbitmq
   - See docs/guides/template-guide.md → "Storing supporting documents" for full guidance
 -->
 
-@../docs/integration/requirements/external-services-summary_v1.md
+<!-- Uncomment once you have an external-services summary of your own:
+@../docs/integration/requirements/[your-system]_external-services_v1.md
+-->
 
 **External services this application integrates with:**
 
 | Service | Purpose | Direction | Protocol | Contract file |
 |---|---|---|---|---|
-| Auth0 | User authentication and JWT issuance | Outbound (OIDC) + Inbound (JWKS validation) | OIDC / OAuth2 | `integration/apis/auth0.md` |
-| Equifax | Credit score retrieval for loan assessment | Outbound | REST over mTLS | `integration/apis/equifax.md` |
-| SendGrid | Transactional email — application status notifications | Outbound | REST | `integration/apis/sendgrid.md` |
-| DocuSign | Electronic signature for loan agreements | Outbound + Webhook | REST + webhook | `integration/apis/docusign.md` |
+| `[IdP]` | User authentication and token issuance | Outbound (OIDC) + Inbound (JWKS validation) | OIDC / OAuth2 | `integration/apis/[idp].md` |
+| `[DataProvider]` | `[what it returns]` | Outbound | REST over mTLS | `integration/apis/[provider].md` |
+| `[EmailProvider]` | Transactional email — status notifications | Outbound | REST | `integration/apis/[provider].md` |
+| `[SignatureProvider]` | `[what it does]` | Outbound + Webhook | REST + webhook | `integration/apis/[provider].md` |
 | RabbitMQ | Internal async messaging (notifications, audit events) | Both | AMQP 0-9-1 | `integration/events/` |
 
 **Event catalogue (RabbitMQ):**
 
 | Event | Exchange | Routing key | Schema version | Publisher | Consumer |
 |---|---|---|---|---|---|
-| `application.submitted` | `loan.events` | `application.submitted` | v2 | Backend `LoanApplicationService` | Notification worker |
-| `document.verified` | `loan.events` | `document.verified` | v1 | Document verification worker | Backend `DocumentService` |
-| `signature.completed` | `loan.events` | `signature.completed` | v1 | DocuSign webhook receiver | Backend `LoanApplicationService` |
+| `[record].submitted` | `[your.exchange]` | `[record].submitted` | v1 | Backend `[Record]Service` | Notification worker |
+| `[attachment].verified` | `[your.exchange]` | `[attachment].verified` | v1 | `[Verification worker]` | Backend `[Attachment]Service` |
+| `[signature].completed` | `[your.exchange]` | `[signature].completed` | v1 | `[Provider]` webhook receiver | Backend `[Record]Service` |
 
 ---
 
@@ -116,10 +118,10 @@ docker compose -f ../infrastructure/docker/docker-compose.yml up rabbitmq
 
 | Threat (Phase 2 ref) | Control | Implementation |
 |---|---|---|
-| Spoofed inbound webhook (STRIDE-S) | HMAC signature validation on all inbound webhooks | DocuSign: validates `X-DocuSign-Signature-1` HMAC-SHA256 header using shared secret from Vault. Auth0: validates JWT signature against JWKS endpoint |
+| Spoofed inbound webhook (STRIDE-S) | HMAC signature validation on every inbound webhook | Validate the provider's signature header (HMAC-SHA256) using a shared secret from Vault, with a constant-time comparison. The IdP's tokens are validated against its JWKS endpoint. **Every** webhook route must be reachable by the provider yet still authenticated — a route left behind a blanket `authenticated()` rule will silently reject all callbacks |
 | Credential theft for outbound calls (STRIDE-I) | All credentials from HashiCorp Vault — never hardcoded | API keys, OAuth2 client secrets, and mTLS client certs fetched from Vault at startup via Vault Agent sidecar. Rotated every 90 days |
-| Man-in-the-middle on sensitive APIs (STRIDE-I) | mTLS for credit bureau API | Equifax API requires mTLS: client certificate and key loaded from Vault at startup, injected into Spring WebClient `SslContext` |
-| PII forwarded to third parties (STRIDE-I) | PII minimisation — send only legally required fields | SendGrid receives email address only (no name, no DOB). Equifax receives only the fields covered by the credit check consent form |
+| Man-in-the-middle on sensitive APIs (STRIDE-I) | mTLS where the provider supports it | Client certificate and key loaded from Vault at startup and injected into the Spring WebClient `SslContext` |
+| PII forwarded to third parties (STRIDE-I) | PII minimisation — send only what each provider legally requires | Record the exact field list per provider in the table below. An email provider needs an address, not a date of birth. Anything beyond the consent you hold is an unlawful disclosure |
 | Replay attacks on inbound events (STRIDE-T) | Message idempotency via RabbitMQ deduplication header | All consumers check `message-id` header against a Redis deduplication cache (TTL 24 hours) before processing |
 | Cascading failure from external dependency (STRIDE-D) | Resilience4j circuit breaker + retry + timeout | All WebClient calls wrapped in Resilience4j: timeout 5s, retry 3× (exponential backoff 100ms base), circuit breaker opens after 5 failures in 10s |
 | Event schema breaking change (STRIDE-T) | Consumer-driven contract tests via Spring Cloud Contract | Contract stubs published by consumers; provider pipeline must pass all consumer contracts before merging a schema change |
@@ -128,8 +130,8 @@ docker compose -f ../infrastructure/docker/docker-compose.yml up rabbitmq
 
 | Setting | Default value | Override |
 |---|---|---|
-| Timeout | 5 seconds | Equifax credit check → 15 s (SLA allowance) |
-| Retry count | 3 | DocuSign webhook ack → 1 (idempotency managed by DocuSign) |
+| Timeout | 5 seconds | `[slow provider]` → `[N]` s (per their SLA) |
+| Retry count | 3 | Webhook acks → 1, where the provider owns idempotency |
 | Retry backoff | Exponential, 100 ms base | — |
 | Circuit breaker failure threshold | 50% in 10-call sliding window | — |
 | Circuit breaker wait in OPEN state | 30 seconds | — |
@@ -138,10 +140,10 @@ docker compose -f ../infrastructure/docker/docker-compose.yml up rabbitmq
 
 | Service | Fields sent | Legal basis |
 |---|---|---|
-| Auth0 | `email`, `name` (registration only) | Contractual necessity |
-| Equifax | `full_name`, `date_of_birth`, `address` | Legal obligation + explicit written consent |
-| SendGrid | `email` only | Consent (notification opt-in) |
-| DocuSign | `email`, `full_name` (signatory fields) | Contractual necessity |
+| `[IdP]` | `[email]`, `[name]` (registration only) | Contractual necessity |
+| `[DataProvider]` | `[exact field list]` | `[lawful basis — e.g. legal obligation + explicit consent]` |
+| `[EmailProvider]` | `[email]` only | Consent (notification opt-in) |
+| `[SignatureProvider]` | `[exact field list]` | Contractual necessity |
 
 ---
 
@@ -168,7 +170,7 @@ docker compose -f ../infrastructure/docker/docker-compose.yml up rabbitmq
 
 | Folder | Contents |
 |---|---|
-| `integration/apis/` | One `.md` contract file per external service (Auth0, Equifax, SendGrid, DocuSign) |
+| `integration/apis/` | One `.md` contract file per external service — create one per provider you add |
 | `integration/events/` | RabbitMQ exchange/queue definitions; event schemas versioned in `events/schemas/v<N>/` |
 | `integration/tests/` | Spring Cloud Contract consumer tests — primary quality gate for all integrations |
 
@@ -176,10 +178,13 @@ docker compose -f ../infrastructure/docker/docker-compose.yml up rabbitmq
 
 | Connects to | Via | Auth method |
 |---|---|---|
-| Auth0 | OIDC / JWKS validation | JWT RS256 |
-| Equifax | REST over mTLS | Client certificate from Vault |
-| SendGrid | REST | API key from Vault |
-| DocuSign | REST + inbound webhook | API key (outbound); HMAC-SHA256 (inbound webhook) |
+| `[IdP]` | OIDC / JWKS validation | JWT RS256 |
+| `[DataProvider]` | REST over mTLS | Client certificate from Vault |
+| `[EmailProvider]` | REST | API key from Vault |
+| `[SignatureProvider]` | REST + inbound webhook | OAuth2 client credentials (outbound); HMAC-SHA256 (inbound webhook). Confirm the provider's real auth scheme from its current docs — do not assume an API key |
 | RabbitMQ | AMQP 0-9-1 | Username/password from Vault |
 
-**Business logic boundary:** If a response from an external service requires a conditional decision (e.g. "reject the application if credit score < 600"), that decision is made in `backend/src/main/java/.../application/LoanApplicationService.java` — not in the integration client.
+**Business logic boundary:** If a response from an external service requires a
+conditional decision (e.g. "reject when the provider's score is below `[N]`"),
+that decision belongs in the owning backend service — never in the integration
+client. The client translates and forwards; it does not decide.

@@ -28,7 +28,7 @@ frontend/CLAUDE.md (what Claude loads)
 │       content maintained here permanently
 │
 └── @import statements — pull in external documents
-    └── @./docs/frontend/requirements/your-requirements-file.md
+    └── @../docs/frontend/requirements/your-requirements-file.md
         → Claude reads this file and treats it as part of
           frontend/CLAUDE.md — indistinguishable from inline content
 ```
@@ -59,8 +59,8 @@ Store UX and business requirements here. Convert Word documents to Markdown so C
 
 ```
 docs/frontend/requirements/
-├── loan-portal_ux-requirements_v1.md     ← Claude reads this
-└── loan-portal_ux-requirements_v1.docx   ← original; human reference only
+├── [system]_ux-requirements_v1.md     ← Claude reads this
+└── [system]_ux-requirements_v1.docx   ← original; human reference only
 ```
 
 **Step 2 — Add `@import` to `frontend/CLAUDE.md`**
@@ -68,7 +68,7 @@ docs/frontend/requirements/
 ```markdown
 ## Application Specification
 
-@./docs/frontend/requirements/loan-portal_ux-requirements_v1.md
+@../docs/frontend/requirements/[system]_ux-requirements_v1.md
 
 **Purpose:** Customer-facing loan application portal...  ← your inline content continues here
 ```
@@ -77,7 +77,7 @@ docs/frontend/requirements/
 
 ```markdown
 <!-- update this line only: -->
-@./docs/frontend/requirements/loan-portal_ux-requirements_v2.md
+@../docs/frontend/requirements/[system]_ux-requirements_v2.md
 ```
 
 ---
@@ -92,15 +92,15 @@ When UX designers provide written screen-by-screen annotations, field validation
 
 ```
 docs/frontend/design/
-├── loan-portal_screen-annotations_v1.md     ← field labels, validation messages, UX rules — @import
-└── loan-portal_user-journey_v1.md           ← step-by-step journey descriptions — @import
+├── [system]_screen-annotations_v1.md     ← field labels, validation messages, UX rules — @import
+└── [system]_user-journey_v1.md           ← step-by-step journey descriptions — @import
 ```
 
 ```markdown
 ## Application Specification
 
-@./docs/frontend/requirements/loan-portal_ux-requirements_v1.md
-@./docs/frontend/design/loan-portal_screen-annotations_v1.md
+@../docs/frontend/requirements/[system]_ux-requirements_v1.md
+@../docs/frontend/design/[system]_screen-annotations_v1.md
 
 **Purpose:** Customer-facing loan application portal...
 ```
@@ -111,15 +111,15 @@ Wireframes, mockups, and design screenshots **cannot be `@imported`**. Reference
 
 ```
 docs/frontend/design/
-├── loan-portal_wireframes-apply-flow_v2.pdf      ← Apply screen wireframes — prompt-only
-├── loan-portal_wireframes-dashboard_v1.pdf       ← Dashboard wireframes — prompt-only
-└── loan-portal_design-system-spec_v1.pdf         ← Design system — prompt-only
+├── [system]_wireframes-apply-flow_v2.pdf      ← Apply screen wireframes — prompt-only
+├── [system]_wireframes-dashboard_v1.pdf       ← Dashboard wireframes — prompt-only
+└── [system]_design-system-spec_v1.pdf         ← Design system — prompt-only
 ```
 
 **Example — building a screen from a wireframe:**
 
 ```
-@docs/frontend/design/loan-portal_wireframes-apply-flow_v2.pdf
+@docs/frontend/design/[system]_wireframes-apply-flow_v2.pdf
 Build the Step 2 component (Employment Details) of the multi-step loan application form.
 Use Angular Reactive Forms. Follow the field names and validation rules shown on page 3 of this wireframe.
 ```
@@ -127,7 +127,7 @@ Use Angular Reactive Forms. Follow the field names and validation rules shown on
 **Example — using the backend API spec to generate an Angular service:**
 
 ```
-@docs/backend/design/loan-portal_openapi-spec_v1.yaml
+@docs/backend/design/[system]_openapi-spec_v1.yaml
 Generate an Angular HttpClient service for the /api/v1/applications endpoints.
 Use the interceptor-based auth pattern defined in frontend/CLAUDE.md.
 ```
@@ -150,9 +150,9 @@ Use the interceptor-based auth pattern defined in frontend/CLAUDE.md.
 
 | Example filename | What it is |
 |---|---|
-| `loan-portal_ux-requirements_v1.md` | Converted requirements — Claude reads this |
-| `loan-portal_ux-requirements_v1.docx` | Original Word — human reference |
-| `loan-portal_screen-annotations_v1.md` | UX annotations — Claude reads this |
-| `loan-portal_user-journey_v1.md` | User journey description — Claude reads this |
-| `loan-portal_wireframes-apply-flow_v2.pdf` | Wireframes — prompt-only |
-| `loan-portal_design-system-spec_v1.pdf` | Design system — prompt-only |
+| `[system]_ux-requirements_v1.md` | Converted requirements — Claude reads this |
+| `[system]_ux-requirements_v1.docx` | Original Word — human reference |
+| `[system]_screen-annotations_v1.md` | UX annotations — Claude reads this |
+| `[system]_user-journey_v1.md` | User journey description — Claude reads this |
+| `[system]_wireframes-apply-flow_v2.pdf` | Wireframes — prompt-only |
+| `[system]_design-system-spec_v1.pdf` | Design system — prompt-only |

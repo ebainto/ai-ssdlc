@@ -1,6 +1,15 @@
 # Loan Portal — Data Dictionary v1
 
-All tables live in the `appdb` database on SQL Server 2022. All IDs are `UNIQUEIDENTIFIER DEFAULT NEWSEQUENTIALID()`. All timestamps are `DATETIME2(7)` with UTC values. Column names use `snake_case`.
+All tables live in the `appdb` database on SQL Server 2022. All IDs are
+`UNIQUEIDENTIFIER DEFAULT NEWID()`. All timestamps are `DATETIME2(7)` with UTC
+values. Column names use `snake_case`.
+
+> **Why `NEWID()` and not `NEWID()`:** every id here appears in a URL
+> (`GET /api/v1/applications/{id}`). `NEWID()` produces predictable,
+> monotonically increasing values, so an attacker who sees one id can guess its
+> neighbours. The IDOR defence in the ASVS mapping depends on ids being
+> unguessable, so it requires random v4 GUIDs. If index fragmentation matters,
+> add a separate internal sequential key and never expose it.
 
 ---
 
@@ -10,9 +19,9 @@ Registered users who can create and submit loan applications.
 
 | Column | Type | Nullable | Default | Classification | Notes |
 |---|---|---|---|---|---|
-| `id` | `UNIQUEIDENTIFIER` | No | `NEWSEQUENTIALID()` | — | PK |
-| `email` | `NVARCHAR(320)` | No | — | PII — Confidential | Always Encrypted (Randomized, AES-256). Max RFC 5321 length. |
-| `password_hash` | `NVARCHAR(72)` | No | — | Secret | BCrypt output. Raw password never stored. |
+| `id` | `UNIQUEIDENTIFIER` | No | `NEWID()` | — | PK |
+| `email` | `NVARCHAR(320)` | No | — | PII — Confidential | Always Encrypted (**Deterministic**, AES-256). Deterministic is required: login and the uniqueness constraint both look this column up by equality, which Randomized encryption can never satisfy. Max RFC 5321 length. |
+| `password_hash` | `CHAR(60)` | No | — | Secret | BCrypt output is exactly 60 chars. Raw password never stored. |
 | `full_name` | `NVARCHAR(200)` | No | — | PII — Internal | Plaintext; RLS restricts to record owner + ADMIN |
 | `phone` | `NVARCHAR(30)` | Yes | `NULL` | PII — Confidential | Always Encrypted (Randomized, AES-256) |
 | `date_of_birth` | `DATE` | Yes | `NULL` | PII — Confidential | Always Encrypted (Randomized, AES-256) |
@@ -20,7 +29,15 @@ Registered users who can create and submit loan applications.
 | `created_at` | `DATETIME2(7)` | No | `SYSUTCDATETIME()` | — | |
 | `updated_at` | `DATETIME2(7)` | No | `SYSUTCDATETIME()` | — | Updated via trigger |
 
-**Indexes:** `UQ_applicants_email` (unique, non-clustered, on encrypted column — requires deterministic encryption for uniqueness; use Deterministic if enforced).
+**Indexes:** `UQ_applicants_email` — unique, non-clustered, on a Deterministic
+Always Encrypted column. Both this constraint and the login lookup need
+equality matching, so the column cannot be Randomized.
+
+> Deterministic encryption leaks equality: two rows with the same plaintext share
+> the same ciphertext, so an observer with table access can tell that two
+> accounts share an email. That is the accepted trade for being able to
+> authenticate. Use Randomized for every PII column you never look up by —
+> `phone` and `date_of_birth` here.
 
 **Row-Level Security:** `ApplicantDataPolicy` — read access restricted to the applicant matching `SESSION_CONTEXT(N'userId')` or `db_admin` role.
 
@@ -32,7 +49,7 @@ A single loan application with lifecycle status.
 
 | Column | Type | Nullable | Default | Classification | Notes |
 |---|---|---|---|---|---|
-| `id` | `UNIQUEIDENTIFIER` | No | `NEWSEQUENTIALID()` | — | PK |
+| `id` | `UNIQUEIDENTIFIER` | No | `NEWID()` | — | PK |
 | `applicant_id` | `UNIQUEIDENTIFIER` | No | — | — | FK → `applicants.id` |
 | `status` | `NVARCHAR(50)` | No | `'DRAFT'` | — | Enum: DRAFT, SUBMITTED, UNDER_REVIEW, APPROVED, REJECTED, ADDITIONAL_INFO_REQUIRED |
 | `loan_amount` | `DECIMAL(12,2)` | No | — | Financial — Confidential | Range: 1,000.00–500,000.00. RLS restricts access. |
@@ -90,11 +107,11 @@ File references for supporting evidence attached to loan applications. Actual fi
 
 | Column | Type | Nullable | Default | Classification | Notes |
 |---|---|---|---|---|---|
-| `id` | `UNIQUEIDENTIFIER` | No | `NEWSEQUENTIALID()` | — | PK |
+| `id` | `UNIQUEIDENTIFIER` | No | `NEWID()` | — | PK |
 | `application_id` | `UNIQUEIDENTIFIER` | No | — | — | FK → `loan_applications.id` |
 | `applicant_id` | `UNIQUEIDENTIFIER` | No | — | — | FK → `applicants.id` (denormalised for RLS performance) |
 | `document_type` | `NVARCHAR(50)` | No | — | Internal | Enum: IDENTITY, INCOME, BANK_STATEMENT, OTHER |
-| `file_path` | `NVARCHAR(500)` | No | — | Internal | UNC path on NAS (e.g. `\\nas01\loan-docs\{applicant_id}\{doc_id}.pdf`). Never a URL. |
+| `file_path` | `NVARCHAR(500)` | No | — | Internal | **Server-generated** UNC path, e.g. `\\nas01\loan-docs\{applicant_id}\{doc_id}.pdf`. Every segment is derived server-side from the authenticated applicant and a generated document id — no part of it ever comes from the request. Never a URL. |
 | `original_filename` | `NVARCHAR(260)` | No | — | Internal | Original filename as uploaded — stored for display only |
 | `mime_type` | `NVARCHAR(100)` | No | — | Internal | e.g. `application/pdf`, `image/jpeg` |
 | `file_size_bytes` | `BIGINT` | No | — | Internal | Max enforced at service layer: 10 MB |
@@ -114,7 +131,7 @@ One row per applicant. Created with defaults when the applicant account is creat
 
 | Column | Type | Nullable | Default | Classification | Notes |
 |---|---|---|---|---|---|
-| `id` | `UNIQUEIDENTIFIER` | No | `NEWSEQUENTIALID()` | — | PK |
+| `id` | `UNIQUEIDENTIFIER` | No | `NEWID()` | — | PK |
 | `applicant_id` | `UNIQUEIDENTIFIER` | No | — | — | FK → `applicants.id`. Unique constraint. |
 | `email_on_status_change` | `BIT` | No | `1` | — | Email when application status changes |
 | `email_on_document_verified` | `BIT` | No | `1` | — | Email when a document is verified |
@@ -129,9 +146,9 @@ Hashed refresh tokens with per-device tracking. Supports token rotation and full
 
 | Column | Type | Nullable | Default | Classification | Notes |
 |---|---|---|---|---|---|
-| `id` | `UNIQUEIDENTIFIER` | No | `NEWSEQUENTIALID()` | — | PK |
+| `id` | `UNIQUEIDENTIFIER` | No | `NEWID()` | — | PK |
 | `applicant_id` | `UNIQUEIDENTIFIER` | No | — | — | FK → `applicants.id` |
-| `token_hash` | `NVARCHAR(72)` | No | — | Secret | BCrypt hash of the opaque refresh token. Raw token never stored. |
+| `token_hash` | `CHAR(64)` | No | — | Secret | SHA-256 hex of the opaque refresh token. NOT BCrypt — BCrypt salts per call, so an equality lookup by hash could never match. The raw token is high-entropy random, so it needs no salt. |
 | `device_fingerprint` | `NVARCHAR(200)` | Yes | `NULL` | Internal | User-Agent + IP hash — for display in "active sessions" list |
 | `issued_at` | `DATETIME2(7)` | No | `SYSUTCDATETIME()` | — | |
 | `expires_at` | `DATETIME2(7)` | No | — | — | `issued_at + 7 days` |

@@ -58,7 +58,7 @@ ng serve --port 4300
 ng test
 
 # Run a single test file
-ng test --include="**/loan-application.component.spec.ts"
+ng test --include="**/[your-feature].component.spec.ts"
 
 # Run tests in headless mode (CI)
 ng test --watch=false --browsers=ChromeHeadless
@@ -79,7 +79,7 @@ ng build --configuration=production
 ng build --stats-json && npx webpack-bundle-analyzer dist/stats.json
 
 # Generate a new component (standalone)
-ng generate component features/loan-application/components/step-one --standalone
+ng generate component features/[your-feature]/components/[step-one] --standalone
 ```
 
 ---
@@ -95,7 +95,7 @@ ng generate component features/loan-application/components/step-one --standalone
     docs/frontend/design/         ← wireframes, screen flows (PDF/images — human reference only)
 
   For requirements documents (text/Markdown), @import here:
-  @../docs/frontend/requirements/loan-portal_ux-requirements_v1.md
+  @../docs/frontend/requirements/[your-system]_ux-requirements_v1.md
 
   For wireframes and mockups (PDF/images), reference in the prompt when needed:
     @docs/frontend/design/apply-screen-wireframe-v2.pdf
@@ -106,30 +106,42 @@ ng generate component features/loan-application/components/step-one --standalone
   - See docs/guides/template-guide.md → "Storing supporting documents" for full guidance
 -->
 
-@../docs/backend/design/openapi-spec_v1.yaml
+<!-- Uncomment once the backend has an OpenAPI spec — the frontend consumes the
+     same contract, so import it rather than restating endpoints here:
+@../docs/backend/design/[your-system]_openapi-spec_v1.yaml
+-->
 
-**Purpose:** Customer-facing loan application portal. Authenticated users can apply for loans, upload supporting documents, and track their application status in real time.
+> **FILL THIS IN.** Everything below is placeholder shape. Replace the bracketed
+> names with your own flows and routes. A fully worked reference is in
+> `examples/loan-portal/`.
 
-**Key user flows:**
-1. **Loan application** — multi-step form (5 steps): personal details → employment → loan amount → documents → review & submit
-2. **Document upload** — PDF/JPG/PNG only, max 10 MB per file, max 5 files per application
-3. **Application status dashboard** — displays current status with polling every 30 seconds via `HttpClient` + RxJS `interval`
-4. **Notification preferences** — user opts in/out of email and SMS alerts per event type
+**Purpose:** [One sentence: who uses this UI and what they accomplish.]
 
-**Business rules enforced at this layer (UX validation — backend re-validates all):**
-- Loan amount: $1,000 minimum, $500,000 maximum (Angular Reactive Form validators)
-- Employment duration: ≥ 3 months required (custom validator)
-- Session timeout: redirect to `/login` after 15 minutes of inactivity
-- File type: `.pdf`, `.jpg`, `.png` only (checked via file input `accept` attribute + custom validator)
+**Key user flows:** [List yours. For each, note the steps and any multi-step
+form state that must survive a refresh.]
+1. **`[Primary flow]`** — [steps]
+2. **`[File upload]`** — state the permitted MIME types, max file size and max
+   file count. Send the file itself as `multipart/form-data`; never let the
+   client choose the stored path (see the boundary rules below)
+3. **`[Status view]`** — note the refresh mechanism and interval
+4. **`[Preferences]`** — note which settings are per-user
 
-**Key routes:**
+**Business rules enforced at this layer (UX validation only — the backend
+re-validates everything):**
+- `[Numeric field]`: min/max via Angular Reactive Form validators
+- `[Custom rule]`: custom validator
+- Session timeout: redirect to the login route after `[N]` minutes of inactivity
+- File type: restrict via the file input `accept` attribute **and** a custom
+  validator — `accept` alone is trivially bypassed
+
+**Key routes:** [replace with your own]
 ```
-/login                          → authentication page (public)
-/dashboard                      → authenticated home (AuthGuard required)
-/apply                          → multi-step loan application (AuthGuard required)
-/applications                   → application history list (AuthGuard required)
-/applications/:id               → application detail (AuthGuard required)
-/settings/notifications         → notification preferences (AuthGuard required)
+/login                          → authentication entry (public)
+/[home]                         → authenticated home (AuthGuard required)
+/[create]                       → create/edit flow (AuthGuard required)
+/[records]                      → list view (AuthGuard required)
+/[records]/:id                  → detail view (AuthGuard required)
+/settings/[preferences]         → user preferences (AuthGuard required)
 ```
 
 ---
@@ -178,7 +190,7 @@ src/app/app.routes.ts                      — root route definitions with lazy-
 src/app/core/interceptors/                 — HTTP interceptors (auth, XSRF, error, loading)
 src/app/core/guards/auth.guard.ts          — route auth guard
 src/app/core/services/auth.service.ts      — token management and refresh logic
-src/app/features/loan-application/        — multi-step loan application feature
+src/app/features/[your-feature]/          — one folder per feature
 src/app/shared/                            — reusable components, pipes, directives
 ```
 
@@ -191,7 +203,7 @@ src/app/shared/                            — reusable components, pipes, direc
 - **All HTTP calls through a service** — never inject `HttpClient` directly into a component; always through a dedicated service in `core/services/` or `features/<name>/services/`
 - **NgRx for global state only** — UI-local state uses Signals; only shared cross-feature state goes into the NgRx store
 - **Lazy load every feature route** — `loadComponent: () => import(...)` on all feature routes; no eager loading of feature modules
-- **Tests co-located:** `loan-application.component.ts` + `loan-application.component.spec.ts` in the same folder
+- **Tests co-located:** `[feature].component.ts` + `[feature].component.spec.ts` in the same folder
 
 ---
 
@@ -210,4 +222,4 @@ src/app/shared/                            — reusable components, pipes, direc
 | Connects to | Via | Contract location |
 |---|---|---|
 | Backend API | REST (Angular `HttpClient`) | `docs/backend/design/openapi-spec_v1.yaml` |
-| Auth0 (via backend) | OAuth2 / OIDC redirect — backend handles token exchange | `integration/apis/auth0.md` |
+| `[IdP]` (via backend) | OAuth2 / OIDC redirect — the backend handles token exchange | `integration/apis/[idp].md` |

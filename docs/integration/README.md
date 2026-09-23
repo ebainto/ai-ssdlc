@@ -26,7 +26,7 @@ integration/CLAUDE.md (what Claude loads)
 │       content maintained here permanently
 │
 └── @import statements — pull in external documents
-    └── @./docs/integration/requirements/equifax_api-summary_v2.md
+    └── @../docs/integration/requirements/[vendor]_api-summary_v2.md
         → Claude reads this file and treats it as part of
           integration/CLAUDE.md — indistinguishable from inline content
 ```
@@ -68,8 +68,8 @@ Extract only what Claude needs to write correct connector code:
 
 ```
 docs/integration/requirements/
-├── equifax_api-summary_v2.md      ← Markdown extract — Claude reads this (~2–4 pages)
-└── equifax_api-guide_v4.pdf       ← Full vendor guide — human reference only (300+ pages)
+├── [vendor]_api-summary_v2.md      ← Markdown extract — Claude reads this (~2–4 pages)
+└── [vendor]_api-guide_v4.pdf       ← Full vendor guide — human reference only (300+ pages)
 ```
 
 **Step 2 — Add `@import` to `integration/CLAUDE.md`**
@@ -79,7 +79,7 @@ In the Application Specification section of `integration/CLAUDE.md`:
 ```markdown
 ## Application Specification — External Services
 
-@./docs/integration/requirements/equifax_api-summary_v2.md
+@../docs/integration/requirements/[vendor]_api-summary_v2.md
 
 **External services this application integrates with:**  ← your inline content continues here
 ```
@@ -88,10 +88,10 @@ In the Application Specification section of `integration/CLAUDE.md`:
 
 ```markdown
 <!-- change this: -->
-@./docs/integration/requirements/equifax_api-summary_v2.md
+@../docs/integration/requirements/[vendor]_api-summary_v2.md
 
 <!-- to this: -->
-@./docs/integration/requirements/equifax_api-summary_v3.md
+@../docs/integration/requirements/[vendor]_api-summary_v3.md
 ```
 
 ---
@@ -106,9 +106,9 @@ When the solutions architect or tech lead produces a written integration design 
 
 ```
 docs/integration/design/
-├── loan-portal_credit-check-integration-design_v1.md   ← @import into integration/CLAUDE.md
-├── loan-portal_docusign-integration-design_v1.md       ← @import if that connector is in scope
-└── loan-portal_event-routing-design_v1.md              ← @import for RabbitMQ routing decisions
+├── [system]_credit-check-integration-design_v1.md   ← @import into integration/CLAUDE.md
+├── [system]_[provider]-integration-design_v1.md    ← @import if that connector is in scope
+└── [system]_event-routing-design_v1.md              ← @import for RabbitMQ routing decisions
 ```
 
 Add `@import` to `integration/CLAUDE.md`:
@@ -116,8 +116,8 @@ Add `@import` to `integration/CLAUDE.md`:
 ```markdown
 ## Application Specification — External Services
 
-@./docs/integration/requirements/equifax_api-summary_v2.md
-@./docs/integration/design/loan-portal_credit-check-integration-design_v1.md
+@../docs/integration/requirements/[vendor]_api-summary_v2.md
+@../docs/integration/design/[system]_credit-check-integration-design_v1.md
 
 **External services this application integrates with:**  ← your inline content continues here
 ```
@@ -136,7 +136,7 @@ Spring Cloud Contract consumer test files live in `integration/tests/` as `.groo
 
 ```
 docs/integration/design/
-└── loan-portal_consumer-contract-spec_v1.md
+└── [system]_consumer-contract-spec_v1.md
 ```
 
 ### Sequence diagrams and event flow diagrams (PDF/images — prompt-only)
@@ -145,14 +145,14 @@ Sequence diagrams and event flow diagrams **cannot be `@imported`**. Reference t
 
 ```
 docs/integration/design/
-├── loan-portal_credit-check-sequence_v1.pdf    ← sequence diagram — prompt-only
-└── loan-portal_event-flow-diagram_v2.pdf       ← RabbitMQ event flow — prompt-only
+├── [system]_credit-check-sequence_v1.pdf    ← sequence diagram — prompt-only
+└── [system]_event-flow-diagram_v2.pdf       ← RabbitMQ event flow — prompt-only
 ```
 
 **Example — implementing from a sequence diagram:**
 
 ```
-@docs/integration/design/loan-portal_credit-check-sequence_v1.pdf
+@docs/integration/design/[system]_credit-check-sequence_v1.pdf
 Implement the error handling for the credit check flow in CreditCheckClient.java.
 Follow the failure path on page 2 — when the external service returns HTTP 503,
 the diagram shows we should retry twice then return a CREDIT_CHECK_UNAVAILABLE status.
@@ -161,7 +161,7 @@ the diagram shows we should retry twice then return a CREDIT_CHECK_UNAVAILABLE s
 **Example — verifying event routing against the flow diagram:**
 
 ```
-@docs/integration/design/loan-portal_event-flow-diagram_v2.pdf
+@docs/integration/design/[system]_event-flow-diagram_v2.pdf
 Does the current RabbitMQ routing key configuration in integration/events/
 match the exchange topology shown in this event flow diagram?
 ```
@@ -173,7 +173,7 @@ match the exchange topology shown in this event flow diagram?
 Use explicit `@` reference in the prompt when you need to look something up in the full vendor guide that is not in your summary extract:
 
 ```
-@docs/integration/requirements/equifax_api-guide_v4.pdf
+@docs/integration/requirements/[vendor]_api-guide_v4.pdf
 How does the credit score response handle a partial data scenario where date_of_birth is missing?
 ```
 
@@ -187,8 +187,8 @@ This loads the document for that conversation only — it is not loaded in futur
 
 | Example filename | What it is |
 |---|---|
-| `equifax_api-summary_v2.md` | Markdown extract — Claude reads this |
-| `equifax_api-guide_v4.pdf` | Full vendor PDF — human reference; prompt-only |
+| `[vendor]_api-summary_v2.md` | Markdown extract — Claude reads this |
+| `[vendor]_api-guide_v4.pdf` | Full vendor PDF — human reference; prompt-only |
 | `auth0_integration-design_v1.md` | Integration design document |
-| `docusign_webhook-spec_v1.md` | Webhook payload specification extract |
+| `[provider]_webhook-spec_v1.md` | Webhook payload specification extract |
 | `rabbitmq_event-flow-diagram_v1.pdf` | Event flow diagram — prompt-only reference |

@@ -124,7 +124,7 @@ components:
 
     CreateDocumentRequest:
       type: object
-      required: [applicationId, documentType, fileReference]
+      required: [applicationId, documentType, file]
       properties:
         applicationId:
           type: string
@@ -132,9 +132,15 @@ components:
         documentType:
           type: string
           enum: [IDENTITY, INCOME, BANK_STATEMENT, OTHER]
-        fileReference:
+        file:
           type: string
-          description: Storage path reference — actual file stored by infrastructure layer
+          format: binary
+          description: |
+            The document itself. Max 10 MB; PDF, JPEG or PNG only, enforced by
+            content sniffing and not by the declared Content-Type or filename.
+            The server derives the storage path as
+            {root}/{applicant_id}/{generated_document_id}.{ext} — no part of it
+            comes from the request.
 
     DocumentResponse:
       type: object
@@ -380,17 +386,48 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /api/v1/auth/logout:
+    post:
+      summary: Revoke the current session
+      description: |
+        Revokes the presented refresh token server-side and clears the cookie.
+        Required for ASVS V3.3.1 — an earlier revision claimed that control was
+        met while shipping no logout endpoint at all.
+      tags: [Auth]
+      responses:
+        '204':
+          description: Session revoked
+        '401':
+          description: No valid session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /api/v1/documents:
     post:
-      summary: Upload document reference
-      description: Stores the file reference and triggers document verification. Actual file storage is handled by the infrastructure layer.
+      summary: Upload a supporting document
+      description: |
+        Accepts the file itself as multipart/form-data. The server generates the
+        storage path from the authenticated applicant id and a server-side
+        document id; the client never supplies or influences a path.
+
+        SECURITY: an earlier revision of this spec accepted a client-supplied
+        `fileReference` string that was persisted as `documents.file_path` (a UNC
+        path on a NAS). That allowed a caller to point the stored path at an
+        arbitrary SMB share, giving path traversal, SSRF onto internal file
+        servers, and NTLM credential capture via an attacker-controlled host.
+        Never accept a storage path from a client.
       tags: [Documents]
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               $ref: '#/components/schemas/CreateDocumentRequest'
+            encoding:
+              file:
+                contentType: application/pdf, image/jpeg, image/png
       responses:
         '201':
           description: Document reference stored — status starts as PENDING

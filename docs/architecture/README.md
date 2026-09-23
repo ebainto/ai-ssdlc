@@ -33,10 +33,10 @@ Write an ADR when:
 
 | Example filename | Decision captured |
 |---|---|
-| `loan-portal_ADR-001_auth-strategy_v1.md` | Why JWT RS256 was chosen over session-based auth |
-| `loan-portal_ADR-002_database-engine_v1.md` | Why SQL Server was chosen over PostgreSQL |
-| `loan-portal_ADR-003_architecture-style_v1.md` | Why modular monolith over microservices for initial release |
-| `loan-portal_ADR-004_secrets-management_v1.md` | Why HashiCorp Vault over environment variables |
+| `[system]_ADR-001_auth-strategy_v1.md` | Why JWT RS256 was chosen over session-based auth |
+| `[system]_ADR-002_database-engine_v1.md` | Why SQL Server was chosen over PostgreSQL |
+| `[system]_ADR-003_architecture-style_v1.md` | Why modular monolith over microservices for initial release |
+| `[system]_ADR-004_secrets-management_v1.md` | Why HashiCorp Vault over environment variables |
 
 Numbers are sequential and never reused. If a decision is revised, increment the version (`_v2.md`) and note the superseded version inside the file.
 
@@ -93,7 +93,7 @@ Reference quality attributes (Security, Scalability, Maintainability, etc.) wher
 ADRs are reference documents — they explain the "why" behind the architecture. Reference them in the prompt when asking Claude to work on something that was shaped by a past decision:
 
 ```
-@docs/architecture/adr/loan-portal_ADR-001_auth-strategy_v1.md
+@docs/architecture/adr/[system]_ADR-001_auth-strategy_v1.md
 I need to add a new service-to-service API call between the notification service and the document service.
 Should it use JWT bearer token or a different auth method? Follow the decision in this ADR.
 ```

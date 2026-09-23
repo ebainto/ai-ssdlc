@@ -125,7 +125,9 @@ project-root/
 │                                        security architecture diagrams (PDF — prompt-only)
 │
 ├── ssdlc/                           ← SSDLC phase-gated outputs (versioned, never overwritten)
-│   ├── [system]_hitl-audit-trail_vN.md    ← Gate approval log — updated after every gate
+│   ├── GATE-FORMAT.md                      ← The parsable format /gate reads and writes
+│   ├── _TEMPLATE_hitl-audit-trail_v1.md    ← Copy this to open a trail for your system
+│   ├── [system]_hitl-audit-trail_vN.md    ← Gate approval log — written only by /gate
 │   ├── [system]_threat-model_vN.md        ← Phase 2 snapshot (working copy in security/threat-model/)
 │   ├── [system]_user-stories_vN.md        ← Phase 3
 │   ├── [system]_component-design_vN.md    ← Phase 4
@@ -134,8 +136,30 @@ project-root/
 │   └── [system]_release-checklist_vN.md   ← Phase 7
 │
 ├── architecture/                    ← Architecture input documents (feed Phase 1)
-└── diagrams/                        ← Box diagrams (.md) and Mermaid exports (.mmd)
+├── diagrams/                        ← Box diagrams (.md) and Mermaid exports (.mmd)
+│
+└── examples/                        ← Worked reference projects — NEVER @imported
+    └── loan-portal/                 ← A full five-document design set showing the
+                                        depth expected of a real project. Read it to
+                                        calibrate your own docs; do not wire it in.
 ```
+
+### What ships empty, and why
+
+The six layer folders (`src/`, `tests/`, `migrations/`, `docker/` …) and every
+`docs/<layer>/` folder are **empty by design**. So is `ssdlc/`, apart from the
+gate format and trail template.
+
+Layer `CLAUDE.md` files use `[bracketed placeholders]` for anything
+domain-specific, and their `@import` lines ship **commented out**. Replace the
+placeholders with your own names, write your documents into
+`docs/<layer>/design/`, then uncomment the import.
+
+This matters more than it sounds: layer `CLAUDE.md` files are auto-loaded by
+Claude Code on every prompt. An earlier revision of this template shipped a
+concrete loan-portal domain in them, so Claude treated loan applications as the
+active domain no matter what the team was building. Those documents now live in
+`examples/loan-portal/`, outside `docs/`, where nothing imports them.
 
 ---
 
@@ -201,7 +225,8 @@ Artifact naming convention: `[system-name]_[artifact-type]_v[N].md` — versions
 |---|---|---|
 | Quick reference | `docs/guides/quick-reference.md` | Short visual training guide — start here |
 | Full template guide | `docs/guides/template-guide.md` | Every file, every decision, common mistakes |
-| Agents and skills guide | `docs/guides/agents-and-skills-guide.md` | Five specialist agents and 18 slash commands — design, decision rationale, and implementation priority |
+| Agents and skills guide | `docs/guides/agents-and-skills-guide.md` | Five specialist agents and eleven slash commands — design, decision rationale, and backlog |
+| Worked example | `examples/loan-portal/README.md` | A full design set at the expected depth, with its known limits stated |
 | Security layer overview | `security/README.md` | What the security layer is and how it relates to the other security locations |
 | Secure coding standard | `security/policies/secure-coding-standard.md` | Coding rules with compliance control references |
 | Encryption policy | `security/policies/encryption-policy.md` | Approved algorithms and key management requirements |

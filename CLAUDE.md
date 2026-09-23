@@ -78,8 +78,34 @@ docs/                   # Project documentation
 ├── database/           #   Database supporting docs — data dictionary, ER diagrams
 ├── infrastructure/     #   Infrastructure supporting docs — network design, topology, capacity plan
 ├── integration/        #   Integration supporting docs — vendor API specs, sequence diagrams
-└── security/           #   Security supporting docs — policy-level and compliance-level inputs only
+├── security/           #   Security supporting docs — policy-level and compliance-level inputs only
+└── agent-skills/       #   Written specs for each agent skill — reference only, never loaded
+
+examples/               # Worked reference projects — NEVER @imported
+└── loan-portal/        #   A full design set showing expected depth. Read it to
+                        #   calibrate your own documents; do not wire it in.
 ```
+
+### Every `docs/<layer>/` folder starts empty
+
+The template ships **no** design documents of its own, and every layer's
+`@import` line is **commented out**. That is deliberate: a live import pointing
+at a file that does not exist imports nothing silently, and a live import
+pointing at *someone else's* domain is worse — Claude would treat that domain as
+yours on every prompt.
+
+Write your own documents into `docs/<layer>/design/` or
+`docs/<layer>/requirements/`, then uncomment the matching `@import` in that
+layer's `CLAUDE.md`. Paths are relative to the importing file, so the correct
+form is `@../docs/...` — `@./docs/...` resolves to `<layer>/docs/<layer>/...`
+and fails silently.
+
+### Layer `CLAUDE.md` files contain placeholders, not a domain
+
+Names in `[square brackets]` — `[actors]`, `[core_records]`, `[CoreRecord]Service`
+— are yours to replace. They are placeholders on purpose. The surrounding
+patterns (temporal tables, Row-Level Security, the Spring Security filter chain,
+resilience settings) are reusable as-is; only the names change.
 
 ### Layer boundary rules
 - **Frontend** → calls `backend/api/` only via Angular `HttpClient`; no direct DB, infra, or third-party API access

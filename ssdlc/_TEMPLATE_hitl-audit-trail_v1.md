@@ -60,6 +60,6 @@ is what commands parse; this section is what an auditor reads.
 | Decision | [approved / rejected / approved-with-conditions] |
 | Date | [YYYY-MM-DD] |
 | Approver | [name / email] |
-| Artifact reviewed | [file path and version, e.g. `ssdlc/loan-portal_threat-model_v2.md`] |
+| Artifact reviewed | [file path and version, e.g. `ssdlc/[system]_threat-model_v2.md`] |
 | Conditions | [if any — these must also appear in the one-line entry] |
 | Notes | [what was checked, what was accepted, what was deferred] |

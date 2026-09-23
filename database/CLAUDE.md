@@ -47,14 +47,18 @@ mvn flyway:migrate -Dflyway.url="jdbc:sqlserver://localhost:1433;databaseName=ap
 # Check current migration status
 mvn flyway:info
 
-# Roll back to a baseline (dev only — Flyway OSS supports undo via Flyway Teams)
-mvn flyway:undo
+# NOTE: `flyway:undo` is a paid Flyway Teams/Enterprise feature. On Flyway OSS
+# it fails. Roll back in dev by recreating the database from migrations, and in
+# production by rolling forward with a new corrective migration — never by
+# editing an applied one.
 
 # Validate migration checksums against DB state
 mvn flyway:validate
 
-# Connect to local SQL Server (Azure Data Studio or sqlcmd)
-sqlcmd -S localhost,1433 -U sa -P YourDevPassword123! -d appdb
+# Connect to local SQL Server (Azure Data Studio or sqlcmd).
+# Read the password from the environment — never inline a credential in a
+# command you might paste into a terminal, a ticket or a commit.
+sqlcmd -S localhost,1433 -U sa -P "$MSSQL_SA_PASSWORD" -d appdb
 
 # Apply dev seed data
 mvn flyway:migrate -Dflyway.locations=classpath:db/migration,classpath:db/seed/dev
@@ -79,10 +83,10 @@ docker compose -f ../infrastructure/docker/docker-compose.yml up sqlserver
     docs/database/design/         ← data dictionary (.md), ER diagrams (PDF — human reference)
 
   For data dictionaries and entity definitions, convert to Markdown and @import here:
-  @../docs/database/design/loan-portal_data-dictionary_v1.md
+  @../docs/database/design/[your-system]_data-dictionary_v1.md
 
   For ER diagrams (PDF/images), reference in the prompt when needed:
-    @docs/database/design/loan-portal_er-diagram_v2.pdf
+    @docs/database/design/[your-system]_er-diagram_v2.pdf
 
   Rules:
   - Convert Excel data dictionaries to Markdown tables before @importing
@@ -90,48 +94,61 @@ docker compose -f ../infrastructure/docker/docker-compose.yml up sqlserver
   - See docs/guides/template-guide.md → "Storing supporting documents" for full guidance
 -->
 
-@../docs/database/design/loan-portal_data-dictionary_v1.md
+<!-- Uncomment and point at your own data dictionary once you have one:
+@../docs/database/design/[your-system]_data-dictionary_v1.md
+-->
+
+> **FILL THIS IN.** Everything below is placeholder shape, not your schema.
+> Replace `[Entity]` / `[your_table]` names with your own. Keep the patterns —
+> the temporal-table, RLS and classification mechanics are the reusable part.
+> A fully worked reference is in `examples/loan-portal/`.
 
 **Core entities:**
 
 | Entity | Table | Purpose |
 |---|---|---|
-| Applicant | `applicants` | Registered user who can submit loan applications |
-| Application | `loan_applications` | A single loan application with status workflow |
-| Document | `documents` | File references for supporting evidence (stored in file share, not DB) |
-| NotificationPreference | `notification_preferences` | Per-applicant opt-in settings for email and SMS alerts |
-| ApplicationHistory | `loan_applications_history` | System-versioned temporal table — auto-generated audit of all application changes |
-| RefreshToken | `refresh_tokens` | Hashed refresh tokens with device fingerprint and expiry |
+| `[PrimaryActor]` | `[actors]` | The authenticated user this system serves |
+| `[CoreRecord]` | `[core_records]` | The main business record, with a status workflow |
+| `[Attachment]` | `[attachments]` | File references — store the file outside the DB, see the rule below |
+| `[CoreRecord]History` | `[core_records_history]` | System-versioned temporal table — SQL Server maintains it |
+| `RefreshToken` | `refresh_tokens` | Hashed refresh tokens with device fingerprint and expiry |
 
 **Key relationships:**
 ```
-applicants (1) ──< loan_applications (many)     — one applicant, many applications
-loan_applications (1) ──< documents (many)       — one application, many documents
-applicants (1) ──< notification_preferences (1)  — one-to-one
-loan_applications → loan_applications_history    — temporal table (SQL Server managed)
-applicants (1) ──< refresh_tokens (many)         — one applicant, multiple device sessions
+[actors] (1) ──< [core_records] (many)        — one actor, many records
+[core_records] (1) ──< [attachments] (many)    — one record, many attachments
+[core_records] → [core_records_history]        — temporal table (SQL Server managed)
+[actors] (1) ──< refresh_tokens (many)         — one actor, multiple device sessions
 ```
 
-**Application status workflow:**
+**Status workflow** — define your own states and the legal transitions between
+them. Every transition must be enforced in the backend, never trusted from the
+client:
 ```
-DRAFT → SUBMITTED → UNDER_REVIEW → APPROVED
-                                 → REJECTED
-                                 → ADDITIONAL_INFO_REQUIRED → SUBMITTED (loop)
+[INITIAL] → [SUBMITTED] → [IN_REVIEW] → [TERMINAL_OK]
+                                      → [TERMINAL_REJECTED]
+                                      → [NEEDS_INPUT] → [SUBMITTED] (loop)
 ```
 
-**Temporal table (audit history) — SQL Server syntax:**
+**Temporal table (audit history) — SQL Server syntax.** This pattern is reusable
+as-is; only the table names change:
 ```sql
--- loan_applications is system-versioned; SQL Server manages loan_applications_history automatically
-CREATE TABLE loan_applications (
-    id              UNIQUEIDENTIFIER DEFAULT NEWSEQUENTIALID() PRIMARY KEY,
-    status          NVARCHAR(50)     NOT NULL DEFAULT 'DRAFT',
-    -- ... other columns
+-- [core_records] is system-versioned; SQL Server maintains the history table
+CREATE TABLE [core_records] (
+    id              UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+    status          NVARCHAR(50)     NOT NULL DEFAULT '[INITIAL]',
+    -- ... your columns
     SysStartTime    DATETIME2        GENERATED ALWAYS AS ROW START NOT NULL,
     SysEndTime      DATETIME2        GENERATED ALWAYS AS ROW END   NOT NULL,
     PERIOD FOR SYSTEM_TIME (SysStartTime, SysEndTime)
 )
-WITH (SYSTEM_VERSIONING = ON (HISTORY_TABLE = dbo.loan_applications_history));
+WITH (SYSTEM_VERSIONING = ON (HISTORY_TABLE = dbo.[core_records_history]));
 ```
+
+> Use `NEWID()`, not `NEWSEQUENTIALID()`, for any id that appears in a URL.
+> Sequential GUIDs are guessable, which defeats access-control-by-obscurity and
+> makes IDOR testing harder. If you need index locality, keep a separate
+> internal sequential key and never expose it.
 
 ---
 
@@ -142,35 +159,54 @@ WITH (SYSTEM_VERSIONING = ON (HISTORY_TABLE = dbo.loan_applications_history));
 
 ### Data Classification
 
+Classify **every** column that holds personal, financial or secret data. A
+column absent from this table is treated as unclassified, which fails an audit.
+
 | Column | Table | Classification | Protection method |
 |---|---|---|---|
-| `email` | `applicants` | PII — Confidential | SQL Server Always Encrypted (Randomized, AES-256); key stored in Azure Key Vault |
-| `phone` | `applicants` | PII — Confidential | SQL Server Always Encrypted (Randomized, AES-256) |
-| `date_of_birth` | `applicants` | PII — Confidential | SQL Server Always Encrypted (Randomized, AES-256) |
-| `full_name` | `applicants` | PII — Internal | Plaintext; access restricted by Row-Level Security policy |
-| `password_hash` | `applicants` | Secret | BCrypt hash (never returned in any SELECT exposed to application) |
-| `token_hash` | `refresh_tokens` | Secret | BCrypt hash; raw token never stored |
-| `loan_amount` | `loan_applications` | Financial — Confidential | Plaintext; RLS restricts access to record owner + ADMIN role |
-| `file_path` | `documents` | Internal | UNC path reference only; file content stored on file share, not in DB |
+| `[login_identifier]` | `[actors]` | PII — Confidential | Always Encrypted **Deterministic** — see the lookup rule below |
+| `[phone]` | `[actors]` | PII — Confidential | Always Encrypted (Randomized, AES-256) |
+| `[date_of_birth]` | `[actors]` | PII — Confidential | Always Encrypted (Randomized, AES-256) |
+| `[full_name]` | `[actors]` | PII — Internal | Plaintext; access restricted by Row-Level Security |
+| `password_hash` | `[actors]` | Secret | BCrypt hash; never returned by any SELECT the application exposes |
+| `token_hash` | `refresh_tokens` | Secret | SHA-256 of the raw token — see the token lookup rule below |
+| `[amount]` | `[core_records]` | Financial — Confidential | Classify per your policy; if it must be queried or aggregated, it cannot be Randomized-encrypted |
+| `[file_reference]` | `[attachments]` | Internal | **Server-generated** path only — never a client-supplied value. See the rule below |
+
+> **Encryption mode decides queryability — get this right before you migrate.**
+> Randomized Always Encrypted produces a different ciphertext each time, so
+> `WHERE col = ?` can never match. Any column you look a row up by — a login
+> identifier above all — must be **Deterministic**, or authentication cannot
+> work. Deterministic leaks equality (two equal plaintexts share a ciphertext),
+> so use it only where lookup is genuinely required.
+>
+> **Never store a salted hash in a column you look up by.** BCrypt and Argon2
+> salt per call, so `WHERE token_hash = ?` cannot match. Verifying a password is
+> fine — you fetch the row by identifier, then call `matches()`. Finding a row
+> by token is not: hash refresh tokens with SHA-256 (they are already
+> high-entropy random, so they need no salt) and look up on that.
+>
+> **Column encryption keys must not live in a cloud KMS in an on-prem design.**
+> Pick a custody story consistent with your deployment and state it here.
 
 ### Security Architecture Controls
 
 | Threat (Phase 2 ref) | Control | Implementation in SQL Server |
 |---|---|---|
-| Unauthorised data access (STRIDE-I) | Row-Level Security (RLS) | RLS policy on `loan_applications` and `documents`: `FILTER PREDICATE` checks `SESSION_CONTEXT(N'userId')` matches `applicant_id` |
-| PII column exposure (STRIDE-I) | Always Encrypted | `email`, `phone`, `date_of_birth` encrypted at driver level (mssql-jdbc); plaintext never reaches SQL Server engine |
-| Credential theft (STRIDE-S) | Password hashing | BCrypt via Spring Security — stored in `password_hash`; column is `NVARCHAR(72)` (BCrypt output length) |
+| Unauthorised data access (STRIDE-I) | Row-Level Security (RLS) | RLS policy on `[core_records]` and `[attachments]`: `FILTER PREDICATE` checks `SESSION_CONTEXT(N'userId')` matches the owning actor id. **Do not put RLS on the table you authenticate against** — the session context is unset before login, so the lookup would return zero rows |
+| PII column exposure (STRIDE-I) | Always Encrypted | Encrypted at driver level (mssql-jdbc); plaintext never reaches the SQL Server engine. Mode per the classification table above |
+| Credential theft (STRIDE-S) | Password hashing | BCrypt via Spring Security, stored in `password_hash`. Size the column for the algorithm: BCrypt emits 60 characters, so `CHAR(60)` — or size for Argon2 if you use it |
 | Migration data loss (STRIDE-T) | Safe multi-step migration pattern | Breaking changes use: (1) add new column → (2) dual-write period → (3) backfill → (4) drop old column |
 | Excessive DB privilege (STRIDE-E) | Least-privilege SQL logins | Three logins: `appuser` (DML only), `flywayuser` (DDL only), `readonlyuser` (SELECT only) — see matrix below |
-| Audit trail tampering (STRIDE-T) | Temporal tables + permission restriction | `loan_applications_history` managed by SQL Server; `appuser` has no permissions on history table; history queryable via `FOR SYSTEM_TIME` only |
+| Audit trail tampering (STRIDE-T) | Temporal tables + permission restriction | `[core_records_history]` managed by SQL Server. `appuser` gets no `INSERT`/`UPDATE`/`DELETE` on the history table, but **does** need `SELECT` on it — a `FOR SYSTEM_TIME` query reads the history table, and without that grant every history query fails |
 | SQL injection (STRIDE-T) | Hibernate parameterised queries | Hibernate generates `sp_executesql` with typed parameters; no `@NativeQuery` with string concatenation permitted |
 
 ### SQL Server Login Matrix
 
 | Login | Permissions | Used by |
 |---|---|---|
-| `appuser` | `SELECT`, `INSERT`, `UPDATE`, `DELETE` on application tables | Backend application at runtime (injected via HashiCorp Vault) |
-| `flywayuser` | `CREATE TABLE`, `ALTER TABLE`, `DROP TABLE`, `CREATE INDEX` | Flyway migration job in CI/CD pipeline only |
+| `appuser` | `SELECT`, `INSERT`, `UPDATE`, `DELETE` on application tables; `SELECT` only on history tables | Backend application at runtime (credentials injected via HashiCorp Vault) |
+| `flywayuser` | `CREATE`/`ALTER`/`DROP TABLE`, `CREATE INDEX`, plus `ALTER ANY SECURITY POLICY` and `ALTER ANY SCHEMA` if your migrations manage RLS | Flyway migration job in the CI pipeline only |
 | `readonlyuser` | `SELECT` on all tables (excluding history tables) | Reporting, read replicas, analytics queries |
 
 ### Row-Level Security — example implementation
@@ -180,24 +216,33 @@ WITH (SYSTEM_VERSIONING = ON (HISTORY_TABLE = dbo.loan_applications_history));
 EXEC sp_set_session_context N'userId', @userId;
 
 -- RLS predicate function
-CREATE FUNCTION dbo.fn_applicant_rls_predicate(@applicant_id UNIQUEIDENTIFIER)
+CREATE FUNCTION dbo.fn_owner_rls_predicate(@owner_id UNIQUEIDENTIFIER)
 RETURNS TABLE WITH SCHEMABINDING AS
 RETURN SELECT 1 AS result
 WHERE
-    CAST(SESSION_CONTEXT(N'userId') AS UNIQUEIDENTIFIER) = @applicant_id
-    OR IS_MEMBER('db_admin') = 1;
+    CAST(SESSION_CONTEXT(N'userId') AS UNIQUEIDENTIFIER) = @owner_id
+    -- Escape hatch for privileged reads. Name a role you actually create in a
+    -- migration; IS_MEMBER() against a non-existent role returns NULL, not 1,
+    -- so a typo here silently locks admins out rather than failing loudly.
+    OR IS_MEMBER('[your_privileged_db_role]') = 1;
 
--- Apply to loan_applications table
-CREATE SECURITY POLICY ApplicantDataPolicy
-ADD FILTER PREDICATE dbo.fn_applicant_rls_predicate(applicant_id)
-ON dbo.loan_applications WITH (STATE = ON);
+-- Apply to the owned table
+CREATE SECURITY POLICY OwnerDataPolicy
+ADD FILTER PREDICATE dbo.fn_owner_rls_predicate([owner_id])
+ON dbo.[core_records] WITH (STATE = ON);
 ```
+
+> **Plan RLS for every role that reads the data, not just the owner.** An admin
+> UI, a reviewer queue and a reporting login each need either a predicate branch
+> or a separate login outside the policy. Decide this before writing the
+> migration — retrofitting it means rewriting the predicate and re-testing every
+> read path.
 
 ---
 
 ## Migration Conventions
 
-- **Naming:** `V<version>__<description>.sql` — Flyway format (e.g. `V20240315001__add_loan_status_index.sql`)
+- **Naming:** `V<version>__<description>.sql` — Flyway format (e.g. `V20240315001__add_status_index.sql`)
 - **Never edit** a migration that has been applied to any environment — create a new one
 - **Every destructive migration** requires a prior data migration script to preserve data
 - **Breaking changes use a 3-step pattern:**

@@ -65,7 +65,7 @@ INTERNAL ZONE (trusted — private network)
 EXTERNAL SERVICES ZONE (semi-trusted — third-party APIs)
                      |
                      v
-  [External API — e.g. Equifax, Auth0, DocuSign]
+  [External API — name each third party you call]
 =========================================================
 ```
 

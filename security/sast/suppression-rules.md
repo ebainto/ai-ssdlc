@@ -21,7 +21,7 @@
 ```java
 // Semgrep — Java example
 // nosemgrep: java.lang.security.audit.formatted-sql-string
-String query = "SELECT id FROM applicants WHERE status = '" + status + "'";
+String query = "SELECT id FROM [your_table] WHERE status = '" + status + "'";
 // ^ safe: status is validated against a strict allowlist before reaching this point (see ApplicationValidator.java:47)
 ```
 

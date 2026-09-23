@@ -28,7 +28,7 @@ backend/CLAUDE.md (what Claude loads)
 │       content maintained here permanently
 │
 └── @import statements — pull in external documents
-    └── @./docs/backend/requirements/your-requirements-file.md
+    └── @../docs/backend/requirements/your-requirements-file.md
         → Claude reads this file and treats it as part of
           backend/CLAUDE.md — indistinguishable from inline content
 ```
@@ -60,8 +60,8 @@ Store business and functional requirements documents here. Convert Word document
 
 ```
 docs/backend/requirements/
-├── loan-portal_business-requirements_v2.md     ← Claude reads this
-└── loan-portal_business-requirements_v2.docx   ← original; human reference only
+├── [system]_business-requirements_v2.md     ← Claude reads this
+└── [system]_business-requirements_v2.docx   ← original; human reference only
 ```
 
 **Step 2 — Add `@import` to `backend/CLAUDE.md`**
@@ -69,7 +69,7 @@ docs/backend/requirements/
 ```markdown
 ## Application Specification
 
-@./docs/backend/requirements/loan-portal_business-requirements_v2.md
+@../docs/backend/requirements/[system]_business-requirements_v2.md
 
 **Purpose:** Processes loan applications...  ← your inline content continues here
 ```
@@ -78,7 +78,7 @@ docs/backend/requirements/
 
 ```markdown
 <!-- update this line only: -->
-@./docs/backend/requirements/loan-portal_business-requirements_v3.md
+@../docs/backend/requirements/[system]_business-requirements_v3.md
 ```
 
 Claude picks up the new version immediately. Keep older versions — they are your audit trail.
@@ -95,16 +95,16 @@ The backend exposes a REST API documented via Springdoc. The generated OpenAPI s
 
 ```
 docs/backend/design/
-├── loan-portal_openapi-spec_v1.yaml            ← Generated OpenAPI spec (Springdoc export)
-├── loan-portal_openapi-spec_v1.md              ← Human-readable summary; @import for Claude
-├── loan-portal_api-design_v1.md                ← API design decisions from tech lead
-└── loan-portal_service-sequence-diagram_v1.pdf ← Sequence diagrams — prompt-only
+├── [system]_openapi-spec_v1.yaml            ← Generated OpenAPI spec (Springdoc export)
+├── [system]_openapi-spec_v1.md              ← Human-readable summary; @import for Claude
+├── [system]_api-design_v1.md                ← API design decisions from tech lead
+└── [system]_service-sequence-diagram_v1.pdf ← Sequence diagrams — prompt-only
 ```
 
 **How the frontend team uses the OpenAPI spec:**
 
 ```
-@docs/backend/design/loan-portal_openapi-spec_v1.yaml
+@docs/backend/design/[system]_openapi-spec_v1.yaml
 Generate a TypeScript Angular HttpClient service for the /api/v1/applications endpoints
 based on this OpenAPI specification.
 ```
@@ -114,8 +114,8 @@ based on this OpenAPI specification.
 ```markdown
 ## Application Specification
 
-@./docs/backend/design/loan-portal_api-design_v1.md
-@./docs/backend/requirements/loan-portal_business-requirements_v2.md
+@../docs/backend/design/[system]_api-design_v1.md
+@../docs/backend/requirements/[system]_business-requirements_v2.md
 
 **Purpose:** Processes loan applications...
 ```
@@ -126,8 +126,8 @@ Technical design documents from the tech lead or solutions architect define comp
 
 ```
 docs/backend/design/
-├── loan-portal_component-design_v1.md     ← @import into backend/CLAUDE.md
-└── loan-portal_auth-flow-design_v1.md     ← @import into backend/CLAUDE.md
+├── [system]_component-design_v1.md     ← @import into backend/CLAUDE.md
+└── [system]_auth-flow-design_v1.md     ← @import into backend/CLAUDE.md
 ```
 
 ### Sequence diagrams and flow diagrams
@@ -135,7 +135,7 @@ docs/backend/design/
 Diagrams (PDF, PNG) cannot be `@imported` — reference them in the prompt when needed:
 
 ```
-@docs/backend/design/loan-portal_service-sequence-diagram_v1.pdf
+@docs/backend/design/[system]_service-sequence-diagram_v1.pdf
 Does the error handling in LoanApplicationService.java match the failure path shown in this diagram?
 ```
 
@@ -157,9 +157,9 @@ Does the error handling in LoanApplicationService.java match the failure path sh
 
 | Example filename | What it is |
 |---|---|
-| `loan-portal_business-requirements_v2.md` | Converted requirements — Claude reads this |
-| `loan-portal_business-requirements_v2.docx` | Original Word — human reference |
-| `loan-portal_api-design_v1.md` | API design document — Claude reads this |
-| `loan-portal_openapi-spec_v1.yaml` | Generated OpenAPI spec — frontend team reference |
-| `loan-portal_component-design_v1.md` | Component design — Claude reads this |
-| `loan-portal_service-sequence-diagram_v1.pdf` | Sequence diagram — prompt-only |
+| `[system]_business-requirements_v2.md` | Converted requirements — Claude reads this |
+| `[system]_business-requirements_v2.docx` | Original Word — human reference |
+| `[system]_api-design_v1.md` | API design document — Claude reads this |
+| `[system]_openapi-spec_v1.yaml` | Generated OpenAPI spec — frontend team reference |
+| `[system]_component-design_v1.md` | Component design — Claude reads this |
+| `[system]_service-sequence-diagram_v1.pdf` | Sequence diagram — prompt-only |

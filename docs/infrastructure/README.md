@@ -26,7 +26,7 @@ infrastructure/CLAUDE.md (what Claude loads)
 │       stable, structured content maintained here permanently
 │
 └── @import statements — pull in external documents
-    └── @./docs/infrastructure/design/loan-portal_network-design_v1.md
+    └── @../docs/infrastructure/design/[system]_network-design_v1.md
         → Claude reads this file and treats it as part of
           infrastructure/CLAUDE.md — indistinguishable from inline content
 ```
@@ -58,8 +58,8 @@ Store infrastructure requirements and hosting constraints here.
 
 ```
 docs/infrastructure/requirements/
-├── loan-portal_infra-requirements_v1.md     ← Claude reads this
-└── loan-portal_infra-requirements_v1.docx   ← original; human reference only
+├── [system]_infra-requirements_v1.md     ← Claude reads this
+└── [system]_infra-requirements_v1.docx   ← original; human reference only
 ```
 
 **Step 2 — Add `@import` to `infrastructure/CLAUDE.md`**
@@ -67,7 +67,7 @@ docs/infrastructure/requirements/
 ```markdown
 ## Application Specification
 
-@./docs/infrastructure/requirements/loan-portal_infra-requirements_v1.md
+@../docs/infrastructure/requirements/[system]_infra-requirements_v1.md
 
 **Environment overview:**  ← your inline content continues here
 ```
@@ -76,7 +76,7 @@ docs/infrastructure/requirements/
 
 ```markdown
 <!-- update this line only: -->
-@./docs/infrastructure/requirements/loan-portal_infra-requirements_v2.md
+@../docs/infrastructure/requirements/[system]_infra-requirements_v2.md
 ```
 
 ---
@@ -91,9 +91,9 @@ Written design decisions from the solutions architect or infrastructure team —
 
 ```
 docs/infrastructure/design/
-├── loan-portal_network-design_v1.md          ← network architecture decisions — @import
-├── loan-portal_vault-policy-design_v1.md     ← Vault access policy design — @import
-└── loan-portal_monitoring-design_v1.md       ← Prometheus/Grafana/Loki design — @import
+├── [system]_network-design_v1.md          ← network architecture decisions — @import
+├── [system]_vault-policy-design_v1.md     ← Vault access policy design — @import
+└── [system]_monitoring-design_v1.md       ← Prometheus/Grafana/Loki design — @import
 ```
 
 Add `@import` to `infrastructure/CLAUDE.md`:
@@ -101,9 +101,9 @@ Add `@import` to `infrastructure/CLAUDE.md`:
 ```markdown
 ## Application Specification
 
-@./docs/infrastructure/requirements/loan-portal_infra-requirements_v1.md
-@./docs/infrastructure/design/loan-portal_network-design_v1.md
-@./docs/infrastructure/design/loan-portal_vault-policy-design_v1.md
+@../docs/infrastructure/requirements/[system]_infra-requirements_v1.md
+@../docs/infrastructure/design/[system]_network-design_v1.md
+@../docs/infrastructure/design/[system]_vault-policy-design_v1.md
 
 **Environment overview:**  ← your inline content continues here
 ```
@@ -113,7 +113,7 @@ Add `@import` to `infrastructure/CLAUDE.md`:
 ```
 Based on the Vault policy design in my context, generate the HCL policy file
 for the backend application role. The design specifies read-only access to
-secret/loan-portal/database/* and secret/loan-portal/auth0/*.
+secret/[system]/database/* and secret/[system]/[idp]/*.
 ```
 
 **Example — asking Claude to review a Docker Compose config against the network design:**
@@ -130,24 +130,24 @@ Network diagrams, physical server rack diagrams, and infrastructure topology ima
 
 ```
 docs/infrastructure/design/
-├── loan-portal_network-diagram_v2.pdf        ← network topology — prompt-only
-├── loan-portal_server-topology_v1.pdf        ← physical/logical server layout — prompt-only
-└── loan-portal_monitoring-dashboard-spec_v1.pdf ← dashboard layout spec — prompt-only
+├── [system]_network-diagram_v2.pdf        ← network topology — prompt-only
+├── [system]_server-topology_v1.pdf        ← physical/logical server layout — prompt-only
+└── [system]_monitoring-dashboard-spec_v1.pdf ← dashboard layout spec — prompt-only
 ```
 
 **Example — configuring Nginx to match a network diagram:**
 
 ```
-@docs/infrastructure/design/loan-portal_network-diagram_v2.pdf
+@docs/infrastructure/design/[system]_network-diagram_v2.pdf
 The network diagram shows the Nginx reverse proxy sits in the DMZ and routes
-to the backend on the internal network. Review infrastructure/nginx/loan-portal.conf
+to the backend on the internal network. Review infrastructure/nginx/[system].conf
 and confirm the upstream server addresses match the internal IP ranges shown on page 2.
 ```
 
 **Example — building a Grafana dashboard from a spec:**
 
 ```
-@docs/infrastructure/design/loan-portal_monitoring-dashboard-spec_v1.pdf
+@docs/infrastructure/design/[system]_monitoring-dashboard-spec_v1.pdf
 The monitoring spec on page 3 defines the SLA dashboard panels. Generate the
 Grafana dashboard JSON for the Loan Application SLA panel using our Prometheus
 metrics as defined in infrastructure/monitoring/prometheus.yml.
@@ -159,7 +159,7 @@ If the infrastructure team provides a written capacity plan with sizing targets 
 
 ```
 docs/infrastructure/design/
-└── loan-portal_capacity-plan_v1.md
+└── [system]_capacity-plan_v1.md
 ```
 
 ---
@@ -181,11 +181,11 @@ docs/infrastructure/design/
 
 | Example filename | What it is |
 |---|---|
-| `loan-portal_infra-requirements_v1.md` | Converted requirements — Claude reads this |
-| `loan-portal_infra-requirements_v1.docx` | Original Word — human reference |
-| `loan-portal_network-design_v1.md` | Network design decisions — Claude reads this |
-| `loan-portal_vault-policy-design_v1.md` | Vault policy design — Claude reads this |
-| `loan-portal_monitoring-design_v1.md` | Monitoring/alerting design — Claude reads this |
-| `loan-portal_capacity-plan_v1.md` | Capacity targets — Claude reads this |
-| `loan-portal_network-diagram_v2.pdf` | Network topology diagram — prompt-only |
-| `loan-portal_server-topology_v1.pdf` | Server layout diagram — prompt-only |
+| `[system]_infra-requirements_v1.md` | Converted requirements — Claude reads this |
+| `[system]_infra-requirements_v1.docx` | Original Word — human reference |
+| `[system]_network-design_v1.md` | Network design decisions — Claude reads this |
+| `[system]_vault-policy-design_v1.md` | Vault policy design — Claude reads this |
+| `[system]_monitoring-design_v1.md` | Monitoring/alerting design — Claude reads this |
+| `[system]_capacity-plan_v1.md` | Capacity targets — Claude reads this |
+| `[system]_network-diagram_v2.pdf` | Network topology diagram — prompt-only |
+| `[system]_server-topology_v1.pdf` | Server layout diagram — prompt-only |

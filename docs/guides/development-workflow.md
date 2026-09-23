@@ -259,7 +259,7 @@ approve
 ```
 ---
 Save instruction:
-  File:    ./ssdlc/loan-portal_threat-model_v2.md
+  File:    ./ssdlc/[system]_threat-model_v2.md
   Version: v2 — if v1 exists, save as v2 (never overwrite)
   Create folder if absent: mkdir -p ./ssdlc
 ---
@@ -268,7 +268,7 @@ Save instruction:
 **What you do:**
 1. Read the save instruction block
 2. **BEFORE proceeding to next skill**, save the file to exactly that path
-3. Verify file was created: `ls -la ./ssdlc/loan-portal_threat-model_v2.md`
+3. Verify file was created: `ls -la ./ssdlc/[system]_threat-model_v2.md`
 4. **Then** move to next step
 
 **If you don't save:**

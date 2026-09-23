@@ -26,7 +26,7 @@ database/CLAUDE.md (what Claude loads)
 │       structured content maintained here permanently
 │
 └── @import statements — pull in external documents
-    └── @./docs/database/design/loan-portal_data-dictionary_v1.md
+    └── @../docs/database/design/[system]_data-dictionary_v1.md
         → Claude reads this file and treats it as part of
           database/CLAUDE.md — indistinguishable from inline content
 ```
@@ -59,8 +59,8 @@ Store data requirements and entity glossary documents here.
 
 ```
 docs/database/requirements/
-├── loan-portal_entity-glossary_v1.md     ← Claude reads this
-└── loan-portal_entity-glossary_v1.docx   ← original; human reference only
+├── [system]_entity-glossary_v1.md     ← Claude reads this
+└── [system]_entity-glossary_v1.docx   ← original; human reference only
 ```
 
 **Step 2 — Add `@import` to `database/CLAUDE.md`**
@@ -68,7 +68,7 @@ docs/database/requirements/
 ```markdown
 ## Application Specification — Data Model
 
-@./docs/database/requirements/loan-portal_entity-glossary_v1.md
+@../docs/database/requirements/[system]_entity-glossary_v1.md
 
 **Core entities:**  ← your inline summary continues here
 ```
@@ -77,7 +77,7 @@ docs/database/requirements/
 
 ```markdown
 <!-- update this line only: -->
-@./docs/database/requirements/loan-portal_entity-glossary_v2.md
+@../docs/database/requirements/[system]_entity-glossary_v2.md
 ```
 
 ---
@@ -95,15 +95,21 @@ Convert Excel data dictionaries to a Markdown table. This is the most valuable d
 ```markdown
 ## Data Dictionary
 
+Shape to follow — replace the bracketed names with your own tables:
+
 | Table | Column | Data type | Nullable | Description | Classification |
 |---|---|---|---|---|---|
-| applicants | id | UNIQUEIDENTIFIER | No | Primary key — NEWSEQUENTIALID() | Internal |
-| applicants | email | NVARCHAR(255) | No | Applicant login email — Always Encrypted (AES-256) | PII — Confidential |
-| applicants | full_name | NVARCHAR(200) | No | Full legal name | PII — Internal |
-| applicants | date_of_birth | DATE | No | Date of birth — Always Encrypted (AES-256) | PII — Confidential |
-| applicants | phone | NVARCHAR(20) | Yes | Mobile phone — Always Encrypted (AES-256) | PII — Confidential |
-| loan_applications | id | UNIQUEIDENTIFIER | No | Primary key | Internal |
-| loan_applications | status | NVARCHAR(50) | No | Workflow status: DRAFT, SUBMITTED, UNDER_REVIEW, APPROVED, REJECTED | Internal |
+| `[actors]` | id | UNIQUEIDENTIFIER | No | Primary key — `NEWID()`, not `NEWSEQUENTIALID()`, because it appears in URLs | Internal |
+| `[actors]` | `[login_id]` | NVARCHAR(255) | No | Login identifier — Always Encrypted **Deterministic** (equality lookup required) | PII — Confidential |
+| `[actors]` | `[full_name]` | NVARCHAR(200) | No | Full legal name | PII — Internal |
+| `[actors]` | `[date_of_birth]` | DATE | No | Always Encrypted (Randomized — never looked up by) | PII — Confidential |
+| `[actors]` | `[phone]` | NVARCHAR(20) | Yes | Always Encrypted (Randomized) | PII — Confidential |
+| `[core_records]` | id | UNIQUEIDENTIFIER | No | Primary key — `NEWID()` | Internal |
+| `[core_records]` | status | NVARCHAR(50) | No | Workflow status — list your legal states | Internal |
+
+> Encryption mode is not cosmetic: a Randomized column can never satisfy
+> `WHERE col = ?`, so any column you authenticate or look up by must be
+> Deterministic. See `database/CLAUDE.md` for the full rule.
 | loan_applications | loan_amount | DECIMAL(18,2) | No | Requested loan amount in AUD | Financial — Confidential |
 ```
 
@@ -111,8 +117,8 @@ Store the converted dictionary in `docs/database/design/`:
 
 ```
 docs/database/design/
-├── loan-portal_data-dictionary_v1.md     ← Markdown table — Claude reads this
-└── loan-portal_data-dictionary_v1.xlsx   ← Original Excel — human reference only
+├── [system]_data-dictionary_v1.md     ← Markdown table — Claude reads this
+└── [system]_data-dictionary_v1.xlsx   ← Original Excel — human reference only
 ```
 
 Add `@import` to `database/CLAUDE.md`:
@@ -120,8 +126,8 @@ Add `@import` to `database/CLAUDE.md`:
 ```markdown
 ## Application Specification — Data Model
 
-@./docs/database/design/loan-portal_data-dictionary_v1.md
-@./docs/database/requirements/loan-portal_entity-glossary_v1.md
+@../docs/database/design/[system]_data-dictionary_v1.md
+@../docs/database/requirements/[system]_entity-glossary_v1.md
 
 **Core entities:**  ← your inline summary continues here
 ```
@@ -130,7 +136,7 @@ Add `@import` to `database/CLAUDE.md`:
 
 ```markdown
 <!-- update this line only: -->
-@./docs/database/design/loan-portal_data-dictionary_v2.md
+@../docs/database/design/[system]_data-dictionary_v2.md
 ```
 
 ### Column-level classification register
@@ -139,11 +145,11 @@ If the data classification register is maintained as a separate document from th
 
 ```
 docs/database/design/
-└── loan-portal_data-classification-register_v1.md
+└── [system]_data-classification-register_v1.md
 ```
 
 ```markdown
-@./docs/database/design/loan-portal_data-classification-register_v1.md
+@../docs/database/design/[system]_data-classification-register_v1.md
 ```
 
 ### ER diagrams (PDF/images — prompt-only)
@@ -152,13 +158,13 @@ ER diagrams **cannot be `@imported`**. Reference them in the prompt when verifyi
 
 ```
 docs/database/design/
-└── loan-portal_er-diagram_v2.pdf     ← ER diagram — prompt-only
+└── [system]_er-diagram_v2.pdf     ← ER diagram — prompt-only
 ```
 
 **Example — verifying a migration against the ER diagram:**
 
 ```
-@docs/database/design/loan-portal_er-diagram_v2.pdf
+@docs/database/design/[system]_er-diagram_v2.pdf
 Review migration V015 and confirm the new foreign key relationship matches
 the relationship shown between loan_applications and documents in this ER diagram.
 ```
@@ -181,9 +187,9 @@ the relationship shown between loan_applications and documents in this ER diagra
 
 | Example filename | What it is |
 |---|---|
-| `loan-portal_data-dictionary_v1.md` | Converted Markdown table — Claude reads this |
-| `loan-portal_data-dictionary_v1.xlsx` | Original Excel — human reference |
-| `loan-portal_entity-glossary_v1.md` | Business definitions per entity — Claude reads this |
-| `loan-portal_data-classification-register_v1.md` | Column classification — Claude reads this |
-| `loan-portal_er-diagram_v2.pdf` | ER diagram — prompt-only |
-| `loan-portal_data-retention-policy_v1.md` | Retention rules per entity — Claude reads this |
+| `[system]_data-dictionary_v1.md` | Converted Markdown table — Claude reads this |
+| `[system]_data-dictionary_v1.xlsx` | Original Excel — human reference |
+| `[system]_entity-glossary_v1.md` | Business definitions per entity — Claude reads this |
+| `[system]_data-classification-register_v1.md` | Column classification — Claude reads this |
+| `[system]_er-diagram_v2.pdf` | ER diagram — prompt-only |
+| `[system]_data-retention-policy_v1.md` | Retention rules per entity — Claude reads this |

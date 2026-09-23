@@ -220,7 +220,7 @@ Add an `@import` line to the layer's `CLAUDE.md`, in the Application Specificati
 ```markdown
 ## Application Specification
 
-@./docs/backend/requirements/loan-application-requirements.md
+@../docs/backend/requirements/[system]_business-requirements_v1.md
 
 <!-- The rest of your Application Specification content -->
 ```
@@ -288,7 +288,7 @@ In `backend/CLAUDE.md`, in the Application Specification section:
 ```markdown
 ## Application Specification
 
-@./docs/backend/requirements/loan-application-requirements-v2.md
+@../docs/backend/requirements/[system]_business-requirements_v2.md
 
 ### Domain Areas
 ...rest of your existing content...
@@ -481,7 +481,7 @@ New project teams often ask whether the three security-related locations in this
 
 - `backend/CLAUDE.md` Security Architecture → "JWT RS256 validated using Spring Security `JwtDecoder`; token claims extracted in `SecurityContext`" ← backend implementation detail
 - `security/policies/encryption-policy.md` → "All inter-service tokens must use RS256 asymmetric signing. HS256 is not permitted." ← the cross-cutting policy that drove that backend decision
-- `docs/security/design/loan-portal_asvs-mapping_v1.md` → "ASVS V3.5.1 — tokens must be invalidated on logout — Status: Gap" ← the compliance input that revealed the requirement
+- `docs/security/design/[system]_asvs-mapping_v1.md` → "ASVS V3.5.1 — tokens must be invalidated on logout — Status: Gap" ← the compliance input that revealed the requirement
 
 **Why you cannot collapse them:**
 
@@ -511,7 +511,7 @@ A common question once teams understand the three locations: is `security/polici
 
 **Concrete example — encryption algorithm choice:**
 
-1. Auditor delivers OWASP ASVS L2 mapping → saved to `docs/security/design/loan-portal_asvs-mapping_v1.md`
+1. Auditor delivers OWASP ASVS L2 mapping → saved to `docs/security/design/[system]_asvs-mapping_v1.md`
 2. Security engineer reads it, sees ASVS V6.2.2 prohibits SHA-1 → writes the rule into `security/policies/encryption-policy.md`: *"SHA-1 is prohibited for all cryptographic purposes"*
 3. Backend team reads `security/policies/encryption-policy.md` and adds to `backend/CLAUDE.md` Security Architecture: *"SHA-1 prohibited — use SHA-256 minimum (encryption-policy.md V6.2.2)"*
 4. CI pipeline enforces it via a Semgrep rule in `security/sast/semgrep.yml` *(you must author this file and the CI job — neither ships with the template)*

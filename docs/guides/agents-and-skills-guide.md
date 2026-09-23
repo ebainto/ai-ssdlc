@@ -345,23 +345,38 @@ Each layer CLAUDE.md has an **Application Specification** section with a how-to 
 
 **Pattern:**
 ```
-@./docs/[layer]/design/[filename].[ext]
+@../docs/[layer]/design/[filename].[ext]
 ```
 
 Add the @import line in the layer CLAUDE.md immediately after the how-to comment block. From that point, every agent that loads the layer CLAUDE.md also receives the imported document — no configuration needed.
 
-**Current @imports in this template:**
+**The @import wiring, layer by layer:**
 
-| Layer CLAUDE.md | @imported document | Purpose |
+| Layer CLAUDE.md | Document to @import | Purpose |
 |---|---|---|
-| `backend/CLAUDE.md` | `docs/backend/design/openapi-spec_v1.yaml` | API contract — all 9 endpoints with request/response schemas |
-| `frontend/CLAUDE.md` | `docs/backend/design/openapi-spec_v1.yaml` | Same contract — frontend consumes and must conform to the backend API |
-| `database/CLAUDE.md` | `docs/database/design/loan-portal_data-dictionary_v1.md` | Column-level data dictionary for all 6 tables, indexes, RLS, and login matrix |
-| `infrastructure/CLAUDE.md` | `docs/infrastructure/design/loan-portal_infrastructure-design_v1.md` | Server inventory, network topology, firewall rules, Vault secret paths, monitoring targets |
-| `integration/CLAUDE.md` | `docs/integration/requirements/external-services-summary_v1.md` | Auth0, Equifax, SendGrid, DocuSign, and RabbitMQ API contracts and integration patterns |
-| `security/CLAUDE.md` | `docs/security/design/loan-portal_asvs-mapping_v1.md` | OWASP ASVS Level 2 full control mapping — requirement, status, and implementation per control |
+| `backend/CLAUDE.md` | `docs/backend/design/[system]_openapi-spec_v1.yaml` | API contract — every endpoint with request/response schemas |
+| `frontend/CLAUDE.md` | `docs/backend/design/[system]_openapi-spec_v1.yaml` | Same contract — the frontend consumes it and must conform |
+| `database/CLAUDE.md` | `docs/database/design/[system]_data-dictionary_v1.md` | Column-level dictionary: types, classification, indexes, RLS, login matrix |
+| `infrastructure/CLAUDE.md` | `docs/infrastructure/design/[system]_infrastructure-design_v1.md` | Server inventory, network topology, firewall rules, secret paths, monitoring targets |
+| `integration/CLAUDE.md` | `docs/integration/requirements/[system]_external-services_v1.md` | One contract per external provider: auth method, PII sent, lawful basis, error codes |
+| `security/CLAUDE.md` | `docs/security/design/[system]_asvs-mapping_v1.md` | Control-framework mapping — requirement, status and implementation per control |
 
-Frontend and backend both import the same OpenAPI spec because both need the contract: backend owns it, frontend is bound by it. When you update the spec to v2, update both @import lines.
+**These @imports ship commented out.** The template has no design documents of
+its own, so a live import would point at a file that does not exist. Uncomment
+the line in a layer once you have written that layer's document.
+
+**Paths are relative to the importing file, not the repo root.** From
+`backend/CLAUDE.md`, the correct form is `@../docs/backend/design/...`. Writing
+`@./docs/...` resolves to `backend/docs/backend/...`, which silently imports
+nothing.
+
+For a worked set of all five documents, see `examples/loan-portal/` — read it
+for expected depth, then write your own. Do not @import it: it describes a
+different system, and Claude would treat that domain as yours.
+
+Frontend and backend import the same OpenAPI spec because both need the
+contract: the backend owns it, the frontend is bound by it. When you bump the
+spec to v2, update both @import lines.
 
 The security layer's ASVS mapping is the compliance evidence layer — it is what auditors and the Security Auditor Agent read to verify control coverage.
 
@@ -1832,7 +1847,7 @@ When an agent makes a mistake in a real session, write a regression eval case im
     description: >
       Regression: Dev Lead wrote a Spring Boot controller directly instead of routing to QA Engineer.
       Found in session 2026-09-21. Fixed in OA1-triage-and-route.md.
-    input: "Implement the GET /applicants/me endpoint for story BE-042"
+    input: "Implement the GET /[actors]/me endpoint for story BE-042"
     expect:
       contains_all:
         - "QA Engineer"

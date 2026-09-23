@@ -384,14 +384,14 @@ Agents refuse to run if their required gate is not approved. The Dev Lead enforc
 
 When you add an @import to a layer CLAUDE.md, every agent that loads that layer receives the imported document automatically. No agent configuration needed — the layer file is the single update point.
 
-| Layer CLAUDE.md | @imported document | Purpose |
+| Layer CLAUDE.md | Document to @import | Purpose |
 |---|---|---|
-| `backend/CLAUDE.md` | `docs/backend/design/openapi-spec_v1.yaml` | API contract — 9 endpoints, request/response schemas |
-| `frontend/CLAUDE.md` | `docs/backend/design/openapi-spec_v1.yaml` | Same contract — frontend must conform to backend API |
-| `database/CLAUDE.md` | `docs/database/design/loan-portal_data-dictionary_v1.md` | Column-level data dictionary for all 6 tables |
-| `infrastructure/CLAUDE.md` | `docs/infrastructure/design/loan-portal_infrastructure-design_v1.md` | Server topology, network design, Vault paths, monitoring |
-| `integration/CLAUDE.md` | `docs/integration/requirements/external-services-summary_v1.md` | Auth0, Equifax, SendGrid, DocuSign, RabbitMQ contracts |
-| `security/CLAUDE.md` | `docs/security/design/loan-portal_asvs-mapping_v1.md` | OWASP ASVS Level 2 control mapping — all requirements |
+| `backend/CLAUDE.md` | `docs/backend/design/[system]_openapi-spec_v1.yaml` *(ships commented out)* | API contract — endpoints, request/response schemas |
+| `frontend/CLAUDE.md` | `docs/backend/design/[system]_openapi-spec_v1.yaml` *(ships commented out)* | Same contract — frontend must conform |
+| `database/CLAUDE.md` | `docs/database/design/[system]_data-dictionary_v1.md` *(ships commented out)* | Column dictionary, classification, RLS |
+| `infrastructure/CLAUDE.md` | `docs/infrastructure/design/[system]_infrastructure-design_v1.md` *(ships commented out)* | Servers, network, secret paths, monitoring |
+| `integration/CLAUDE.md` | `docs/integration/requirements/[system]_external-services_v1.md` *(ships commented out)* | Per-provider contracts and PII sent |
+| `security/CLAUDE.md` | `docs/security/design/[system]_asvs-mapping_v1.md` *(ships commented out)* | Control-framework mapping |
 
 **Rules:** YAML and Markdown files can be @imported directly. Convert Word docs to Markdown first. Large PDFs (100+ pages): reference with `@` in the prompt only. When a document updates, increment its version suffix and update the @import line in the relevant layer CLAUDE.md files.
 
@@ -463,7 +463,7 @@ When an agent makes a mistake in a real session, add a case to the relevant eval
 ```yaml
   - id: regression-2026-09-21-dev-lead-wrote-code-directly
     description: "Regression: Dev Lead wrote controller code instead of routing to QA Engineer"
-    input: "Implement the GET /applicants/me endpoint for story BE-042"
+    input: "Implement the GET /[actors]/me endpoint for story BE-042"
     expect:
       contains_all:
         - "QA Engineer"

@@ -45,7 +45,7 @@ security/CLAUDE.md (what Claude loads)
 │       content maintained here permanently
 │
 └── @import statements — pull in external documents
-    └── @./docs/security/design/loan-portal_asvs-mapping_v1.md
+    └── @../docs/security/design/[system]_asvs-mapping_v1.md
         → Claude reads this file and treats it as part of
           security/CLAUDE.md — indistinguishable from inline content
 ```
@@ -74,9 +74,9 @@ security/CLAUDE.md (what Claude loads)
 
 ```
 docs/security/design/
-├── loan-portal_asvs-mapping_v1.md      ← OWASP ASVS L2 controls mapped to this project's stack; @import this
-├── loan-portal_iso27001-gap-analysis_v1.md  ← Gap analysis for this project; @import this
-└── loan-portal_risk-assessment_v1.md    ← Risk register for this project; @import if needed
+├── [system]_asvs-mapping_v1.md      ← OWASP ASVS L2 controls mapped to this project's stack; @import this
+├── [system]_iso27001-gap-analysis_v1.md  ← Gap analysis for this project; @import this
+└── [system]_risk-assessment_v1.md    ← Risk register for this project; @import if needed
 ```
 
 Add `@import` to `security/CLAUDE.md` Application Specification section:
@@ -84,7 +84,7 @@ Add `@import` to `security/CLAUDE.md` Application Specification section:
 ```markdown
 ## Application Specification — Compliance Obligations
 
-@./docs/security/design/loan-portal_asvs-mapping_v1.md
+@../docs/security/design/[system]_asvs-mapping_v1.md
 
 | Framework | Applies | Reason | Key obligation |  ← your inline table continues here
 ```
@@ -93,10 +93,10 @@ Add `@import` to `security/CLAUDE.md` Application Specification section:
 
 ```markdown
 <!-- change this: -->
-@./docs/security/design/loan-portal_asvs-mapping_v1.md
+@../docs/security/design/[system]_asvs-mapping_v1.md
 
 <!-- to this: -->
-@./docs/security/design/loan-portal_asvs-mapping_v2.md
+@../docs/security/design/[system]_asvs-mapping_v2.md
 ```
 
 ---
@@ -111,9 +111,9 @@ A control framework mapping translates a regulatory standard into the specific c
 
 ```
 docs/security/design/
-├── loan-portal_asvs-mapping_v1.md          ← OWASP ASVS L2 controls mapped to Spring Boot/Angular
-├── loan-portal_iso27001-gap-analysis_v1.md ← Gap analysis specific to this project's current state
-└── loan-portal_compliance-control-map_v1.md ← Cross-framework control map (GDPR + PCI-DSS + ISO)
+├── [system]_asvs-mapping_v1.md          ← OWASP ASVS L2 controls mapped to Spring Boot/Angular
+├── [system]_iso27001-gap-analysis_v1.md ← Gap analysis specific to this project's current state
+└── [system]_compliance-control-map_v1.md ← Cross-framework control map (GDPR + PCI-DSS + ISO)
 ```
 
 **Example Markdown control mapping format:**
@@ -135,8 +135,8 @@ Add `@import` to `security/CLAUDE.md`:
 ```markdown
 ## Application Specification — Compliance Obligations
 
-@./docs/security/design/loan-portal_asvs-mapping_v1.md
-@./docs/security/design/loan-portal_iso27001-gap-analysis_v1.md
+@../docs/security/design/[system]_asvs-mapping_v1.md
+@../docs/security/design/[system]_iso27001-gap-analysis_v1.md
 
 | Framework | Applies | Reason | Key obligation |  ← your inline table continues here
 ```
@@ -155,7 +155,7 @@ A project-specific risk register that identifies technical security risks and mi
 
 ```
 docs/security/design/
-└── loan-portal_risk-assessment_v1.md
+└── [system]_risk-assessment_v1.md
 ```
 
 Only `@import` if the document is focused on this project and under ~10 pages. A generic 50-page risk assessment framework document is not appropriate to `@import` — extract the relevant risks into a project-specific summary first.
@@ -166,13 +166,13 @@ Security architecture diagrams (trust boundary diagrams, network security diagra
 
 ```
 docs/security/design/
-└── loan-portal_security-architecture-diagram_v1.pdf    ← prompt-only
+└── [system]_security-architecture-diagram_v1.pdf    ← prompt-only
 ```
 
 **Example — implementing a control from the security architecture:**
 
 ```
-@docs/security/design/loan-portal_security-architecture-diagram_v1.pdf
+@docs/security/design/[system]_security-architecture-diagram_v1.pdf
 The security architecture diagram on page 2 shows a WAF in front of the API Gateway.
 Our current Nginx config in infrastructure/nginx/ does not implement the rate limiting
 rules shown. Help me add rate limiting per the diagram.
@@ -207,7 +207,7 @@ Pen test reports are confidential. They reveal active vulnerabilities and must b
 - Reference in the prompt only when remediating a specific finding:
 
 ```
-@security/pen-test/loan-portal_pentest-report_2026-Q1.pdf
+@security/pen-test/[system]_pentest-report_2026-Q1.pdf
 Finding PT-07 describes a broken object-level authorisation issue on GET /api/v1/applications/{id}.
 Help me fix the authorisation check in LoanApplicationController.java.
 ```
@@ -220,9 +220,9 @@ Help me fix the authorisation check in LoanApplicationController.java.
 
 | Example filename | What it is |
 |---|---|
-| `loan-portal_asvs-mapping_v1.md` | OWASP ASVS control mapping — @import into `security/CLAUDE.md` |
-| `loan-portal_iso27001-gap-analysis_v1.md` | ISO 27001 gap analysis — @import into `security/CLAUDE.md` |
-| `loan-portal_risk-assessment_v1.md` | Project risk register — @import if Claude needs context |
+| `[system]_asvs-mapping_v1.md` | OWASP ASVS control mapping — @import into `security/CLAUDE.md` |
+| `[system]_iso27001-gap-analysis_v1.md` | ISO 27001 gap analysis — @import into `security/CLAUDE.md` |
+| `[system]_risk-assessment_v1.md` | Project risk register — @import if Claude needs context |
 | `gdpr-recitals.pdf` | Full GDPR text — prompt-only reference |
 | `owasp-asvs-4.0.3.pdf` | OWASP ASVS standard — prompt-only reference |
 | `pci-dss-v4.0.pdf` | PCI-DSS requirements — prompt-only reference |

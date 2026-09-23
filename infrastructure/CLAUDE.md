@@ -110,7 +110,7 @@ vault kv get secret/app/backend
     docs/infrastructure/design/         ← network diagrams, deployment architecture docs
 
   For infrastructure design documents, convert to Markdown and @import here:
-  @../docs/infrastructure/design/loan-portal_infrastructure-design_v1.md
+  @../docs/infrastructure/design/[your-system]_infrastructure-design_v1.md
 
   Network diagrams (PDF/images) are human reference — reference in the prompt when needed:
     @docs/infrastructure/design/network-topology-v2.pdf
@@ -120,7 +120,9 @@ vault kv get secret/app/backend
   - See docs/guides/template-guide.md → "Storing supporting documents" for full guidance
 -->
 
-@../docs/infrastructure/design/loan-portal_infrastructure-design_v1.md
+<!-- Uncomment once you have an infrastructure design document of your own:
+@../docs/infrastructure/design/[your-system]_infrastructure-design_v1.md
+-->
 
 **Environments:**
 
