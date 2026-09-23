@@ -198,7 +198,7 @@ Request → CorsFilter              (CORS headers)
 single most common defect in this layer: half the codebase validates IdP tokens
 while the other half issues its own, and neither is fully correct.
 
-**Option A — external IdP (default; recommended).** `security/policies/secure-coding-standard.md`
+**DEFAULT: Option A — external IdP (recommended).** `security/policies/secure-coding-standard.md`
 requires this: *never roll your own authentication*.
 ```java
 // No login endpoint exists here. The IdP authenticates the user and issues the
@@ -210,11 +210,13 @@ Request with Authorization: Bearer <access_token>
   → map token claims → GrantedAuthority set
   → SecurityContext holds the subject claim as the identity
 ```
-Refresh and revocation are the IdP's job. Do not build a refresh endpoint.
+Refresh and revocation are the IdP's job. **Do NOT build a `/auth/refresh` endpoint under Option A.**
+Frontend and Security Architecture must align to this choice: no refresh endpoint exists.
 
-**Option B — this service is the identity provider.** Only choose this
-deliberately, and record it as an ADR with the reasons. It puts credential
-storage, rotation, lockout, MFA and breach response on your team.
+**Option B — this service is the identity provider (non-default; requires ADR).** Only choose this
+deliberately, and record it in an Architecture Decision Record with the reasons. It puts credential
+storage, rotation, lockout, MFA and breach response on your team. **Use this only if you have written
+an ADR explaining why external IdP was rejected for your domain.** Under this option, build `/auth/refresh`.
 ```java
 POST /api/v1/auth/login
   → fetch the actor row by its login identifier

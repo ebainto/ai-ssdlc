@@ -44,8 +44,9 @@ These rules derive from:
 
 | Rule | Applies to | Control ref | Enforcement |
 |---|---|---|---|
-| Never roll your own authentication — use [Auth0 / Keycloak / Azure AD] | All layers | ASVS V2.1.1 | Code review |
-| JWT tokens must use RS256 asymmetric signing — HS256 is not permitted | Backend | ASVS V3.5.3 | SAST / code review |
+| **DEFAULT:** Use an external IdP ([Auth0 / Keycloak / Azure AD]) — do NOT build your own auth | All layers | ASVS V2.1.1 | Code review |
+| If you must use self-issued credentials (Option B, requires ADR): implement bcrypt ≥12 or Argon2id for password storage | Backend | ASVS V2.4.3 | Code review |
+| JWT tokens must use RS256 asymmetric signing; HS256 is not permitted (it requires a shared secret and cannot be rotated securely) | Backend | ASVS V3.5.3 | SAST / code review |
 | Access tokens must expire within [15 minutes] | Backend | ASVS V3.3.1 | Code review |
 | Invalidate server-side session on logout | Backend | ASVS V3.3.1 | Code review |
 | MFA required for [admin roles / all users — specify] | Backend, Frontend | ASVS V2.2.1 | Code review |

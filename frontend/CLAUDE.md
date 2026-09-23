@@ -156,10 +156,10 @@ re-validates everything):**
 
 | Threat (Phase 2 ref) | Control | Implementation in Angular |
 |---|---|---|
-| Session hijacking (STRIDE-I) | Auth tokens never in localStorage — memory-only with httpOnly cookie refresh | Access token stored in-memory (NgRx store, not localStorage). Refresh token in httpOnly cookie managed by backend. On page reload, call `/auth/refresh` to re-issue access token |
+| Session hijacking (STRIDE-I) | **DEFAULT:** Stateless JWT in Authorization header; no refresh endpoint. If using self-issued identity (Option B in backend, requires ADR): tokens in httpOnly cookie with refresh | **Option A (recommended):** Access token (short-lived JWT) in memory (NgRx store). Do **NOT** call `/auth/refresh` — the token lifetime is controlled by the IdP. **Option B (self-issued, requires backend ADR):** Refresh token in httpOnly cookie. Call `/auth/refresh` on 401 to re-issue access token. |
 | XSS via user-generated content (STRIDE-T) | Angular's built-in DOM sanitisation; avoid `bypassSecurityTrust*` | Angular escapes all interpolation `{{ }}` and property bindings by default. `DomSanitizer.bypassSecurityTrustHtml()` is banned. There is **no** built-in `@angular-eslint` rule for this — enforce it with a generic ban, e.g. `no-restricted-syntax` matching `bypassSecurityTrust*` calls, or a Semgrep rule, and require a security reviewer on any exception |
-| CSRF (STRIDE-T) | Angular `HttpClient` XSRF token handling | `HttpClientXsrfModule` configured to read `XSRF-TOKEN` cookie and send as `X-XSRF-TOKEN` header on all mutating requests |
-| Clickjacking (STRIDE-E) | X-Frame-Options + CSP frame-ancestors | Set at Nginx layer (`infrastructure/`); Angular app itself adds meta CSP tag in `index.html` |
+| CSRF (STRIDE-T) | **DEFAULT:** No CSRF needed (stateless JWT in Authorization header). If using self-issued Option B with httpOnly cookies: CSRF protection required | **Option A (recommended):** Token in Authorization header — CSRF protection not needed. **Option B (self-issued, httpOnly cookie):** Enable Spring `CsrfFilter` on backend; do **NOT** use `HttpClientXsrfModule` (deprecated in Angular 17, requires NgModule). Implement as standalone XSRF interceptor instead. |
+| Clickjacking (STRIDE-E) | X-Frame-Options + CSP frame-ancestors | Set at Nginx layer (`infrastructure/`) only. Do **NOT** add CSP to Angular meta tag (browsers ignore `frame-ancestors` in meta). Nginx CSP header is authoritative. |
 | Idle session abuse (STRIDE-E) | 15-minute inactivity timeout | `IdleTimerService` uses RxJS `fromEvent` (mousemove, keydown) + `timer`; after 15 min dispatches NgRx `logout` action |
 | Malicious file upload (STRIDE-T) | Client-side MIME + size check (UX gate) | Angular custom validator checks `file.type` and `file.size`; backend is the authoritative validator |
 | Route unauthorised access (STRIDE-E) | Angular route guards on all authenticated routes | `AuthGuard` implements `CanActivate` — checks NgRx auth state; redirects to `/login` if unauthenticated |
@@ -172,7 +172,9 @@ Request →  AuthInterceptor       (injects Authorization: Bearer <token>)
 Response → LoadingInterceptor     (manages global loading state)
 ```
 
-**Content Security Policy (applied in `index.html` meta tag):**
+**Content Security Policy:**
+Do **NOT** set CSP in Angular's `index.html` meta tag. Browsers ignore `frame-ancestors` directive in meta tags.
+CSP is controlled entirely by Nginx (`infrastructure/CLAUDE.md`), which sends it as a response header:
 ```
 default-src 'self';
 script-src 'self';

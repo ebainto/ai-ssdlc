@@ -111,7 +111,7 @@ docker compose -f ../infrastructure/docker/docker-compose.yml up sqlserver
 | `[CoreRecord]` | `[core_records]` | The main business record, with a status workflow |
 | `[Attachment]` | `[attachments]` | File references — store the file outside the DB, see the rule below |
 | `[CoreRecord]History` | `[core_records_history]` | System-versioned temporal table — SQL Server maintains it |
-| `RefreshToken` | `refresh_tokens` | Hashed refresh tokens with device fingerprint and expiry |
+| `RefreshToken` *(Option B only)* | `refresh_tokens` | **Only if backend uses self-issued identity (Option B in backend/CLAUDE.md, requires ADR).** Hashed refresh tokens with device fingerprint and expiry. If using external IdP: omit this table. |
 
 **Key relationships:**
 ```
@@ -171,8 +171,8 @@ column absent from this table is treated as unclassified, which fails an audit.
 | `[phone]` | `[actors]` | PII — Confidential | Always Encrypted (Randomized, AES-256) |
 | `[date_of_birth]` | `[actors]` | PII — Confidential | Always Encrypted (Randomized, AES-256) |
 | `[full_name]` | `[actors]` | PII — Internal | Plaintext; access restricted by Row-Level Security |
-| `password_hash` | `[actors]` | Secret | BCrypt hash; never returned by any SELECT the application exposes |
-| `token_hash` | `refresh_tokens` | Secret | SHA-256 of the raw token — see the token lookup rule below |
+| `password_hash` *(Option B only)* | `[actors]` | Secret | **Only if backend uses self-issued identity.** BCrypt hash; never returned by any SELECT the application exposes. If external IdP: omit this column. |
+| `token_hash` *(Option B only)* | `refresh_tokens` | Secret | **Only if backend uses self-issued identity.** SHA-256 of the raw token — see the token lookup rule below. If external IdP: omit this table. |
 | `[amount]` | `[core_records]` | Financial — Confidential | Classify per your policy; if it must be queried or aggregated, it cannot be Randomized-encrypted |
 | `[file_reference]` | `[attachments]` | Internal | **Server-generated** path only — never a client-supplied value. See the rule below |
 

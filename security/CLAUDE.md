@@ -110,7 +110,7 @@ This file is automatically loaded by Claude Code whenever you work on any file i
 
 | Control | Applies to | Standard | Implementation across stacks |
 |---|---|---|---|
-| Authentication | Frontend, Backend | OWASP ASVS V2 | `[Your identity model — must match backend/CLAUDE.md exactly.]` Default: an external IdP issues RS256 tokens, the backend validates against its JWKS, and the browser holds the refresh token in an httpOnly cookie. Pick one transport and one CSRF posture across all layers |
+| Authentication | Frontend, Backend | OWASP ASVS V2 | **Option A (DEFAULT & RECOMMENDED):** External IdP issues RS256 tokens. Backend validates against IdP's JWKS endpoint. Frontend stores token in memory, no `/auth/refresh` endpoint. No refresh token in browser. No CSRF protection needed (stateless, Authorization header). **Option B (non-default, requires ADR):** Self-issued credentials. Backend implements login/refresh endpoints. Frontend uses httpOnly cookie for refresh token. Backend's Spring `CsrfFilter` protects cookie-based auth. Database includes RefreshToken table. **Pick ONE model and apply it consistently across all layers.** |
 | Authorisation | Backend (Spring Boot) | OWASP ASVS V4 | `@PreAuthorize` RBAC at method level; `@ResourceOwner` annotation for record ownership checks |
 | Transport encryption | All layers | TLS 1.2+ | Nginx enforces TLS 1.2/1.3 externally; backend ↔ SQL Server uses Encrypted=true in JDBC URL; RabbitMQ uses TLS 1.2 |
 | Secrets management | All layers | OWASP ASVS V2.10 | HashiCorp Vault via Vault Agent sidecar; no secrets in `application.yml`, `.env`, Dockerfiles, or Compose files |

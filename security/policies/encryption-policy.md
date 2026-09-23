@@ -56,7 +56,7 @@ This policy defines the minimum encryption standards for [system name] — cover
 
 | Use case | Approved algorithm | Prohibited | Control ref |
 |---|---|---|---|
-| Password hashing | bcrypt (cost ≥ 12) or Argon2id | MD5, SHA-1, SHA-256 for passwords | ASVS V2.4.1 |
+| **Password hashing** *(Option B only: self-issued identity)* | bcrypt (cost ≥ 12) or Argon2id | MD5, SHA-1, SHA-256 for passwords. **If using external IdP (Option A, default): password hashing is N/A — IdP manages it.** | ASVS V2.4.1 |
 | Digital signatures | RSA-PSS (2048-bit min) or ECDSA (P-256 min) | RSA PKCS#1 v1.5 | ASVS V6.2.5 |
 | General hashing / integrity | SHA-256 minimum | MD5, SHA-1 | ASVS V6.2.2 |
 | Key derivation | PBKDF2 (100,000+ iterations), bcrypt, or Argon2 | Custom key derivation | ASVS V6.2.3 |
